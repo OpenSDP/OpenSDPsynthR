@@ -7,6 +7,13 @@ A project to generate realistic synthetic unit-level education data.
 To use `OpenSDP_data`, follow the instructions below:
 
 
+## Package Dependencies
+
+- `dplyr`
+- `lubridate`
+- [wakefield](https://www.github.com/trinker/wakefield)
+
+
 ## OpenSDP
 
 `OpenSDP_data` is part of the OpenSDP project. 

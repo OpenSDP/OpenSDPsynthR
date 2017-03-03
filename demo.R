@@ -59,6 +59,10 @@ for(i in 1:nrow(demog_master)){
 
 stu_year <- bind_rows(stu_year)
 
+stu_year$age <- age_calc(dob = stu_year$DOB, 
+                         enddate = as.Date(paste0(stu_year$year, "-09-21")),
+                         units = "years", precise = TRUE)
+
 
 
 # Create grades

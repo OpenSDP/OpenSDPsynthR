@@ -20,6 +20,9 @@ expand.grid.df <- function(...) Reduce(function(...) merge(..., by=NULL), list(.
 # TODO: UNIT TESTS
 # Document prob_list structure and verify
 cond_prob <- function(data, factor, newvar, prob_list){
+  if(!factor %in% names(demog_master)){
+    stop("Factor not found in data. Did you forget to create it?")
+  }
   data[, newvar] <- NA
   # Error checking, if not all factors are defined in prob_list, issue error
   if(!all(unique(data[, factor]) %in% names(prob_list))){
@@ -182,7 +185,7 @@ assign_baseline <- function(baseline = NULL, data, key){
 }
 
 
-varMap <- function(CEDS = , local, category){
+varMap <- function(CEDS = NULL, local, category){
   
 }
 
@@ -192,6 +195,28 @@ get_code_values <- function(x){
   tmp <- sapply(tmp, strsplit, split = "[[:punct:]]")
   levels <- map(tmp, 1) %>% unlist
   labels <- map(tmp, 2) %>% unlist
+  labels <- trimws(labels, which = )
   return(list(levels = levels, labels = labels))
 }
 
+# TODO: This should always append
+#http://stackoverflow.com/questions/35943455/creating-indicator-variable-columns-in-dplyr-chain
+make_inds <- function(data, col) {
+  for(i in col) {
+    idx <- which(names(data)==i)
+    v <- data[[idx]]
+    stopifnot(class(v)=="factor")
+    m <- matrix(0, nrow=nrow(data), ncol=nlevels(v))
+    m[cbind(seq_along(v), as.integer(v))]<-1
+    colnames(m) <- paste(levels(v))
+    r <- data.frame(m)
+    # if (idx > 1) {
+    #   r <- cbind(data[1:(idx-1)],r)
+    # }
+    # if (idx < ncol(data)) {
+    #   r <- cbind(r, data[(idx+1):ncol(data)])
+    # }
+    data <- cbind(data, r)
+  }
+  data
+}

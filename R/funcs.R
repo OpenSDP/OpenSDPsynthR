@@ -21,6 +21,27 @@ expand.grid.df <- function(...) Reduce(function(...) merge(..., by=NULL), list(.
 # Document prob_list structure and verify
 cond_prob <- function(data, factor, newvar, prob_list){
   data[, newvar] <- NA
+  # Error checking, if not all factors are defined in prob_list, issue error
+  if(!all(unique(data[, factor]) %in% names(prob_list))){
+    missingLevels <- 
+      as.character(unique(data[, factor])[!unique(data[, factor]) %in% 
+                                            names(prob_list)])
+    msg <- paste0("Probability list does not specify all possible factor levels.", 
+                  "\n", "Missing levels: \n", 
+                  paste0(missingLevels, collapse = ",\n"))
+    stop(msg)
+  }
+  # If not all prob_list elements are listed in the data, issue a warning
+  if(!all(names(prob_list) %in% unique(data[, factor]))){
+    missingLevels <- 
+      as.character(names(prob_list)[!names(prob_list) %in% 
+                                      unique(data[, factor])])
+    msg <- paste0("Probability list elements not found in data.", 
+                  "\n", "Missing levels: \n", 
+                  paste0(missingLevels, collapse = ",\n"))
+    warning(msg)
+  } 
+   
   for(i in unique(data[, factor])){
     N <- nrow(data[data[,  factor] == i, ])
     data[data[,  factor] == i, newvar] <- do.call(prob_list[[i]]$f, 
@@ -158,5 +179,19 @@ assign_baseline <- function(baseline = NULL, data, key){
   
   
   
+}
+
+
+varMap <- function(CEDS = , local, category){
+  
+}
+
+# Convert xwalk format into labels and levels for recoding
+get_code_values <- function(x){
+  tmp <- strsplit(x, split = ";")
+  tmp <- sapply(tmp, strsplit, split = "[[:punct:]]")
+  levels <- map(tmp, 1) %>% unlist
+  labels <- map(tmp, 2) %>% unlist
+  return(list(levels = levels, labels = labels))
 }
 

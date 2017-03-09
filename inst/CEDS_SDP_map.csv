@@ -1,0 +1,8 @@
+entity,category,CEDS_name,sdp_name,Option Set
+K12Student,Demographic,Asian,asian,Yes - Yes;No - No;NotSelected - Not Selected
+K12Student,Demographic,American Indian or Alaska Native,amerind,Yes - Yes;No - No;NotSelected - Not Selected
+K12Student,Demographic,Black or African American,black,Yes - Yes;No - No;NotSelected - Not Selected
+K12Student,Demographic,Hispanic or Latino Ethnicity,hispanic,Yes - Yes;No - No;NotSelected - Not Selected
+K12Student,Demographic,Demographic Race Two or More Races,multiracial,Yes - Yes;No - No;NotSelected - Not Selected
+K12Student,Demographic,Native Hawaiian or Other Pacific Islander,hawaiian_pi,Yes - Yes;No - No;NotSelected - Not Selected
+K12Student,Demographic,,other

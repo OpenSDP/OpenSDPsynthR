@@ -6,7 +6,10 @@ source("R/funcs.R")
 
 demog_master <- r_data_frame(n = 500, 
                              id(random = TRUE), 
-                             race, 
+                             race(x = c("White", "Hispanic or Latino Ethnicity", "Black or African American", 
+                                        "Asian", "American Indian or Alaska Native", "Native Hawaiian or Other Pacific Islander", 
+                                        "Demographic Race Two or More Races"), 
+                                  prob = c(0.637, 0.163, 0.122, 0.047, .007, .0015, .021)), 
                              sex, 
                              # dob, set range of years available for birth
                              dob(start = Sys.Date() - 365 * 25, 
@@ -17,20 +20,20 @@ demog_master <- r_data_frame(n = 500,
 
 ses_list <- list("White" = list(f = rnorm, 
                                   pars = list(mean = 0.3, sd = 1.1)), 
-                    "Hispanic" = list(f = rnorm, 
+                 "Hispanic or Latino Ethnicity" = list(f = rnorm, 
                                    pars = list(mean = -0.1, sd = 0.9)),
-                    "Black" = list(f = rnorm, 
+                 "Black or African American" = list(f = rnorm, 
                                       pars = list(mean = -0.2, sd = 1.2)), 
                     "Asian" = list(f = rnorm, 
                                       pars = list(mean = 0.23, sd = 1.2)), 
-                    "Bi-Racial" = list(f = rnorm, 
+                 "Demographic Race Two or More Races" = list(f = rnorm, 
                                       pars = list(mean = 0.0, sd = 1)), 
-                    "Native" = list(f = rnorm, 
+                 "American Indian or Alaska Native" = list(f = rnorm, 
                                       pars = list(mean = -0.2, sd = 1)), 
                     "Other" = list(f = rnorm, 
                                       pars = list(mean = 0, sd = 1)),
-                    "Hawaiian" = list(f = rnorm, 
-                                   pars = list(mean = 0, sd = 1)) 
+                 "Native Hawaiian or Other Pacific Islander" = list(f = rnorm, 
+                                   pars = list(mean = 0, sd = 1))
                     )
 # Need SES
 demog_master <- as.data.frame(demog_master)
@@ -64,6 +67,20 @@ stu_year$age <- age_calc(dob = stu_year$DOB,
                          units = "years", precise = TRUE)
 
 
-
 # Create grades
+# Create ELL
+### Initial
+## Identify first enrollment period for a student
+## Look up probability based on age/race of being ELL
+## Assign student to ELL status or not in first year
 
+### Longitudinal
+## If a student is not ELL, give a very very low probability of being ELL in the 
+## future (.0001 in t + 1, .000001 in t+n)
+## If a student is ELL, define a function for probability of exiting ELL status
+
+stu_first <- stu_year %>% group_by(ID) %>% 
+  mutate(flag = if_else(age == min(age), 1, 0)) %>% 
+  filter(flag == 1) %>% select(-flag)
+
+stu_first <- inner_join(stu_first, demog_master[, c("ID", "Race")])

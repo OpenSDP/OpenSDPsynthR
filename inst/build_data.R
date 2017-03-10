@@ -1,10 +1,11 @@
 # Build data
-
+library(purrr)
 
 ## Build example ELL baseline data
 ell <- read.csv("inst/ellDist.csv")
 ell <- na.omit(ell)
-ell <- ell[-1,]
+ell %<>% gather(-age, key = "race", value = "prob")
+# ell <- ell[-1,]
 saveRDS(ell, "data/ell.rds")
 
 

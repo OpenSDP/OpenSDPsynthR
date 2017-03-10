@@ -127,66 +127,34 @@ age_calc <- function (dob, enddate = Sys.Date(),
 # Function to load baseline data
 get_baseline <- function(bl){
   if(bl == "ell"){
-    readRDS("data/ell.rds")
+    data <- readRDS("data/ell.rds")
+    keys <- c("race", "age")
+    fun <- function(x) rbinom(1, 1, x)
   }
+  return(list(data = data, keys = keys, fun = fun))
 }
 
-# TODO:
-# Structure baseline
-# Make it a list
-# Make the list include the key variables needed
-# Make the list include the levels of factors to match on 
 
-
-# x and y are vectors of labels
-reconcile_labels <- function(x, y){
-  list(x, y[pmatch(tolower(x), tolower(y))])
-}
-
-try_label <- function(x, y, value){
-  lookup <- reconcile_labels(x, y)
-  if(is.na(y[value])){
-    out <- lookup[[2]][which(lookup[[1]] == value)]
-    if(length(out) != 0){
-      return(out)
-    } else{
-      return(NA)
-    }
-  } else{
-    return(y[value])
-  }
-}
-
-assign_baseline <- function(baseline = NULL, data, key){
+assign_baseline <- function(baseline = NULL, data){
   bl_data <- get_baseline(baseline)
-  
-  
-  
-  gen_fun <- function(x, y){
-    tmp_race <- as.character(x)
-    tmp_age <- y
-    idx <- which(tolower(names(bl_data)) == tolower(tmp_race))
-    prob <- bl_data[bl_data$age == tmp_age, idx]
-    out <- rbinom(1, 1, prob = prob)
-    return(out)
+  data <- as.data.frame(left_join(data, bl_data$data, by = bl_data$keys))
+  var <- names(bl_data$data)[!names(bl_data$data) %in% bl_data$keys]
+  if(length(var) > 1){
+    stop("Variables are labeled wrong in data.")
   }
-  
-  out <- mapply(gen_fun, x = stu_year[,"Race"], y = stu_year[,"age_int"])
-  
-  out <- lapply(stu_year, function(x) gen_fun(x))
-  
-  tmp_race <- as.character(demog_master$Race[1])
-  tmp_age <- round(stu_year$age[1], 0)
-  
-  
-  
-  
-  
+  out <- sapply(data[, var], bl_data$fun)
+  return(out)
 }
 
 
-varMap <- function(CEDS = NULL, local, category){
-  
+varMap <- function(local, category = NULL, CEDS = NULL){
+  CEDS_map <- readRDS("data/sdp_ceds_map.rds")
+  out <- CEDS_map$sdp_name[match(local, CEDS_map$CEDS_name)]
+  if(all(is.na(out))){
+    out <- NULL
+  } else{
+    return(out)  
+  }
 }
 
 # Convert xwalk format into labels and levels for recoding
@@ -210,6 +178,7 @@ make_inds <- function(data, col) {
     m[cbind(seq_along(v), as.integer(v))]<-1
     colnames(m) <- paste(levels(v))
     r <- data.frame(m)
+    # Only need this if you want to drop original column
     # if (idx > 1) {
     #   r <- cbind(data[1:(idx-1)],r)
     # }
@@ -220,3 +189,30 @@ make_inds <- function(data, col) {
   }
   data
 }
+
+# TODO:
+# Structure baseline
+# Make it a list
+# Make the list include the key variables needed
+# Make the list include the levels of factors to match on 
+
+
+# # x and y are vectors of labels
+# reconcile_labels <- function(x, y){
+#   list(x, y[pmatch(tolower(x), tolower(y))])
+# }
+# 
+# try_label <- function(x, y, value){
+#   lookup <- reconcile_labels(x, y)
+#   if(is.na(y[value])){
+#     out <- lookup[[2]][which(lookup[[1]] == value)]
+#     if(length(out) != 0){
+#       return(out)
+#     } else{
+#       return(NA)
+#     }
+#   } else{
+#     return(y[value])
+#   }
+# }
+

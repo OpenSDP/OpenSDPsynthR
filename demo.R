@@ -82,6 +82,7 @@ stu_first <- stu_year %>% group_by(ID) %>%
   filter(flag == 1) %>% select(-flag)
 
 stu_first <- inner_join(stu_first, demog_master[, c("ID", "Race")])
-
-
+stu_first$age <- round(stu_first$age, 0)
+stu_first$race <- varMap(stu_first$Race)
+stu_first$ell <- assign_baseline(baseline = "ell", data = stu_first)
 

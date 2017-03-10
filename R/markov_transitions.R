@@ -34,7 +34,10 @@ createAutocorBinSeries(n=12,mean=0.5,corr=0.9)
 createAutocorBinSeries(n=100,mean=0.5,corr=0.1)
 
 
-findTransitions <- function(series){
+findTransitions <- function(series, return = c("matrix", "simple")){
+  if(missing(return)){
+    return <- "matrix"
+  }
   # TODO check to ensure this coerces into a true transition matrix
   tab <- table(paste0(head(series,-1),tail(series,-1))) 
   tab <- matrix(c(tab["00"], tab["01"], tab["10"], tab["11"]), 
@@ -42,7 +45,16 @@ findTransitions <- function(series){
   tab[is.na(tab)] <- 0
   tab <- prop.table(tab, 1)
   tab[is.na(tab)] <- 0
-  tab
+  if(return == "matrix"){
+    tab
+  } else {
+    # TODO: Check
+    # Is this the right math?
+    p01 <- tab[1, 2]
+    corr <- tab[2, 2]
+    mean <- p01/corr - 1
+    return(list(mean = mean, corr = corr))
+  }
 }
 
 # createSeries(10, matrix(c(0.444, 0.111, 0.222, 0.222), nrow = 2, byrow =TRUE))
@@ -59,4 +71,24 @@ findTransitions <- function(series){
 # 
 # apply(outList, 2, findTransitions)
 
-
+# 
+# out <- findTransitions(series)
+# 
+# p01=corr*(1-mean)/mean 
+# createSeries(n,matrix(c(1-p01,p01,corr,1-corr),nrow=2,byrow=T))
+# 
+# series <- createAutocorBinSeries(n=5000, mean=0.1, corr=0.8)
+# out <- findTransitions(series)
+# out <- findTransitions(series, return = "simple")
+# 
+#              
+# mapply(function(x, y) (x*(1-y) / y), seq(0, 1, 0.1), seq(0, 1, 0.1))
+# mapply(function(x, y) (x*(1-y) / y), seq(1, 0, -0.1), seq(1, 0, -0.1))
+# mapply(function(x, y) (x*(1-y) / y), seq(0, 1, 0.1), seq(1, 0, -0.1))
+# mapply(function(x, y) (x*(1-y) / y), seq(1, 0, -0.1), seq(0, 1, 0.1))
+# p01=corr*(1-mean)/mean 
+# 
+# testdf <- expand.grid(mean = seq(0.01, 0.99, 0.1), corr = seq(0.01, 0.99, 0.1))
+# testdf$p01 <- mapply(function(x, y) (x*(1-y) / y), testdf$corr, testdf$mean)
+# 
+# createSeries(100 , matrix(c(1-90, 90, 0.91, .09),nrow=2,byrow=T)) 

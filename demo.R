@@ -40,10 +40,30 @@ ses_list <- list("White" = list(f = rnorm,
                  "Native Hawaiian or Other Pacific Islander" = list(f = rnorm, 
                                    pars = list(mean = 0, sd = 1))
                     )
+
+ses_list_b <- list("White" = list(f = rbinom, 
+                                pars = list(size = 1, prob = 0.4)), 
+                 "Hispanic or Latino Ethnicity" = list(f = rbinom, 
+                              pars = list(size = 1, prob = 0.6)),
+                 "Black or African American" = list(f = rbinom, 
+                              pars = list(size = 1, prob = 0.65)), 
+                 "Asian" = list(f = rbinom, 
+                                pars = list(size = 1, prob = 0.375)), 
+                 "Demographic Race Two or More Races" = list(f = rbinom, 
+                                pars = list(size = 1, prob = 0.4)), 
+                 "American Indian or Alaska Native" = list(f = rbinom, 
+                              pars = list(size = 1, prob = 0.4)), 
+                 "Other" = list(f = rbinom, 
+                                pars = list(size = 1, prob = 0.4)),
+                 "Native Hawaiian or Other Pacific Islander" = list(f = rbinom, 
+                                  pars = list(size = 1, prob = 0.4))
+)
+
+
 # Need SES
 demog_master <- as.data.frame(demog_master)
 demog_master <- cond_prob(demog_master, factor = "Race", 
-                 newvar = "ses", prob_list = ses_list)
+                 newvar = "ses", prob_list = ses_list_b)
 
 ## Generate student-year data
 minyear <- 1997

@@ -34,4 +34,16 @@ test_that("Baseline assignment works for ELL example", {
 
 # Check for error reporting
 
+ex_data <- data.frame(id = 100:116, age_year = c(3:19),
+                      race_eth = c(rep(c("amerind", "asian", "black", "hispanic",
+                                     "multiracial", "white", "hawaiian_pi"), 2),
+                               "other", "bad", "error"))
+
+
+test_that("Baseline assignment errors are informative", {
+  expect_error(assign_baseline(baseline = "ell", data = ex_data),
+               "Data supplied does not have right keys to merge")
+})
+
+
 

@@ -28,7 +28,7 @@ assign_grade <- function(age, ability){
 #' @details From SO {\url{http://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames}}
 #' @return an expanded data frame
 #' @export
-expand.grid.df <- function(...){
+expand_grid_df <- function(...){
   Reduce(function(...) merge(..., by=NULL), list(...))
 }
 
@@ -207,6 +207,11 @@ get_baseline <- function(bl){
 #' @export
 assign_baseline <- function(baseline = NULL, data){
   bl_data <- get_baseline(baseline)
+  if(any(!bl_data$keys %in% names(data))){
+    msg <- paste("Data supplied does not have right keys to merge. Please use columns:",
+                 paste(bl_data$keys, collapse = ", "), sep = " \n ")
+    stop(msg)
+  }
   data <- as.data.frame(left_join(data, bl_data$data, by = bl_data$keys))
   var <- names(bl_data$data)[!names(bl_data$data) %in% bl_data$keys]
   if(length(var) > 1){
@@ -239,7 +244,6 @@ map_CEDS <- function(local, category = NULL, CEDS = NULL){
 #' @param x the data.frame character element that contains the codes
 #'
 #' @return a list with the labels and levels properly formatted
-#' @examples
 get_code_values <- function(x){
   tmp <- strsplit(x, split = ";")
   tmp <- sapply(tmp, strsplit, split = "[[:punct:]]")

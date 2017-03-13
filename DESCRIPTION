@@ -3,7 +3,10 @@ Title: Package to generate synthetic data for the OpenSDP Project
 Version: 0.0.0.9000
 Authors@R: person("Jared", "Knowles", email = "jknowles@gmail.com", role = c("aut", "cre"))
 Description: Generate realistic synthetic unit-level education system data suitable for analysis.
-Depends: R (>= 3.3.2)
+Depends: R (>= 3.3.2),
+  wakefield,
+  dplyr
+Suggests: tidyverse
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

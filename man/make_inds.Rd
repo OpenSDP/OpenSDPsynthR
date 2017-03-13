@@ -4,7 +4,7 @@
 \alias{make_inds}
 \title{Append indicator variables to a data frame based on a single factor variable}
 \source{
-http://stackoverflow.com/questions/35943455/creating-indicator-variable-columns-in-dplyr-chain
+\url{http://stackoverflow.com/questions/35943455/creating-indicator-variable-columns-in-dplyr-chain}
 }
 \usage{
 make_inds(data, col)

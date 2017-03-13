@@ -5,8 +5,8 @@
 \title{Create a series of binary variables based on a transition matrix}
 \source{
 \itemize{
-\item \link{http://stats.stackexchange.com/questions/14175/how-to-generate-random-auto-correlated-binary-time-series-data}
-\item \link{https://en.wikipedia.org/wiki/Examples_of_Markov_chains}
+\item \url{http://stats.stackexchange.com/questions/14175/how-to-generate-random-auto-correlated-binary-time-series-data}
+\item \url{https://en.wikipedia.org/wiki/Examples_of_Markov_chains}
 }
 }
 \usage{

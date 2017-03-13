@@ -20,6 +20,7 @@ defining the transitions in the vector
 Identify the parameters that define a series of binary outcomes
 }
 \examples{
-createSeries(10, matrix(c(0.444, 0.111, 0.222, 0.222), nrow = 2, byrow =TRUE))
+series <- createSeries(10, matrix(c(0.444, 0.111, 0.222, 0.222), 
+                       nrow = 2, byrow =TRUE))
 createSeries(10, findTransitions(series))
 }

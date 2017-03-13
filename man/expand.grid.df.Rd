@@ -16,5 +16,5 @@ an expanded data frame
 Expand dataframe into a complete grid
 }
 \details{
-From SO {\link{http://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames}}
+From SO {\url{http://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames}}
 }

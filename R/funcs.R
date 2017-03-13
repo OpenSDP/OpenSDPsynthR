@@ -7,6 +7,7 @@
 #' @param ability a modifier that signifies student ability?
 #'
 #' @return a vector of grade levels
+#' @importFrom wakefield level
 #' @export
 #'
 #' @examples
@@ -15,7 +16,7 @@
 assign_grade <- function(age, ability){
   baseGrade <- floor(age - 7)
   maxGrade <- floor(age - 4)
-  out <- level(1, x = baseGrade:maxGrade, prob = c(0.01, 0.03, 0.9, 0.06))
+  out <- wakefield::level(1, x = baseGrade:maxGrade, prob = c(0.01, 0.03, 0.9, 0.06))
   return(out)
 }
 
@@ -24,7 +25,7 @@ assign_grade <- function(age, ability){
 #' Expand dataframe into a complete grid
 #'
 #' @param ... dataframe
-#' @details From SO {\link{http://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames}}
+#' @details From SO {\url{http://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames}}
 #' @return an expanded data frame
 expand.grid.df <- function(...){
   Reduce(function(...) merge(..., by=NULL), list(...))
@@ -47,7 +48,7 @@ expand.grid.df <- function(...){
 #' @return data.frame with \code{newvar} appended to dataframe 
 #' @export
 cond_prob <- function(data, factor, newvar, prob_list){
-  if(!factor %in% names(demog_master)){
+  if(!factor %in% names(data)){
     stop("Factor not found in data. Did you forget to create it?")
   }
   data[, newvar] <- NA
@@ -183,7 +184,7 @@ age_calc <- function (dob, enddate = Sys.Date(),
 #' @export
 get_baseline <- function(bl){
   if(bl == "ell"){
-    data <- readRDS("data/ell.rds")
+    data("ell")
     keys <- c("race", "age")
     fun <- function(x) rbinom(1, 1, x)
   }
@@ -198,6 +199,7 @@ get_baseline <- function(bl){
 #' @param data a data.frame to append the baseline to
 #'
 #' @return the data.frame passed by the user with an additional variable appended
+#' @importFrom dplyr left_join
 #' @export
 assign_baseline <- function(baseline = NULL, data){
   bl_data <- get_baseline(baseline)
@@ -220,8 +222,8 @@ assign_baseline <- function(baseline = NULL, data){
 #' @return mapped CEDS names
 #' @export
 map_CEDS <- function(local, category = NULL, CEDS = NULL){
-  CEDS_map <- readRDS("data/sdp_ceds_map.rds")
-  out <- CEDS_map$sdp_name[match(local, CEDS_map$CEDS_name)]
+  data("xwalk")
+  out <- xwalk$sdp_name[match(local, xwalk$CEDS_name)]
   if(all(is.na(out))){
     out <- NULL
   } else{
@@ -244,7 +246,7 @@ map_CEDS <- function(local, category = NULL, CEDS = NULL){
 #'
 #' @param data a data frame
 #' @param col character, name of the factor column to generate indicators for
-#' @source http://stackoverflow.com/questions/35943455/creating-indicator-variable-columns-in-dplyr-chain
+#' @source \url{http://stackoverflow.com/questions/35943455/creating-indicator-variable-columns-in-dplyr-chain}
 #' @return a data frame with the factor levels appended as columns
 #' @export
 make_inds <- function(data, col) {

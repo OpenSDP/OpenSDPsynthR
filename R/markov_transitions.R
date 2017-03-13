@@ -14,8 +14,8 @@
 #'  \item Element 2, 2 is the probability of moving to state 1 conditional on being in state 1
 #' }
 #' @source \itemize{
-#' \item \link{http://stats.stackexchange.com/questions/14175/how-to-generate-random-auto-correlated-binary-time-series-data}
-#' \item \link{https://en.wikipedia.org/wiki/Examples_of_Markov_chains}
+#' \item \url{http://stats.stackexchange.com/questions/14175/how-to-generate-random-auto-correlated-binary-time-series-data}
+#' \item \url{https://en.wikipedia.org/wiki/Examples_of_Markov_chains}
 #' }
 #' @export 
 #' @examples
@@ -60,7 +60,8 @@ createAutocorBinSeries = function(n=100,mean=0.5, corr=0){
 #' @export
 #'
 #' @examples
-#' createSeries(10, matrix(c(0.444, 0.111, 0.222, 0.222), nrow = 2, byrow =TRUE))
+#' series <- createSeries(10, matrix(c(0.444, 0.111, 0.222, 0.222), 
+#'                        nrow = 2, byrow =TRUE))
 #' createSeries(10, findTransitions(series))
 findTransitions <- function(series, return = c("matrix", "simple")){
   if(missing(return)){

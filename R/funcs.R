@@ -1,6 +1,17 @@
 # Functions
 
 
+#' Assign student a grade
+#'
+#' @param age age of the student in years
+#' @param ability a modifier that signifies student ability?
+#'
+#' @return a vector of grade levels
+#' @export
+#'
+#' @examples
+#' age <- c(9, 10, 11, 12)
+#' assign_grade(age = age)
 assign_grade <- function(age, ability){
   baseGrade <- floor(age - 7)
   maxGrade <- floor(age - 4)
@@ -9,9 +20,15 @@ assign_grade <- function(age, ability){
 }
 
 # Expand DF into grid, from SO
-#http://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames
-expand.grid.df <- function(...) Reduce(function(...) merge(..., by=NULL), list(...))
-
+#
+#' Expand dataframe into a complete grid
+#'
+#' @param ... dataframe
+#' @details From SO {\link{http://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames}}
+#' @return an expanded data frame
+expand.grid.df <- function(...){
+  Reduce(function(...) merge(..., by=NULL), list(...))
+} 
 
 # Function to generate conditional probabilities and append them to data
 # Input is data frame, output is a data frame
@@ -19,6 +36,16 @@ expand.grid.df <- function(...) Reduce(function(...) merge(..., by=NULL), list(.
 
 # TODO: UNIT TESTS
 # Document prob_list structure and verify
+
+#' Generate conditional probabilities by group
+#'
+#' @param data dataframe to add variable to
+#' @param factor grouping variable that probability of \code{newvar} is conditional on
+#' @param newvar name, character, of new variable defined by \code{prob_list}
+#' @param prob_list a list, defining the way \code{newvar} should be generated 
+#'
+#' @return data.frame with \code{newvar} appended to dataframe 
+#' @export
 cond_prob <- function(data, factor, newvar, prob_list){
   if(!factor %in% names(demog_master)){
     stop("Factor not found in data. Did you forget to create it?")
@@ -55,7 +82,33 @@ cond_prob <- function(data, factor, newvar, prob_list){
    return(data)
 }
 
-# From eeptools, and Jason Becker
+##' Function to calculate age from date of birth.
+##' @description his function calculates age in days, months, or years from a 
+##' date of birth to another arbitrary date. This returns a numeric vector in 
+##' the specified units.
+##' @param dob a vector of class \code{Date} representing the date of birth/start date
+##' @param enddate a vector of class Date representing the when the observation's 
+##' age is of interest, defaults to current date.
+##' @param units character, which units of age should be calculated? allowed values are 
+##' days, months, and years
+##' @param precise logical indicating whether or not to calculate with leap year 
+##' and leap second precision
+##' @return A numeric vector of ages the same length as the dob vector
+##' @source This function was developed in part from this response on the R-Help mailing list.
+##' @seealso See also \code{\link{difftime}} which this function uses and mimics 
+##' some functionality but at higher unit levels.
+##' @author Jason P. Becker
+##' @export
+##' @examples
+##' a <- as.Date(seq(as.POSIXct('1987-05-29 018:07:00'), len=26, by="21 day"))
+##' b <- as.Date(seq(as.POSIXct('2002-05-29 018:07:00'), len=26, by="21 day"))
+##' 
+##' age <- age_calc(a, units='years')
+##' age
+##' age <- age_calc(a, units='months')
+##' age
+##' age <- age_calc(a, as.Date('2005-09-01'))
+##' age
 age_calc <- function (dob, enddate = Sys.Date(), 
                       units = "months", precise = TRUE){
   if (!inherits(dob, "Date") | !inherits(enddate, "Date")) {
@@ -121,10 +174,13 @@ age_calc <- function (dob, enddate = Sys.Date(),
   }
   return(result)
 }
-# height_list <- list("Male" = list(f = height_in, pars = list(mean = 70, sd = 3.8)), 
-#                     "Female" = list(f = height_in, pars = list(mean = 64, sd = 3.2)))
 
-# Function to load baseline data
+#' Function to load in SDP default baseline data
+#'
+#' @param bl a character naming the type of baseline available
+#'
+#' @return the restored baseline object
+#' @export
 get_baseline <- function(bl){
   if(bl == "ell"){
     data <- readRDS("data/ell.rds")
@@ -135,6 +191,14 @@ get_baseline <- function(bl){
 }
 
 
+
+#' Append baseline data to initial data
+#'
+#' @param baseline character value of the default baseline to assign
+#' @param data a data.frame to append the baseline to
+#'
+#' @return the data.frame passed by the user with an additional variable appended
+#' @export
 assign_baseline <- function(baseline = NULL, data){
   bl_data <- get_baseline(baseline)
   data <- as.data.frame(left_join(data, bl_data$data, by = bl_data$keys))
@@ -147,7 +211,15 @@ assign_baseline <- function(baseline = NULL, data){
 }
 
 
-varMap <- function(local, category = NULL, CEDS = NULL){
+#' Map to and from CEDS column names
+#'
+#' @param local character vector of variable names to match
+#' @param category character, a category of CEDS data to match
+#' @param CEDS optional
+#'
+#' @return mapped CEDS names
+#' @export
+map_CEDS <- function(local, category = NULL, CEDS = NULL){
   CEDS_map <- readRDS("data/sdp_ceds_map.rds")
   out <- CEDS_map$sdp_name[match(local, CEDS_map$CEDS_name)]
   if(all(is.na(out))){
@@ -158,17 +230,23 @@ varMap <- function(local, category = NULL, CEDS = NULL){
 }
 
 # Convert xwalk format into labels and levels for recoding
-get_code_values <- function(x){
-  tmp <- strsplit(x, split = ";")
-  tmp <- sapply(tmp, strsplit, split = "[[:punct:]]")
-  levels <- map(tmp, 1) %>% unlist
-  labels <- map(tmp, 2) %>% unlist
-  labels <- trimws(labels, which = )
-  return(list(levels = levels, labels = labels))
-}
+# get_code_values <- function(x){
+#   tmp <- strsplit(x, split = ";")
+#   tmp <- sapply(tmp, strsplit, split = "[[:punct:]]")
+#   levels <- map(tmp, 1) %>% unlist
+#   labels <- map(tmp, 2) %>% unlist
+#   labels <- trimws(labels, which = )
+#   return(list(levels = levels, labels = labels))
+# }
 
 # TODO: This should always append
-#http://stackoverflow.com/questions/35943455/creating-indicator-variable-columns-in-dplyr-chain
+#' Append indicator variables to a data frame based on a single factor variable
+#'
+#' @param data a data frame
+#' @param col character, name of the factor column to generate indicators for
+#' @source http://stackoverflow.com/questions/35943455/creating-indicator-variable-columns-in-dplyr-chain
+#' @return a data frame with the factor levels appended as columns
+#' @export
 make_inds <- function(data, col) {
   for(i in col) {
     idx <- which(names(data)==i)

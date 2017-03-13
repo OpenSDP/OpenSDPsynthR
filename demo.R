@@ -11,8 +11,10 @@ demog_master <- r_data_frame(n = 500,
                              # dob, set range of years available for birth
                              dob(start = Sys.Date() - 365 * 25, 
                                  k = 365 * 8, by = "1 days"), 
-                             race(x = c("White", "Hispanic or Latino Ethnicity", "Black or African American", 
-                                        "Asian", "American Indian or Alaska Native", "Native Hawaiian or Other Pacific Islander", 
+                             race(x = c("White", "Hispanic or Latino Ethnicity", 
+                                        "Black or African American", 
+                                        "Asian", "American Indian or Alaska Native", 
+                                        "Native Hawaiian or Other Pacific Islander", 
                                         "Demographic Race Two or More Races"), 
                                   prob = c(0.637, 0.163, 0.122, 0.047, .007, .0015, .021)))
 

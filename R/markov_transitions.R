@@ -1,39 +1,67 @@
-# Transition matrix series switching 
-#http://stats.stackexchange.com/questions/14175/how-to-generate-random-auto-correlated-binary-time-series-data
-
-
-# n = length of the series to create
-# TransitionMatrix is a 2x2 matrix where 
-# Element 1, 1 is the probability of moving to state 0 conditional on being in state 0
-# Element 2, 1 is the probability of moving to state 0 conditional on being in state 1
-# Element 1, 2 is the probability of moving to state 1 conditional on being in state 0
-# ELement 2, 2 is the probability of moving to state 1 conditional on being in state 1
-# Rows represent the probability choices within a state
-# https://en.wikipedia.org/wiki/Examples_of_Markov_chains
-createSeries <- function(n, TransitionMatrix){
-  stopifnot(is.matrix(TransitionMatrix))
-  stopifnot(n>0)
-  
+#' Create a series of binary variables based on a transition matrix
+#'
+#' @param n an integer representing the length of the series
+#' @param tm a Transition Matrix that describes the transition matrix
+#'
+#' @return a vector of length \code{n} with a random series of 0 and 1 generated 
+#' from the \code{tm}
+#' @description Generate a 
+#' @details A Transition Matrix is a 2x2 matrix where:
+#' \itemize{
+#'  \item Element 1, 1 is the probability of moving to state 0 conditional on being in state 0
+#'  \item Element 2, 1 is the probability of moving to state 0 conditional on being in state 1
+#'  \item Element 1, 2 is the probability of moving to state 1 conditional on being in state 0
+#'  \item Element 2, 2 is the probability of moving to state 1 conditional on being in state 1
+#' }
+#' @source \itemize{
+#' \item \link{http://stats.stackexchange.com/questions/14175/how-to-generate-random-auto-correlated-binary-time-series-data}
+#' \item \link{https://en.wikipedia.org/wiki/Examples_of_Markov_chains}
+#' }
+#' @export 
+#' @examples
+#' createSeries(10, matrix(c(0.6,0.4,0.9,0.1), nrow=2, byrow=TRUE))
+createSeries <- function(n, tm){
+  stopifnot(is.matrix(tm))
+  stopifnot(n > 0)
   Series <- c(1, rep(NA,n-1))
   random <- runif(n-1)
   for (i in 2:length(Series)){
-    Series[i] <- TransitionMatrix[Series[i-1]+1, 1] >= random[i-1]
+    Series[i] <- tm[Series[i-1]+1, 1] >= random[i-1]
   }
-  
   return(Series)
 }
 
-createSeries(10, matrix(c(0.6,0.4,0.9,0.1), nrow=2, byrow=TRUE))
 
+#' Create an autocorrelated binary series
+#'
+#' @param n integer, length of series to generate
+#' @param mean numeric between 0 and 1, proportion of cases with value 1
+#' @param corr numeric between -1 and 1, how correlated should series be?
+#' @description Generate a binary series that is autocorrelated using the 
+#' Markov method from \code{\link{createSeries}}
+#'
+#' @return A binary series
+#' @export
+#' @examples
+#' createAutocorBinSeries(n=12,mean=0.5,corr=0.9)
+#' createAutocorBinSeries(n=100,mean=0.5,corr=0.1)
 createAutocorBinSeries = function(n=100,mean=0.5, corr=0){ 
-  p01=corr*(1-mean)/mean 
-  createSeries(n,matrix(c(1-p01,p01,corr,1-corr),nrow=2,byrow=T)) 
-  }
+  p01 <- corr * (1 - mean) / mean 
+  createSeries(n, matrix(c(1-p01, p01, corr, 1-corr), nrow=2, byrow=T)) 
+}
 
-createAutocorBinSeries(n=12,mean=0.5,corr=0.9)
-createAutocorBinSeries(n=100,mean=0.5,corr=0.1)
-
-
+#' Identify the parameters that define a series of binary outcomes
+#'
+#' @param series a vector of 0 and 1 values
+#' @param return a character with two options, matrix returns a transition 
+#' matrix, simple returns a list with two elements, mean and cor
+#' @return Either a transition matrix or a list with parameters mean and cor 
+#' defining the transitions in the vector
+#' @export
+#'
+#' @examples
+#' createSeries(10, matrix(c(0.444, 0.111, 0.222, 0.222), nrow = 2, byrow =TRUE))
+#' createSeries(10, findTransitions(series))
 findTransitions <- function(series, return = c("matrix", "simple")){
   if(missing(return)){
     return <- "matrix"
@@ -57,38 +85,4 @@ findTransitions <- function(series, return = c("matrix", "simple")){
   }
 }
 
-# createSeries(10, matrix(c(0.444, 0.111, 0.222, 0.222), nrow = 2, byrow =TRUE))
-# createSeries(10, findTransitions(series))
-# outList <- replicate(25, createAutocorBinSeries(n=10,mean=0.4,corr=0.8), 
-#                      simplify = "array")
-# 
-# outList <- apply(outList, 2, function(x) table(paste0(head(x, -1), tail(x,-1))))
-# 
-# map(outList, function(x) sum(x[names(x) == "00"])) %>% reduce_right(sum)
-# map(outList, function(x) sum(x[names(x) == "10"])) %>% reduce_right(sum)
-# map(outList, function(x) sum(x[names(x) == "01"])) %>% reduce_right(sum)
-# map(outList, function(x) sum(x[names(x) == "11"])) %>% reduce_right(sum)
-# 
-# apply(outList, 2, findTransitions)
 
-# 
-# out <- findTransitions(series)
-# 
-# p01=corr*(1-mean)/mean 
-# createSeries(n,matrix(c(1-p01,p01,corr,1-corr),nrow=2,byrow=T))
-# 
-# series <- createAutocorBinSeries(n=5000, mean=0.1, corr=0.8)
-# out <- findTransitions(series)
-# out <- findTransitions(series, return = "simple")
-# 
-#              
-# mapply(function(x, y) (x*(1-y) / y), seq(0, 1, 0.1), seq(0, 1, 0.1))
-# mapply(function(x, y) (x*(1-y) / y), seq(1, 0, -0.1), seq(1, 0, -0.1))
-# mapply(function(x, y) (x*(1-y) / y), seq(0, 1, 0.1), seq(1, 0, -0.1))
-# mapply(function(x, y) (x*(1-y) / y), seq(1, 0, -0.1), seq(0, 1, 0.1))
-# p01=corr*(1-mean)/mean 
-# 
-# testdf <- expand.grid(mean = seq(0.01, 0.99, 0.1), corr = seq(0.01, 0.99, 0.1))
-# testdf$p01 <- mapply(function(x, y) (x*(1-y) / y), testdf$corr, testdf$mean)
-# 
-# createSeries(100 , matrix(c(1-90, 90, 0.91, .09),nrow=2,byrow=T)) 

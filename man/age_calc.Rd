@@ -12,21 +12,21 @@ age_calc(dob, enddate = Sys.Date(), units = "months", precise = TRUE)
 \arguments{
 \item{dob}{a vector of class \code{Date} representing the date of birth/start date}
 
-\item{enddate}{a vector of class Date representing the when the observation's 
+\item{enddate}{a vector of class Date representing the when the observation's
 age is of interest, defaults to current date.}
 
-\item{units}{character, which units of age should be calculated? allowed values are 
+\item{units}{character, which units of age should be calculated? allowed values are
 days, months, and years}
 
-\item{precise}{logical indicating whether or not to calculate with leap year 
+\item{precise}{logical indicating whether or not to calculate with leap year
 and leap second precision}
 }
 \value{
 A numeric vector of ages the same length as the dob vector
 }
 \description{
-his function calculates age in days, months, or years from a 
-date of birth to another arbitrary date. This returns a numeric vector in 
+his function calculates age in days, months, or years from a
+date of birth to another arbitrary date. This returns a numeric vector in
 the specified units.
 }
 \examples{
@@ -41,7 +41,7 @@ age <- age_calc(a, as.Date('2005-09-01'))
 age
 }
 \seealso{
-See also \code{\link{difftime}} which this function uses and mimics 
+See also \code{\link{difftime}} which this function uses and mimics
 some functionality but at higher unit levels.
 }
 \author{

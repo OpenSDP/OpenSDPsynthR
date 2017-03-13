@@ -1,5 +1,6 @@
 # Build data
 library(purrr)
+library(tidyr)
 
 ## Build example ELL baseline data
 ell <- read.csv("data-raw/ellDist.csv")
@@ -13,8 +14,8 @@ ell %<>% gather(-age, key = "race", value = "prob")
 xwalk <- read.csv("data-raw/CEDS_SDP_map.csv", stringsAsFactors = FALSE)
 xwalk$schema <- NA
 for(i in 1:nrow(xwalk)){
-  xwalk$schema[i] <- I(list(get_code_values(xwalk$Option.Set[i])))
+  xwalk$schema[i] <- I(list(OpenSDP.data:::get_code_values(xwalk$Option.Set[i])))
 }
 
 # saveRDS(xwalk, "data/sdp_ceds_map.rds")
-use_data(ell, xwalk, internal = TRUE)
+devtools::use_data(ell, xwalk, internal = TRUE, overwrite = TRUE)

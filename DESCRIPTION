@@ -6,9 +6,9 @@ Description: Generate realistic synthetic unit-level education system data suita
 Depends: R (>= 3.3.2),
   wakefield,
   dplyr
-Suggests: tidyverse
+Suggests: tidyverse, magrittr, lubridate
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Suggests: testthat
 RoxygenNote: 6.0.1

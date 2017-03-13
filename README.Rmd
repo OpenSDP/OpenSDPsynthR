@@ -173,7 +173,6 @@ stu_first <- inner_join(stu_first, demog_master[, c("ID", "Race")])
 stu_first$age <- round(stu_first$age, 0)
 stu_first$race <- map_CEDS(stu_first$Race)
 stu_first$ell <- assign_baseline(baseline = "ell", data = stu_first)
-
 head(stu_first)
 ```
 

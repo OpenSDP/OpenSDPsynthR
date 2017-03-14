@@ -31,6 +31,11 @@ make_markov_series <- function(n, tm){
   return(Series)
 }
 
+make_markov_series_better <- function(n, tm){
+  stopifnot(is.matrix(tm))
+  mc <- new("markovchain", transitionMatrix = tm)
+  markovchainSequence(n, mc)
+}
 
 #' Create an autocorrelated binary series
 #'
@@ -57,32 +62,24 @@ make_binary_series <- function(n=100,mean=0.5, corr=0){
 #' matrix, simple returns a list with two elements, mean and cor
 #' @return Either a transition matrix or a list with parameters mean and cor
 #' defining the transitions in the vector
+#' @importFrom markovchain markovchainFit
 #' @export
-#'
 #' @examples
 #' series <- make_markov_series(10, matrix(c(0.444, 0.111, 0.222, 0.222),
 #'                        nrow = 2, byrow =TRUE))
 #' make_markov_series(10, fit_binary_series(series))
-fit_binary_series <- function(series, return = c("matrix", "simple")){
+fit_binary_series <- function(series, return = c("matrix")){
   if(missing(return)){
     return <- "matrix"
   }
   # TODO check to ensure this coerces into a true transition matrix
-  tab <- table(paste0(head(series,-1),tail(series,-1)))
-  tab <- matrix(c(tab["00"], tab["01"], tab["10"], tab["11"]),
-                ncol = 2, byrow =TRUE)
-  tab[is.na(tab)] <- 0
-  tab <- prop.table(tab, 1)
-  tab[is.na(tab)] <- 0
+  # seqMat <- createSequenceMatrix(series)
+  out <- markovchainFit(series)
+
   if(return == "matrix"){
-    tab
+    out$estimate
   } else {
-    # TODO: Check
-    # Is this the right math?
-    p01 <- tab[1, 2]
-    corr <- tab[2, 2]
-    mean <- p01/corr - 1
-    return(list(mean = mean, corr = corr))
+    stop("bad")
   }
 }
 

@@ -4,7 +4,7 @@
 \alias{fit_binary_series}
 \title{Identify the parameters that define a series of binary outcomes}
 \usage{
-fit_binary_series(series, return = c("matrix", "simple"))
+fit_binary_series(series, return = c("matrix"))
 }
 \arguments{
 \item{series}{a vector of 0 and 1 values}

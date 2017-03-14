@@ -2,7 +2,7 @@
 #'
 #' @param n an integer representing the length of the series
 #' @param tm a Transition Matrix that describes the transition matrix
-#'
+#' @param ... additional arguments to apss to \code{\link{markovchainSequence}}
 #' @return a vector of length \code{n} with a random series of 0 and 1 generated
 #' from the \code{tm}
 #' @description Generate a
@@ -17,24 +17,16 @@
 #' \item \url{http://stats.stackexchange.com/questions/14175/how-to-generate-random-auto-correlated-binary-time-series-data}
 #' \item \url{https://en.wikipedia.org/wiki/Examples_of_Markov_chains}
 #' }
+#' @importFrom markovchain markovchainSequence
 #' @export
 #' @examples
 #' make_markov_series(10, matrix(c(0.6,0.4,0.9,0.1), nrow=2, byrow=TRUE))
-make_markov_series <- function(n, tm){
+make_markov_series <- function(n, tm, ...){
   stopifnot(is.matrix(tm))
   stopifnot(n > 0)
-  Series <- c(1, rep(NA, n-1))
-  random <- runif(n-1)
-  for (i in 2:length(Series)){
-    Series[i] <- tm[Series[i-1]+1, 1] >= random[i-1]
-  }
-  return(Series)
-}
-
-make_markov_series_better <- function(n, tm){
-  stopifnot(is.matrix(tm))
   mc <- new("markovchain", transitionMatrix = tm)
-  markovchainSequence(n, mc)
+  series <- markovchainSequence(n, mc, ...)
+  return(series)
 }
 
 #' Create an autocorrelated binary series
@@ -50,10 +42,18 @@ make_markov_series_better <- function(n, tm){
 #' @examples
 #' make_binary_series(n=12,mean=0.5,corr=0.9)
 #' make_binary_series(n=100,mean=0.5,corr=0.1)
-make_binary_series <- function(n=100,mean=0.5, corr=0){
+make_binary_series <- function(n = 100, mean = 0.5, corr = 0){
   p01 <- corr * (1 - mean) / mean
-  make_markov_series(n, matrix(c(1-p01, p01, corr, 1-corr), nrow=2, byrow=T))
+  tm <- matrix(c(1 - p01, p01, corr, 1 - corr), nrow=2, byrow=T)
+  tm <- matrix(c(0.2, 1.24, 1.3, -0.4), nrow=2, byrow=T)
+  if(any(tm > 1 | tm < 0)){
+    tm[1, ] <- prop.table(sqrt(tm[1, ]^2))
+    tm[2, ] <- prop.table(sqrt(tm[1, ]^2))
+  }
+  tm <- t(apply(tm, 1, function(x)(x-min(x))/(max(x)-min(x))))
+  make_markov_series(n, tm)
 }
+
 
 #' Identify the parameters that define a series of binary outcomes
 #'
@@ -65,21 +65,20 @@ make_binary_series <- function(n=100,mean=0.5, corr=0){
 #' @importFrom markovchain markovchainFit
 #' @export
 #' @examples
-#' series <- make_markov_series(10, matrix(c(0.444, 0.111, 0.222, 0.222),
+#' series <- make_markov_series(10, matrix(c(0.3, 0.7, 0.25, 0.75),
 #'                        nrow = 2, byrow =TRUE))
-#' make_markov_series(10, fit_binary_series(series))
-fit_binary_series <- function(series, return = c("matrix")){
+#' fit_series(series)
+fit_series <- function(series, return = c("matrix", "fit")){
   if(missing(return)){
     return <- "matrix"
   }
   # TODO check to ensure this coerces into a true transition matrix
   # seqMat <- createSequenceMatrix(series)
   out <- markovchainFit(series)
-
   if(return == "matrix"){
     out$estimate
-  } else {
-    stop("bad")
+  } else if(return == "fit") {
+    out
   }
 }
 

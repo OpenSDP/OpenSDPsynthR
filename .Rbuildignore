@@ -5,3 +5,5 @@
 ^README\.Rmd$
 ^README-.*\.png$
 ^data-raw$
+^todo.md$
+^demo.R$

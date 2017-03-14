@@ -10,12 +10,14 @@
 }
 }
 \usage{
-make_markov_series(n, tm)
+make_markov_series(n, tm, ...)
 }
 \arguments{
 \item{n}{an integer representing the length of the series}
 
 \item{tm}{a Transition Matrix that describes the transition matrix}
+
+\item{...}{additional arguments to apss to \code{\link{markovchainSequence}}}
 }
 \value{
 a vector of length \code{n} with a random series of 0 and 1 generated

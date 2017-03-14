@@ -172,8 +172,195 @@ stu_first <- stu_year %>% group_by(ID) %>%
 stu_first <- inner_join(stu_first, demog_master[, c("ID", "Race")])
 stu_first$age <- round(stu_first$age, 0)
 stu_first$race <- map_CEDS(stu_first$Race)
-stu_first$ell <- assign_baseline(baseline = "ell", data = stu_first)
+stu_first$ell_first <- assign_baseline(baseline = "ell", data = stu_first)
+stu_first$ell_first <- ifelse(stu_first$ell_first == 1, "Yes", "No")
 head(stu_first)
+```
+
+
+```{r eval=FALSE}
+stu_year <- left_join(stu_year, stu_first[, c(1, 7)])
+# Option to use start frequencies as basis for chains or generate chains without 
+# initial states
+# Define the transition frequencies
+statesNames <- c("No", "Yes")
+tm <- matrix(c(800, 40, 120, 300), nrow = 2, byrow = TRUE, 
+             dimnames = list(statesNames, statesNames))
+
+# frpl
+tm_f <- matrix(c(900, 200, 300, 2000), nrow = 2, byrow=TRUE, 
+               dimnames = list(statesNames, statesNames))
+make_markov_series(20, tm = tm_f/rowSums(tm_f))
+
+# gifted
+tm_g <- matrix(c(2000, 200, 20, 400), nrow = 2, byrow=TRUE, 
+               dimnames = list(statesNames, statesNames))
+make_markov_series(20, tm = tm_g/rowSums(tm_g))
+# iep
+tm_i <- matrix(c(3000, 200, 200, 3000), nrow = 2, byrow=TRUE, 
+               dimnames = list(statesNames, statesNames))
+make_markov_series(20, tm = tm_i/rowSums(tm_i))
+
+# grade_level
+gradeNames <- c("1", "0", "-1")
+tm_grade <- matrix(c(900, 50, 10, 900, 20, 10, 900, 20, 10), nrow = 3, byrow=TRUE, 
+               dimnames = list(gradeNames, gradeNames))
+testMC <- as(tm_grade/rowSums(tm_grade), "markovchain")
+
+make_markov_series(20, tm = tm_grade/rowSums(tm_grade), t0 = "1")
+
+
+stu_year %<>% group_by(ID) %>% arrange(ID, year) %>% 
+  mutate(ell = make_markov_series(n(), tm = tm/rowSums(tm), 
+                                  t0 = ell_first[1], 
+                                  include.t0 = TRUE))
+
+stu_year %<>% group_by(ID) %>% arrange(ID, year) %>% 
+  mutate(frpl = make_markov_series(n(), tm = tm_f/rowSums(tm_f)), 
+         gifted = make_markov_series(n(), tm = tm_g/rowSums(tm_g)), 
+         iep = make_markov_series(n(), tm = tm_i/rowSums(tm_i)), 
+         grade_adv = make_markov_series(n(), tm = tm_grade/rowSums(tm_grade)))
+
+```
+
+
+```{r eval = FALSE}
+# Conditional markovchains
+tm_f <- matrix(c(900, 200, 300, 2000), nrow = 2, byrow=TRUE, 
+               dimnames = list(statesNames, statesNames))
+tm_f <- matrix(c(900, 200, 300, 2000), nrow = 2, byrow=TRUE, 
+               dimnames = list(statesNames, statesNames))
+
+make_markov_series(20, tm = tm_f/rowSums(tm_f))
+
+
+
+tm_list <- replicate(8, matrix(c(sample(750:900, 1),
+                    sample(400:500, 1),
+                    sample(125:175, 1),
+                    sample(1500:2200, 1)),
+                    2, 2, dimnames = list(c("Yes", "No"), 
+                    c("Yes", "No"))), simplify = FALSE) %>% lapply(function(x) x / rowSums(x))
+
+
+ses_list_MC <- list("White" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[1]])), 
+                 "Hispanic or Latino Ethnicity" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[2]])),
+                 "Black or African American" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[3]])),
+                 "Asian" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[4]])), 
+                 "Demographic Race Two or More Races" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[5]])), 
+                 "American Indian or Alaska Native" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[6]])), 
+                 "Other" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[7]])),
+                 "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[8]])))
+
+tm_grade_f <- tm_grade/rowSums(tm_grade)
+tm_grade_m <- tm_grade
+tm_grade_m[, 2] <- tm_grade_m[, 2] + 30
+tm_grade_m[, 3] <- tm_grade_m[, 3] + 5
+tm_grade_m <- tm_grade_m/rowSums(tm_grade_m)
+
+retention_list <- list("Male" = list(f = make_markov_series, 
+                                     pars = list(tm = tm_grade_m)),
+                       "Female" = list(f = make_markov_series, 
+                                       pars = list(tm_grade_f)))
+
+testDF <- left_join(stu_year[, c(1:4)], demog_master[, c(1, 2, 4)])
+
+testDF <- as.data.frame(testDF)
+testDF <- cond_prob(testDF, factor = "Race", 
+                 newvar = "frpl", prob_list = ses_list_MC)
+testDF <- cond_prob(testDF, factor = "Sex", 
+                 newvar = "grade_adv", prob_list = retention_list)
+
+testDF %>% slice_rows("ID") %>% 
+  by_slice(~ createSequenceMatrix(.x$grade_adv, possibleStates = c("-1", "0", "1"))) 
+
+
+testDF %>% group_by(Sex) %>%
+  split(.$ID) %>% select(grade_adv) %>% 
+  map(~ createSequenceMatrix(possibleStates = c("-1", "0", "1"))) %>% 
+  reduce(`+`)
+
+
+testDF %>% split(.$ID) %>% 
+  bind_rows() %>% 
+  group_by(Sex) %>%
+  summarise_each(sum)
+
+zed <- testDF %>%
+  group_by(Sex) %>% 
+  slice_rows("ID") %>% 
+  select(grade_adv, Sex) %>% 
+  by_slice(~ createSequenceMatrix(., possibleStates = c("-1", "0", "1")), .labels =TRUE) %>% 
+  bind_rows(.$.out) %>%
+  group_by(Sex) %>% 
+  reduce(`+`)
+  
+zed <- testDF %>% group_by(Sex, ID) %>% 
+  do(.out = createSequenceMatrix(.$grade_adv, possibleStates = c("-1", "0", "1"))) %>% 
+  ungroup %>%
+  group_by(Sex) %>% 
+  
+
+
+
+testDF %>% 
+  split(.$ID) %>% 
+  by_slice(~ createSequenceMatrix(.x$grade_adv, possibleStates = c("-1", "0", "1"))) %>% 
+  reduce(`+`)
+
+testDF %>%
+  slice_rows("ID") %>%
+  nest() %>% 
+  mutate(.out = map(.$data, partial(lm, mpg ~ disp)))
+
+
+# Build diagnostics to ensure things are different by group
+
+```
+
+
+```{r diagnostics, eval=FALSE}
+emp_tm <- out %>% group_by(ell_first) %>% split(.$ID) %>% 
+  map(~ createSequenceMatrix(.x$ell, possibleStates = c("Yes", "No"))) %>% 
+  reduce(`+`)
+
+emp_tm <- out %>% split(.$ID) %>% 
+  map(~ createSequenceMatrix(.x$ell, possibleStates = c("Yes", "No"))) %>% 
+  reduce(`+`)
+
+library(tidyr); library(viridis)
+stu_year %>% split(.$ID) %>% 
+  map(~ createSequenceMatrix(.x$grade_adv, possibleStates = c("-1", "0", "1"))) %>% 
+  reduce(`+`) %>% tidy() %>% 
+  gather(2:ncol(.), key = "to", value = "n") %>% 
+  rename(from = .rownames) %>% 
+  ggplot(aes(x = from, y = to, fill = n)) + geom_tile() + 
+  scale_fill_viridis(direction = -1) + geom_text(aes(label = n))
+
+
+
+ggplot(stu_year[stu_year$ID %in% unique(stu_year$ID)[1:50],], 
+       aes(x = year, y = as.numeric(factor(frpl)), 
+       group = ID)) + 
+  geom_step(stat = "identity", alpha = I(0.1)) + 
+  scale_y_discrete("FRPL", breaks = c(1, 2), labels = c("No", "Yes")) + 
+  scale_x_continuous(breaks = c(1998:2017))
+
+
+ggplot(out, aes(x = year, y = as.numeric(factor(ell)))) + 
+  geom_step(stat = "identity") + 
+  theme_bw() + 
+  scale_y_discrete(name = "State", breaks = c(1, 2), 
+                   labels = c("No", "Yes"))
+
 ```
 
 

@@ -242,6 +242,8 @@ map_CEDS <- function(local, category = NULL, CEDS = NULL){
 #' Get values of codes from the CEDS Crosswalk List
 #'
 #' @param x the data.frame character element that contains the codes
+#' @importFrom purrr map
+#' @importFrom magrittr %>%
 #'
 #' @return a list with the labels and levels properly formatted
 get_code_values <- function(x){

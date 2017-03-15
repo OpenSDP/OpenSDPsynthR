@@ -1,23 +1,50 @@
 
 # make_markov_series
-# fit_series
+
+context("Test Markov Generator")
+
+test_that("Markov Chain works", {
+  statesNames <- c("No", "Yes")
+  tm <- matrix(c(800, 10, 200, 200), nrow = 2, byrow = TRUE,
+               dimnames = list(statesNames, statesNames))
+  tm <- tm / rowSums(tm)
+  expect_equal(length(make_markov_series(10, tm = tm)), 10)
+  expect_equal(length(make_markov_series(10, tm = tm, t0 = "Yes")), 10)
+  expect_equal(length(make_markov_series(10, tm = tm, t0 = "Yes",
+                                         include.t0 = TRUE)), 11)
+  expect_equal(length(make_markov_series(10, tm = tm, t0 = "No",
+                                         include.t0 = TRUE)), 11)
+  expect_true(all(make_markov_series(10, tm = tm,
+                                     t0 = "Yes", include.t0 = TRUE) %in% statesNames))
+})
 
 
-
-test_string <- make_binary_series(1000, mean = 0.25, corr = 0)
-
-mean(test_string)
+# Test accuracy
 
 
-trans.matrix <- function(X, prob=T)
-{
-  tt <- table( c(X[,-ncol(X)]), c(X[,-1]) )
-  if(prob) tt <- tt / rowSums(tt)
-  tt
+test_fun <- function(basetm, runLength, ...){
+  zzz <- make_markov_series(runLength, tm = basetm)
+  out <- fit_series(zzz, return = "fit", ...)
+  return(all(c(all(out$lowerEndpointMatrix < basetm),
+               all(basetm < out$upperEndpointMatrix))))
 }
 
+dumbTM <- structure(c(0.5, 0.5, 0.5, 0.5), .Dim = c(2L, 2L), .Dimnames = list(
+  c("No", "Yes"), c("No", "Yes")))
 
-X <- c(1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1)
+table(
+  replicate(500, test_fun(basetm = dumbTM, runLength = 15))
+)
+
+dumbTM2 <-  matrix(c(0.7, 0.3, 0.2, 0.8), nrow = 2, byrow = TRUE,
+                        dimnames = list(statesNames, statesNames))
+
+table(
+  replicate(500, test_fun(basetm = dumbTM2, runLength = 50,
+                          possibleStates = statesNames))
+)
+
+# fit_series
 
 
 

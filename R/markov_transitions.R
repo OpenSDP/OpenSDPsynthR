@@ -59,7 +59,8 @@ make_binary_series <- function(n = 100, mean = 0.5, corr = 0){
 #'
 #' @param series a vector of 0 and 1 values
 #' @param return a character with two options, matrix returns a transition
-#' matrix, simple returns a list with two elements, mean and cor
+#' matrix, "fit" returns a \code{\link{markovchain}} object
+#' @param ... additional arguments to pass to \code{\link{markovchainFit}}
 #' @return Either a transition matrix or a list with parameters mean and cor
 #' defining the transitions in the vector
 #' @importFrom markovchain markovchainFit
@@ -68,17 +69,17 @@ make_binary_series <- function(n = 100, mean = 0.5, corr = 0){
 #' series <- make_markov_series(10, matrix(c(0.3, 0.7, 0.25, 0.75),
 #'                        nrow = 2, byrow =TRUE))
 #' fit_series(series)
-fit_series <- function(series, return = c("matrix", "fit")){
+fit_series <- function(series, return = c("matrix", "fit"), ...){
   if(missing(return)){
     return <- "matrix"
   }
   # TODO check to ensure this coerces into a true transition matrix
   # seqMat <- createSequenceMatrix(series)
-  out <- markovchainFit(series)
+  out <- markovchainFit(series,  ...)
   if(return == "matrix"){
-    out$estimate
+    return(out$estimate)
   } else if(return == "fit") {
-    out
+    return(out)
   }
 }
 

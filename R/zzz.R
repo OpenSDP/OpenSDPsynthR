@@ -27,7 +27,7 @@ m_sum <- function(l) {
 #' @return a data.frame
 #' @importFrom markovchain createSequenceMatrix
 #' @export
-#' @example
+#' @examples
 #' tidy_sequence(seq = c("Yes", "No", "No", "No", "Yes", "Yes"),
 #'              states = c("Yes", "No"))
 tidy_sequence <- function(seq, states){

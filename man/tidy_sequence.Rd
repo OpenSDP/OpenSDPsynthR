@@ -17,3 +17,7 @@ a data.frame
 \description{
 Tidy a two-state markov sequence for output
 }
+\examples{
+tidy_sequence(seq = c("Yes", "No", "No", "No", "Yes", "Yes"),
+             states = c("Yes", "No"))
+}

@@ -4,13 +4,15 @@
 \alias{fit_series}
 \title{Identify the parameters that define a series of binary outcomes}
 \usage{
-fit_series(series, return = c("matrix", "fit"))
+fit_series(series, return = c("matrix", "fit"), ...)
 }
 \arguments{
 \item{series}{a vector of 0 and 1 values}
 
 \item{return}{a character with two options, matrix returns a transition
-matrix, simple returns a list with two elements, mean and cor}
+matrix, "fit" returns a \code{\link{markovchain}} object}
+
+\item{...}{additional arguments to pass to \code{\link{markovchainFit}}}
 }
 \value{
 Either a transition matrix or a list with parameters mean and cor

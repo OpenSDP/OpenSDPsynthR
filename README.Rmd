@@ -8,7 +8,7 @@ output: github_document
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "README-",
+  fig.path = "tools/figs/README-",
   message = FALSE,
   warning = FALSE
 )
@@ -336,10 +336,61 @@ stu_year <- stu_year %>%
 table(initialELL =stu_year$ell_first, byyear = stu_year$ell)
 ```
 
+### Diagnostics
 
+How do we know it worked? We can look at the patterns of ELL enrollment that 
+are observed and see what patterns are the most common. To do this, let's compute 
+the frequency of transition states observed per student. 
+
+```{r ellDiagnostic}
+library(ggplot2)
+library(tidyr)
+plotdf <- stu_year %>% arrange(ID, year) %>% group_by(ID) %>% 
+  do(tidy_sequence(.$ell, states = c("Yes", "No")))
+
+plotdf$total <- rowSums(plotdf[, -1])
+plotdf <- plotdf %>% gather(-ID, key = "Transition", value = "Count")
+
+plotdf <- plotdf %>% group_by(ID) %>% 
+  mutate(total = sum(Count)) %>% 
+  mutate(per = Count / total) %>% filter(Transition != "total")  %>% 
+  separate(Transition, into = c("From", "To"), sep = "-")
+
+ggplot(plotdf, aes(Count)) + geom_histogram() + 
+  scale_x_continuous(breaks = c(0:11)) + 
+  facet_grid(From~To, labeller = label_both, switch = "y") + 
+  theme_bw() + 
+  labs(title = "Frequency of Transition States by Student", 
+       y = "Count", x = "Times per Student State Observed")
+
+```
 
 
 ```{r eval = FALSE, include=FALSE}
+
+ggplot(plotdf[plotdf$Transition!="total", ], 
+       aes(x = Transition, y = Count)) + 
+  geom_bar(stat = 'identity')
+
+
+plotdf <- 
+
+
+plotdf %>% group_by(From, To) %>% 
+  summarise(Count = sum(Count)) %>% 
+ggplot(aes(x = From, y = To, fill = Count)) + 
+  geom_tile() + geom_text(aes(label = Count))
+
+
+plotdf %>% group_by(From, To) %>% 
+  summarise(Count = sum(Count)) %>% 
+  ungroup %>% 
+  mutate(total = sum(Count)) %>%
+  mutate(per = Count/total) %>%
+ggplot(aes(x = From, y = To, fill = per)) + 
+  geom_tile() + geom_text(aes(label = round(per, digits = 2)))
+
+
 # Conditional markovchains
 tm_f <- matrix(c(900, 200, 300, 2000), nrow = 2, byrow=TRUE, 
                dimnames = list(statesNames, statesNames))

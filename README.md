@@ -254,7 +254,7 @@ The function that will be used is `rbinom` and it will be passed one parameter, 
 ``` r
 bl_data$fun
 #> function(x) rbinom(1, 1, x)
-#> <environment: 0x000000000cdbed78>
+#> <environment: 0x000000000dd81588>
 ```
 
 The `bl_data$data` object tells us what the value of `x` will be:
@@ -415,6 +415,34 @@ table(initialELL =stu_year$ell_first, byyear = stu_year$ell)
 #>        No  4636  560
 #>        Yes  565  239
 ```
+
+### Diagnostics
+
+How do we know it worked? We can look at the patterns of ELL enrollment that are observed and see what patterns are the most common. To do this, let's compute the frequency of transition states observed per student.
+
+``` r
+library(ggplot2)
+library(tidyr)
+plotdf <- stu_year %>% arrange(ID, year) %>% group_by(ID) %>% 
+  do(tidy_sequence(.$ell, states = c("Yes", "No")))
+
+plotdf$total <- rowSums(plotdf[, -1])
+plotdf <- plotdf %>% gather(-ID, key = "Transition", value = "Count")
+
+plotdf <- plotdf %>% group_by(ID) %>% 
+  mutate(total = sum(Count)) %>% 
+  mutate(per = Count / total) %>% filter(Transition != "total")  %>% 
+  separate(Transition, into = c("From", "To"), sep = "-")
+
+ggplot(plotdf, aes(Count)) + geom_histogram() + 
+  scale_x_continuous(breaks = c(0:11)) + 
+  facet_grid(From~To, labeller = label_both, switch = "y") + 
+  theme_bw() + 
+  labs(title = "Frequency of Transition States by Student", 
+       y = "Count", x = "Times per Student State Observed")
+```
+
+![](tools/figs/README-ellDiagnostic-1.png)
 
 Package Dependencies
 --------------------

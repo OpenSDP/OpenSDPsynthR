@@ -1,4 +1,8 @@
 
+# make_markov_series
+# fit_series
+
+
 
 test_string <- make_binary_series(1000, mean = 0.25, corr = 0)
 

@@ -36,7 +36,7 @@ library(wakefield)
 library(lubridate)
 set.seed(612)
 
-demog_master <- r_data_frame(n = 500, 
+demog_master <- r_data_frame(n = 2000, 
                              id(random = TRUE), 
                              sex, 
                              # dob, set range of years available for birth
@@ -51,14 +51,14 @@ demog_master <- r_data_frame(n = 500,
 
 head(demog_master)
 #> # A tibble: 6 × 4
-#>      ID    Sex        DOB                      Race
-#>   <chr> <fctr>     <date>                    <fctr>
-#> 1   326   Male 1999-10-18                     Asian
-#> 2   252   Male 1997-04-03                     White
-#> 3   137   Male 1997-03-27                     White
-#> 4   089   Male 1994-08-14                     White
-#> 5   081   Male 1996-01-20 Black or African American
-#> 6   246 Female 1992-11-21                     White
+#>      ID    Sex        DOB                         Race
+#>   <chr> <fctr>     <date>                       <fctr>
+#> 1  1304 Female 1999-02-15 Hispanic or Latino Ethnicity
+#> 2  1006   Male 1993-06-12 Hispanic or Latino Ethnicity
+#> 3  0546 Female 1999-04-22 Hispanic or Latino Ethnicity
+#> 4  0356 Female 1993-12-06                        White
+#> 5  0324 Female 1996-04-30                        White
+#> 6  0989   Male 1999-03-16 Hispanic or Latino Ethnicity
 ```
 
 Next, let's break the "Race" variable into a series of indicator variables.
@@ -68,19 +68,19 @@ demog_master %<>% make_inds("Race")
 demog_master %<>% mutate_at(5:11, 
                         funs(recode(., `0` = "No", `1` = "Yes")))
 head(demog_master[, 4:9])
-#>                        Race White Hispanic.or.Latino.Ethnicity
-#> 1                     Asian    No                           No
-#> 2                     White   Yes                           No
-#> 3                     White   Yes                           No
-#> 4                     White   Yes                           No
-#> 5 Black or African American    No                           No
-#> 6                     White   Yes                           No
+#>                           Race White Hispanic.or.Latino.Ethnicity
+#> 1 Hispanic or Latino Ethnicity    No                          Yes
+#> 2 Hispanic or Latino Ethnicity    No                          Yes
+#> 3 Hispanic or Latino Ethnicity    No                          Yes
+#> 4                        White   Yes                           No
+#> 5                        White   Yes                           No
+#> 6 Hispanic or Latino Ethnicity    No                          Yes
 #>   Black.or.African.American Asian American.Indian.or.Alaska.Native
-#> 1                        No   Yes                               No
+#> 1                        No    No                               No
 #> 2                        No    No                               No
 #> 3                        No    No                               No
 #> 4                        No    No                               No
-#> 5                       Yes    No                               No
+#> 5                        No    No                               No
 #> 6                        No    No                               No
 ```
 
@@ -130,20 +130,20 @@ demog_master <- cond_prob(demog_master, factor = "Race",
                  newvar = "ses", prob_list = ses_list_b)
 
 head(demog_master)
-#>    ID    Sex        DOB                      Race White
-#> 1 326   Male 1999-10-18                     Asian    No
-#> 2 252   Male 1997-04-03                     White   Yes
-#> 3 137   Male 1997-03-27                     White   Yes
-#> 4 089   Male 1994-08-14                     White   Yes
-#> 5 081   Male 1996-01-20 Black or African American    No
-#> 6 246 Female 1992-11-21                     White   Yes
+#>     ID    Sex        DOB                         Race White
+#> 1 1304 Female 1999-02-15 Hispanic or Latino Ethnicity    No
+#> 2 1006   Male 1993-06-12 Hispanic or Latino Ethnicity    No
+#> 3 0546 Female 1999-04-22 Hispanic or Latino Ethnicity    No
+#> 4 0356 Female 1993-12-06                        White   Yes
+#> 5 0324 Female 1996-04-30                        White   Yes
+#> 6 0989   Male 1999-03-16 Hispanic or Latino Ethnicity    No
 #>   Hispanic.or.Latino.Ethnicity Black.or.African.American Asian
-#> 1                           No                        No   Yes
-#> 2                           No                        No    No
-#> 3                           No                        No    No
+#> 1                          Yes                        No    No
+#> 2                          Yes                        No    No
+#> 3                          Yes                        No    No
 #> 4                           No                        No    No
-#> 5                           No                       Yes    No
-#> 6                           No                        No    No
+#> 5                           No                        No    No
+#> 6                          Yes                        No    No
 #>   American.Indian.or.Alaska.Native
 #> 1                               No
 #> 2                               No
@@ -161,9 +161,9 @@ head(demog_master)
 #>   Demographic.Race.Two.or.More.Races ses
 #> 1                                 No   0
 #> 2                                 No   0
-#> 3                                 No   0
+#> 3                                 No   1
 #> 4                                 No   0
-#> 5                                 No   1
+#> 5                                 No   0
 #> 6                                 No   1
 ```
 
@@ -191,13 +191,13 @@ stu_year$age <- age_calc(dob = stu_year$DOB,
                          units = "years", precise = TRUE)
 
 head(stu_year)
-#>    ID        DOB year      age
-#> 1 326 1999-10-18 2004 4.924059
-#> 2 326 1999-10-18 2005 5.926027
-#> 3 326 1999-10-18 2006 6.926027
-#> 4 326 1999-10-18 2007 7.926027
-#> 5 326 1999-10-18 2008 8.924059
-#> 6 326 1999-10-18 2009 9.926027
+#>     ID        DOB year       age
+#> 1 1304 1999-02-15 2004  5.595628
+#> 2 1304 1999-02-15 2005  6.597260
+#> 3 1304 1999-02-15 2006  7.597260
+#> 4 1304 1999-02-15 2007  8.597260
+#> 5 1304 1999-02-15 2008  9.595628
+#> 6 1304 1999-02-15 2009 10.597260
 ```
 
 ELL is a good example. A student's initial ELL status determines future ELL status to a high degree. To generate a student's ELL status over time, first the initial ELL status of a student needs to be set. Below, a dataframe of the first observation for each student in the dataset is created, this contains the `ID`, `year`, `age` in years, and `Race` of the student.
@@ -216,13 +216,13 @@ stu_first <- stu_year %>% group_by(ID) %>%
 stu_first <- inner_join(stu_first, demog_master[, c("ID", "Race")])
 stu_first$age <- round(stu_first$age, 0)
 head(stu_first)
-#>    ID year age                      Race
-#> 1 326 2004   5                     Asian
-#> 2 252 2002   5                     White
-#> 3 137 2002   5                     White
-#> 4 089 1999   5                     White
-#> 5 081 2001   6 Black or African American
-#> 6 246 1997   5                     White
+#>     ID year age                         Race
+#> 1 1304 2004   6 Hispanic or Latino Ethnicity
+#> 2 1006 1998   5 Hispanic or Latino Ethnicity
+#> 3 0546 2004   5 Hispanic or Latino Ethnicity
+#> 4 0356 1998   5                        White
+#> 5 0324 2001   5                        White
+#> 6 0989 2004   6 Hispanic or Latino Ethnicity
 ```
 
 To assign students to inital ELL status, we need three things:
@@ -254,7 +254,7 @@ The function that will be used is `rbinom` and it will be passed one parameter, 
 ``` r
 bl_data$fun
 #> function(x) rbinom(1, 1, x)
-#> <environment: 0x000000000dd81588>
+#> <environment: 0x000000000ea14ee0>
 ```
 
 The `bl_data$data` object tells us what the value of `x` will be:
@@ -298,15 +298,17 @@ table(stu_first$race, stu_first$Race)[, 1:4]
 #>               White Hispanic or Latino Ethnicity Black or African American
 #>   amerind         0                            0                         0
 #>   asian           0                            0                         0
-#>   black           0                            0                        68
-#>   hispanic        0                           79                         0
+#>   black           0                            0                       226
+#>   hawaiian_pi     0                            0                         0
+#>   hispanic        0                          347                         0
 #>   multiracial     0                            0                         0
-#>   white         318                            0                         0
+#>   white        1288                            0                         0
 #>              
 #>               Asian
 #>   amerind         0
-#>   asian          22
+#>   asian          94
 #>   black           0
+#>   hawaiian_pi     0
 #>   hispanic        0
 #>   multiracial     0
 #>   white           0
@@ -320,13 +322,13 @@ stu_first$ell_first <- assign_baseline(baseline = "ell", data = stu_first)
 # Recode it
 stu_first$ell_first <- ifelse(stu_first$ell_first == 1, "Yes", "No")
 head(stu_first)
-#>    ID year age                      Race  race ell_first
-#> 1 326 2004   5                     Asian asian       Yes
-#> 2 252 2002   5                     White white        No
-#> 3 137 2002   5                     White white        No
-#> 4 089 1999   5                     White white        No
-#> 5 081 2001   6 Black or African American black        No
-#> 6 246 1997   5                     White white        No
+#>     ID year age                         Race     race ell_first
+#> 1 1304 2004   6 Hispanic or Latino Ethnicity hispanic       Yes
+#> 2 1006 1998   5 Hispanic or Latino Ethnicity hispanic        No
+#> 3 0546 2004   5 Hispanic or Latino Ethnicity hispanic        No
+#> 4 0356 1998   5                        White    white        No
+#> 5 0324 2001   5                        White    white        No
+#> 6 0989 2004   6 Hispanic or Latino Ethnicity hispanic       Yes
 ```
 
 Using the initial ELL status of students it is now possible to simulate the transition from ELL to non-ELL student.
@@ -367,13 +369,13 @@ Let's look at an example. First, we combine the first observation for each stude
 ``` r
 stu_year <- left_join(stu_year, stu_first[, c(1, 6)])
 head(stu_year)
-#>    ID        DOB year      age ell_first
-#> 1 326 1999-10-18 2004 4.924059       Yes
-#> 2 326 1999-10-18 2005 5.926027       Yes
-#> 3 326 1999-10-18 2006 6.926027       Yes
-#> 4 326 1999-10-18 2007 7.926027       Yes
-#> 5 326 1999-10-18 2008 8.924059       Yes
-#> 6 326 1999-10-18 2009 9.926027       Yes
+#>     ID        DOB year       age ell_first
+#> 1 1304 1999-02-15 2004  5.595628       Yes
+#> 2 1304 1999-02-15 2005  6.597260       Yes
+#> 3 1304 1999-02-15 2006  7.597260       Yes
+#> 4 1304 1999-02-15 2007  8.597260       Yes
+#> 5 1304 1999-02-15 2008  9.595628       Yes
+#> 6 1304 1999-02-15 2009 10.597260       Yes
 ```
 
 Now we define the transition matrix. Conveniently, we can input the observed pattern and then normalize it to a transition matrix by dividing it by the `rowSums()`.
@@ -381,20 +383,20 @@ Now we define the transition matrix. Conveniently, we can input the observed pat
 ``` r
 # Define the transition matrix
 statesNames <- c("No", "Yes")
-tm <- matrix(c(800, 40, 120, 300), nrow = 2, byrow = TRUE,
+tm <- matrix(c(800, 10, 200, 200), nrow = 2, byrow = TRUE,
              dimnames = list(statesNames, statesNames))
 tm <- tm / rowSums(tm)
 tm
 #>            No        Yes
-#> No  0.9523810 0.04761905
-#> Yes 0.2857143 0.71428571
+#> No  0.9876543 0.01234568
+#> Yes 0.5000000 0.50000000
 ```
 
 Now, for each student we need to apply the transition matrix. Using the `OpenSDP.data` function `make_markov_series()`, this is simple.
 
 ``` r
 make_markov_series(10, tm = tm)
-#>  [1] "No" "No" "No" "No" "No" "No" "No" "No" "No" "No"
+#>  [1] "Yes" "No"  "No"  "No"  "No"  "No"  "No"  "No"  "No"  "No"
 ```
 
 And applying it to each student:
@@ -402,7 +404,7 @@ And applying it to each student:
 ``` r
 stu_year <- stu_year %>% 
   group_by(ID) %>% 
-  arrange(ID, year) %>%
+  arrange(ID, year) %>% 
   mutate(ell = make_markov_series(n() - 1, 
           tm = tm, #define transition matrix
           t0 = ell_first[1], # specify that the matrix should start with first obs
@@ -411,9 +413,9 @@ stu_year <- stu_year %>%
 
 table(initialELL =stu_year$ell_first, byyear = stu_year$ell)
 #>           byyear
-#> initialELL   No  Yes
-#>        No  4636  560
-#>        Yes  565  239
+#> initialELL    No   Yes
+#>        No  20568   432
+#>        Yes  2444   556
 ```
 
 ### Diagnostics
@@ -429,10 +431,23 @@ plotdf <- stu_year %>% arrange(ID, year) %>% group_by(ID) %>%
 plotdf$total <- rowSums(plotdf[, -1])
 plotdf <- plotdf %>% gather(-ID, key = "Transition", value = "Count")
 
-plotdf <- plotdf %>% group_by(ID) %>% 
+plotdf %>% group_by(Transition) %>% filter(Transition != "total") %>%
+  summarize(sum(Count))
+#> # A tibble: 4 × 2
+#>   Transition `sum(Count)`
+#>        <chr>        <dbl>
+#> 1      No-No        20802
+#> 2     No-Yes          263
+#> 3     Yes-No          460
+#> 4    Yes-Yes          475
+
+
+plotdf <- plotdf %>% filter(Transition != "total")  %>% 
+  group_by(ID) %>% 
   mutate(total = sum(Count)) %>% 
   mutate(per = Count / total) %>% filter(Transition != "total")  %>% 
-  separate(Transition, into = c("From", "To"), sep = "-")
+  separate(Transition, into = c("From", "To"), sep = "-") %>% 
+  filter(Count < 13)
 
 ggplot(plotdf, aes(Count)) + geom_histogram() + 
   scale_x_continuous(breaks = c(0:11)) + 
@@ -443,6 +458,242 @@ ggplot(plotdf, aes(Count)) + geom_histogram() +
 ```
 
 ![](tools/figs/README-ellDiagnostic-1.png)
+
+Looking at this chart we can see that most students went from the No state to a No state -- as would be expected when there are few ELLs.
+
+``` r
+# Initial
+table(stu_first$ell_first)
+#> 
+#>   No  Yes 
+#> 1750  250
+
+# Ever ELL after Markov
+plotdf %>% group_by(ID, To) %>% 
+  summarize(Count = sum(Count)) %>% filter(To == "Yes") %>% 
+  filter(Count > 0) %>% with(., table(ELL = To))
+#> ELL
+#> Yes 
+#> 363
+```
+
+Through this process we've gained students in the ELL status who were not initially ELL. Depending on our application this may not be desirable and we may want to modify the transition matrix to avoid this. Otherwise, later, this becomes an exercise in data cleaning.
+
+Two other visual diagnostics are below.
+
+``` r
+# Other plots
+
+ggplot(plotdf, aes(per)) + geom_density() + 
+  facet_grid(From ~ To, labeller = label_both, switch = "y") + 
+  theme_bw() + labs(title = "By Student Densities of Transitions")
+```
+
+![](tools/figs/README-visualdiagnostics-1.png)
+
+``` r
+
+# Heatmap
+plotdf %>% group_by(From, To) %>% 
+  summarise(Count = sum(Count)) %>% 
+  ungroup %>% 
+  mutate(total = sum(Count)) %>%
+  mutate(per = Count/total) %>%
+ggplot(aes(x = From, y = To, fill = per)) + 
+  geom_tile(color= I("black")) + 
+  geom_text(aes(label = round(per, digits = 2))) + 
+  theme_minimal() +
+  coord_cartesian()
+```
+
+![](tools/figs/README-visualdiagnostics-2.png)
+
+We can also do a comparative diagnostic. Given the relatively short length of our sequence per student, it will be hard to estimate fit from a short sequence.
+
+``` r
+# series <- stu_year$ell[stu_year$ID == "1705"]
+# series <- stu_year$ell[stu_year$ID == "0001"]
+
+test_fit <- function(series, expected){
+  if(dim(table(series)) == 1){
+    return(TRUE)
+  } else {
+  out <- fit_series(series, return = "fit", confidencelevel = 0.99, 
+                    possibleStates = rownames(expected))
+  low <- out$lowerEndpointMatrix < expected
+  hi <- out$upperEndpointMatrix > expected
+  return(all(low, hi))
+  }
+}
+
+test_res <- stu_year %>% group_by(ID) %>% 
+  summarize(fit_ok = test_fit(ell, expected = tm))
+
+table(test_res$fit_ok)
+#> 
+#> FALSE  TRUE 
+#>   364  1636
+```
+
+A better test might be to look at the summed aggregate pattern across students. This involves creating a TM per student. These will be different depending on whether a student is an initial ELL or not. This will provide a more stable estimate of how the algorithm is working.
+
+``` r
+results <- stu_year %>% group_by(ell_first) %>% 
+  do(.out = createSequenceMatrix(.$ell, possibleStates = c("Yes", "No"))) %>% 
+  ungroup %>%
+  nest(-ell_first) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+lst <- results$summed
+names(lst) <- results$ell_first
+lst 
+#> $No
+#>        No Yes
+#> No  20337 230
+#> Yes   230 202
+#> 
+#> $Yes
+#>       No Yes
+#> No  2170 273
+#> Yes  274 282
+
+test_fit_m <- function(obs, expected, tol){
+  obs <- obs / rowSums(obs)
+  test_m <- abs(obs - expected)
+  test_m < tol
+}
+
+test_fit_m(obs = lst$No, expected = tm, tol = 0.05)
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+test_fit_m(obs = lst$Yes, expected = tm, tol = 0.1)
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+```
+
+### Scaling
+
+The advantage of this approach is that by combining it with the `cond_prob()` function, we can further simulate discrete processes for students based on other characteristics. This can be done in a group.
+
+``` r
+rm(tm, test_res, results, plotdf, bl_data, i, lst, maxyear, minyear)
+
+# Need Race for this process
+stu_year <- left_join(stu_year, stu_first[, c("ID", "Race")])
+
+# Make a list of random transition matrices
+tm_list <- replicate(8, matrix(c(sample(750:900, 1),
+                    sample(400:500, 1),
+                    sample(125:175, 1),
+                    sample(1500:2200, 1)),
+                    2, 2, dimnames = list(c("Yes", "No"), 
+                    c("Yes", "No"))), simplify = FALSE) %>% 
+  lapply(function(x) x / rowSums(x))
+
+# Put them in a list expected by condprob
+ses_list_MC <- list("White" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[1]])), 
+                 "Hispanic or Latino Ethnicity" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[2]])),
+                 "Black or African American" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[3]])),
+                 "Asian" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[4]])), 
+                 "Demographic Race Two or More Races" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[5]])), 
+                 "American Indian or Alaska Native" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[6]])), 
+                 "Other" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[7]])),
+                 "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series, 
+                                pars = list(tm = tm_list[[8]])))
+
+testDF <- cond_prob(stu_year, factor = "Race", 
+                 newvar = "frpl", prob_list = ses_list_MC)
+
+
+results <- testDF %>% group_by(Race, ID) %>% 
+  do(.out = createSequenceMatrix(.$frpl, possibleStates = c("Yes", "No"))) %>% 
+  ungroup %>%
+  nest(-Race) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+lst <- results$summed
+names(lst) <- results$Race
+# lst 
+
+# 
+names(tm_list) <- names(ses_list_MC)
+tm_list <- tm_list[names(lst)]
+map2(lst, tm_list, ~ test_fit_m(obs = .x, expected = .y, tol = 0.15))
+#> $White
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+#> 
+#> $`Hispanic or Latino Ethnicity`
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+#> 
+#> $`Black or African American`
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+#> 
+#> $Asian
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+#> 
+#> $`American Indian or Alaska Native`
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+#> 
+#> $`Native Hawaiian or Other Pacific Islander`
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+#> 
+#> $`Demographic Race Two or More Races`
+#>       No  Yes
+#> No  TRUE TRUE
+#> Yes TRUE TRUE
+```
+
+Now, let's take this to scale.
+
+``` r
+# gifted
+# iep
+# grade_level
+grade_mat <- read.csv("data-raw/grade_matrix.csv")
+zzz <- as.matrix(grade_mat[, 2:15])
+dimnames(zzz) <- list(grade_mat[, 1], grade_mat[, 1])
+
+make_markov_series(10, tm = zzz, t0 = "2")
+
+gradeNames <- c("1", "0", "-1")
+tm_grade <- matrix(c(900, 50, 10, 900, 20, 10, 900, 20, 10), nrow = 3, byrow=TRUE, 
+               dimnames = list(gradeNames, gradeNames))
+testMC <- as(tm_grade/rowSums(tm_grade), "markovchain")
+
+tm_grade_f <- tm_grade/rowSums(tm_grade)
+tm_grade_m <- tm_grade
+tm_grade_m[, 2] <- tm_grade_m[, 2] + 30
+tm_grade_m[, 3] <- tm_grade_m[, 3] + 5
+tm_grade_m <- tm_grade_m/rowSums(tm_grade_m)
+
+retention_list <- list("Male" = list(f = make_markov_series, 
+                                     pars = list(tm = tm_grade_m)),
+                       "Female" = list(f = make_markov_series, 
+                                       pars = list(tm_grade_f)))
+
+testDF <- left_join(stu_year[, c(1:4)], demog_master[, c(1, 2, 4)])
+```
 
 Package Dependencies
 --------------------

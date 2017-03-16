@@ -374,7 +374,7 @@ ggplot(plotdf, aes(Count)) + geom_histogram() +
 Looking at this chart we can see that most students went from the No state to 
 a No state -- as would be expected when there are few ELLs. 
 
-```{r}
+```{r check ellStates}
 # Initial
 table(stu_first$ell_first)
 
@@ -391,7 +391,7 @@ this becomes an exercise in data cleaning.
 
 Two other visual diagnostics are below. 
 
-```{r}
+```{r visualdiagnostics}
 # Other plots
 
 ggplot(plotdf, aes(per)) + geom_density() + 
@@ -413,29 +413,83 @@ ggplot(aes(x = From, y = To, fill = per)) +
 ```
 
 
+We can also do a comparative diagnostic. Given the relatively short length of 
+our sequence per student, it will be hard to estimate fit from a short sequence. 
+
+
+```{r testbyStudent}
+# series <- stu_year$ell[stu_year$ID == "1705"]
+# series <- stu_year$ell[stu_year$ID == "0001"]
+
+test_fit <- function(series, expected){
+  if(dim(table(series)) == 1){
+    return(TRUE)
+  } else {
+  out <- fit_series(series, return = "fit", confidencelevel = 0.99, 
+                    possibleStates = rownames(expected))
+  low <- out$lowerEndpointMatrix < expected
+  hi <- out$upperEndpointMatrix > expected
+  return(all(low, hi))
+  }
+}
+
+test_res <- stu_year %>% group_by(ID) %>% 
+  summarize(fit_ok = test_fit(ell, expected = tm))
+
+table(test_res$fit_ok)
+```
+
+
+A better test might be to look at the summed aggregate pattern across students. 
+This involves creating a TM per student. These will be different depending on 
+whether a student is an initial ELL or not. This will provide a more stable 
+estimate of how the algorithm is working. 
+
+```{r aggregateTest}
+results <- stu_year %>% group_by(ell_first) %>% 
+  do(.out = createSequenceMatrix(.$ell, possibleStates = c("Yes", "No"))) %>% 
+  ungroup %>%
+  nest(-ell_first) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+lst <- results$summed
+names(lst) <- results$ell_first
+lst 
+
+test_fit_m <- function(obs, expected, tol){
+  obs <- obs / rowSums(obs)
+  test_m <- abs(obs - expected)
+  test_m < tol
+}
+
+test_fit_m(obs = lst$No, expected = tm, tol = 0.05)
+test_fit_m(obs = lst$Yes, expected = tm, tol = 0.1)
+```
+
+
 ### Scaling
 
 The advantage of this approach is that by combining it with the `cond_prob()` 
 function, we can further simulate discrete processes for students based on 
-other characteristics. 
+other characteristics. This can be done in a group. 
 
 
-```{r eval=FALSE}
+```{r eval=TRUE}
+rm(tm, test_res, results, plotdf, bl_data, i, lst, maxyear, minyear)
 
-# Conditional markovchains
-tm_f <- matrix(c(900, 200, 300, 2000), nrow = 2, byrow=TRUE, 
-               dimnames = list(statesNames, statesNames))
+# Need Race for this process
+stu_year <- left_join(stu_year, stu_first[, c("ID", "Race")])
 
-make_markov_series(20, tm = tm_f/rowSums(tm_f))
-
+# Make a list of random transition matrices
 tm_list <- replicate(8, matrix(c(sample(750:900, 1),
                     sample(400:500, 1),
                     sample(125:175, 1),
                     sample(1500:2200, 1)),
                     2, 2, dimnames = list(c("Yes", "No"), 
-                    c("Yes", "No"))), simplify = FALSE) %>% lapply(function(x) x / rowSums(x))
+                    c("Yes", "No"))), simplify = FALSE) %>% 
+  lapply(function(x) x / rowSums(x))
 
-
+# Put them in a list expected by condprob
 ses_list_MC <- list("White" = list(f = make_markov_series, 
                                 pars = list(tm = tm_list[[1]])), 
                  "Hispanic or Latino Ethnicity" = list(f = make_markov_series, 
@@ -453,7 +507,38 @@ ses_list_MC <- list("White" = list(f = make_markov_series,
                  "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series, 
                                 pars = list(tm = tm_list[[8]])))
 
+testDF <- cond_prob(stu_year, factor = "Race", 
+                 newvar = "frpl", prob_list = ses_list_MC)
+
+
+results <- testDF %>% group_by(Race, ID) %>% 
+  do(.out = createSequenceMatrix(.$frpl, possibleStates = c("Yes", "No"))) %>% 
+  ungroup %>%
+  nest(-Race) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+lst <- results$summed
+names(lst) <- results$Race
+# lst 
+
+# 
+names(tm_list) <- names(ses_list_MC)
+tm_list <- tm_list[names(lst)]
+map2(lst, tm_list, ~ test_fit_m(obs = .x, expected = .y, tol = 0.15))
+```
+
+Now, let's take this to scale. 
+
+```{r eval=FALSE}
+# gifted
+# iep
 # grade_level
+grade_mat <- read.csv("data-raw/grade_matrix.csv")
+zzz <- as.matrix(grade_mat[, 2:15])
+dimnames(zzz) <- list(grade_mat[, 1], grade_mat[, 1])
+
+make_markov_series(10, tm = zzz, t0 = "2")
+
 gradeNames <- c("1", "0", "-1")
 tm_grade <- matrix(c(900, 50, 10, 900, 20, 10, 900, 20, 10), nrow = 3, byrow=TRUE, 
                dimnames = list(gradeNames, gradeNames))
@@ -472,87 +557,8 @@ retention_list <- list("Male" = list(f = make_markov_series,
 
 testDF <- left_join(stu_year[, c(1:4)], demog_master[, c(1, 2, 4)])
 
-testDF <- as.data.frame(testDF)
-testDF <- cond_prob(testDF, factor = "Race", 
-                 newvar = "frpl", prob_list = ses_list_MC)
-testDF <- cond_prob(testDF, factor = "Sex", 
-                 newvar = "grade_adv", prob_list = retention_list)
-
-results <- testDF %>% group_by(Sex, ID) %>% 
-  do(.out = createSequenceMatrix(.$grade_adv, possibleStates = c("-1", "0", "1"))) %>% 
-  ungroup %>%
-  nest(-Sex) %>%
-  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
-
-lst <- results$summed
-names(lst) <- results$Sex
-lst 
-
-# 
-zed <- results %>%
-  select(-data) %>%
-  spread(Sex, summed) %>% 
-  at_depth(zed, 2, .f = function (x) x / rowSums(x))
-
-
-
-### 
-zed %>% map("m_sum")
-zed %>% detect("m_sum")
-
-# sum matrices in list column by grouping variable
-library(tidyverse)
-
-m <- matrix(1:4, ncol = 2)
-d <- data_frame(g = c('a', 'a', 'b', 'b', 'b', 'c'),
-                m = rep(list(m), 6))
-
-
-
-group_by(d, g) %>%
-  summarise(m_sum = m_sum(m)) %>%
-  select(m_sum) %>%
-  unlist(recursive = FALSE)
-
-
-
-testDF %>% group_by(Sex) %>%
-  split(.$ID) %>% select(grade_adv) %>% 
-  map(~ createSequenceMatrix(possibleStates = c("-1", "0", "1"))) %>% 
-  reduce(`+`)
-
-
-testDF %>% split(.$ID) %>% 
-  bind_rows() %>% 
-  group_by(Sex) %>%
-  summarise_each(sum)
-
-zed <- testDF %>%
-  group_by(Sex, ID) %>% 
-  group_by(ID) %>%
-  by_slice(~ createSequenceMatrix(., possibleStates = c("-1", "0", "1")), .labels =TRUE) %>% 
-  group_by(Sex) %>% 
-  reduce(`+`)
-  
- %>% 
-  
-
-
-
-testDF %>% 
-  split(.$ID) %>% 
-  by_slice(~ createSequenceMatrix(.x$grade_adv, possibleStates = c("-1", "0", "1"))) %>% 
-  reduce(`+`)
-
-testDF %>%
-  slice_rows("ID") %>%
-  nest() %>% 
-  mutate(.out = map(.$data, partial(lm, mpg ~ disp)))
-
-
-# Build diagnostics to ensure things are different by group
-
 ```
+
 
 
 ```{r diagnostics, eval=FALSE, include=FALSE}

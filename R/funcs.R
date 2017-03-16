@@ -49,6 +49,10 @@ expand_grid_df <- function(...){
 #' @return data.frame with \code{newvar} appended to dataframe
 #' @export
 cond_prob <- function(data, factor, newvar, prob_list){
+  # Work around tbls
+  if(any(class(data) != "data.frame")){
+    data <- as.data.frame(data)
+  }
   if(!factor %in% names(data)){
     stop("Factor not found in data. Did you forget to create it?")
   }

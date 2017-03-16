@@ -21,6 +21,7 @@ test_that("Markov Chain works", {
 
 # Test accuracy
 
+set.seed(458397)
 
 test_fun <- function(basetm, runLength, ...){
   zzz <- make_markov_series(runLength, tm = basetm)
@@ -29,24 +30,37 @@ test_fun <- function(basetm, runLength, ...){
                all(basetm < out$upperEndpointMatrix))))
 }
 
-dumbTM <- structure(c(0.5, 0.5, 0.5, 0.5), .Dim = c(2L, 2L), .Dimnames = list(
-  c("No", "Yes"), c("No", "Yes")))
+test_that("Markov series are correct", {
+  dumbTM <- structure(c(0.5, 0.5, 0.5, 0.5), .Dim = c(2L, 2L), .Dimnames = list(
+    c("No", "Yes"), c("No", "Yes")))
+  zzz <- replicate(500, test_fun(basetm = dumbTM, runLength = 75))
+  per_true <- length(zzz[zzz == TRUE]) / length(zzz)
+  expect_true(0.87 < per_true)
+  expect_true(0.92 > per_true)
+  statesNames <- c("No", "Yes")
+  dumbTM2 <-  matrix(c(0.5, 0.5, 0.5, 0.5), nrow = 2, byrow = TRUE,
+                     dimnames = list(statesNames, statesNames))
+  zzy <-  replicate(500, test_fun(basetm = dumbTM2, runLength = 10,
+                        possibleStates = statesNames))
+  per_true2 <- length(zzy[zzy == TRUE]) / length(zzy)
+  expect_true(per_true2 < per_true)
+})
 
-table(
-  replicate(500, test_fun(basetm = dumbTM, runLength = 15))
-)
-
-dumbTM2 <-  matrix(c(0.7, 0.3, 0.2, 0.8), nrow = 2, byrow = TRUE,
-                        dimnames = list(statesNames, statesNames))
-
-table(
-  replicate(500, test_fun(basetm = dumbTM2, runLength = 50,
-                          possibleStates = statesNames))
-)
+test_that("fit series respects user input", {
+  dumbTM <- structure(c(0.5, 0.5, 0.5, 0.5), .Dim = c(2L, 2L), .Dimnames = list(
+    c("No", "Yes"), c("No", "Yes")))
+  zzz <- make_markov_series(20, tm = dumbTM)
+  out <- fit_series(zzz, return = "fit")
+  expect_is(out$estimate, "markovchain")
+  expect_is(out, "list")
+  expect_equal(out$confidenceLevel, 0.95)
+  out <- fit_series(zzz, return = "fit", confidencelevel = 0.9)
+  expect_equal(out$confidenceLevel, 0.9)
+  out <- fit_series(zzz, return = "matrix")
+  expect_is(out, "markovchain")
+})
 
 # fit_series
-
-
 
 # outList <- replicate(25, createAutocorBinSeries(n=10,mean=0.4,corr=0.8),
 #                      simplify = "array")

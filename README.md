@@ -254,7 +254,7 @@ The function that will be used is `rbinom` and it will be passed one parameter, 
 ``` r
 bl_data$fun
 #> function(x) rbinom(1, 1, x)
-#> <environment: 0x000000000e95dbf0>
+#> <environment: 0x0000000011df9080>
 ```
 
 The `bl_data$data` object tells us what the value of `x` will be:
@@ -702,6 +702,196 @@ results <- stu_year %>% group_by(Sex) %>%
 ## Turn this into a list for easier manipulation
 lst <- results$summed
 names(lst) <- results$Sex
+```
+
+Now let's add grades:
+
+``` r
+# grade_mat <- read.csv("data-raw/grade_matrix.csv")
+# zzz <- as.matrix(grade_mat[, 2:15])
+# dimnames(zzz) <- list(grade_mat[, 1], grade_mat[, 1])
+# 
+# make_markov_series(10, tm = zzz, t0 = "2")
+
+gradeNames <- c("2", "1", "0", "-1")
+tm_grade <- matrix(c(0, 800, 20, 2, 
+                     10, 1200, 20, 2, 
+                     12, 1200, 16, 0, 
+                     20, 1200, 2, 1), nrow = 4, byrow=TRUE, 
+               dimnames = list(gradeNames, gradeNames))
+testMC <- as(tm_grade/rowSums(tm_grade), "markovchain")
+
+tm_grade_f <- tm_grade/rowSums(tm_grade)
+tm_grade_m <- tm_grade
+tm_grade_m[, 2] <- tm_grade_m[, 2] + 30
+tm_grade_m[, 3] <- tm_grade_m[, 3] + 5
+tm_grade_m <- tm_grade_m/rowSums(tm_grade_m)
+
+# make_markov_series(100, tm = tm_grade_m, t0 = "-1")
+
+
+grade_list <- list("Male" = list(f = make_markov_series, 
+                                     pars = list(tm = tm_grade_m)),
+                       "Female" = list(f = make_markov_series, 
+                                       pars = list(tm = tm_grade_f)))
+
+
+stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>% 
+  mutate(grade_adv = markov_cond_list(Sex[1], n = n(), grade_list))
+
+
+results <- stu_year %>% group_by(Sex) %>% 
+  do(.out = createSequenceMatrix(.$grade_adv, possibleStates = c("-1", "0", "1", "2"))) %>% 
+  ungroup %>%
+  nest(-Sex) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+## Turn this into a list for easier manipulation
+lst <- results$summed
+names(lst) <- results$Sex
+lst
+#> $Male
+#>    -1   0     1  2
+#> -1  3   1    10  0
+#> 0   0  27   241  6
+#> 1  11 243 11633 79
+#> 2   0   3    82  8
+#> 
+#> $Female
+#>    -1   0     1  2
+#> -1  0   0    22  0
+#> 0   0  23   170  3
+#> 1  22 171 11124 70
+#> 2   0   2    71  9
+```
+
+Cleanup workspace and data
+
+``` r
+rm(tm_gifted_f, tm_gifted_m, tm_grade, tm_grade_f, tm_grade_m, results, 
+   tm_iep_f, tm_iep_m, grade_mat, gifted_list, grade_list, gradeNames, ses_list, 
+   ses_list_b, ses_list_MC, statesNames, testMC, tm_list, lst, iep_list, zzz)
+
+stu_year$ell_first <- NULL
+
+# Look at by year patterns of relationships by student year
+table(FRL = stu_year$frpl, GIFTED = stu_year$gifted)
+#>      GIFTED
+#> FRL      No   Yes
+#>   No   9592  1068
+#>   Yes 12088  1288
+table(FRL = stu_year$frpl, IEP = stu_year$iep)
+#>      IEP
+#> FRL     No  Yes
+#>   No  5541 5119
+#>   Yes 6867 6509
+table(FRL = stu_year$gifted, IEP = stu_year$iep)
+#>      IEP
+#> FRL      No   Yes
+#>   No  11215 10465
+#>   Yes  1193  1163
+
+gamma_GK(stu_year$gifted, stu_year$iep)
+#> $gamma
+#> [1] 0.02187028
+#> 
+#> $se
+#> [1] 0.03067754
+#> 
+#> $z
+#> [1] 0.7129085
+#> 
+#> $sig
+#> [1] 0.4759024
+gamma_GK(stu_year$frpl, stu_year$iep)
+#> $gamma
+#> [1] 0.01283649
+#> 
+#> $se
+#> [1] 0.01836956
+#> 
+#> $z
+#> [1] 0.6987913
+#> 
+#> $sig
+#> [1] 0.4846825
+gamma_GK(stu_year$frpl, stu_year$ell)
+#> $gamma
+#> [1] -0.01766328
+#> 
+#> $se
+#> [1] 0.04553668
+#> 
+#> $z
+#> [1] -0.3878913
+#> 
+#> $sig
+#> [1] 0.6980965
+
+gamma_GK(stu_year$Race, stu_year$ell)
+#> $gamma
+#> [1] 0.4075967
+#> 
+#> $se
+#> [1] 0.03499079
+#> 
+#> $z
+#> [1] 11.64869
+#> 
+#> $sig
+#> [1] 0
+gamma_GK(stu_year$Sex, stu_year$iep)
+#> $gamma
+#> [1] -0.1246833
+#> 
+#> $se
+#> [1] 0.01808344
+#> 
+#> $z
+#> [1] -6.894889
+#> 
+#> $sig
+#> [1] 5.390577e-12
+gamma_GK(stu_year$Sex, stu_year$gifted)
+#> $gamma
+#> [1] -0.1090771
+#> 
+#> $se
+#> [1] 0.03052729
+#> 
+#> $z
+#> [1] -3.573101
+#> 
+#> $sig
+#> [1] 0.0003527789
+```
+
+Collapse down
+
+``` r
+
+test_df <- stu_year %>% group_by(ID) %>% 
+  summarize(iep_ever = if_else(any(iep == "Yes"), "Yes", "No"), 
+            ell_ever = if_else(any(ell == "Yes"), "Yes", "No"), 
+            frpl_ever = if_else(any(frpl == "Yes"), "Yes", "No"), 
+            gifted_ever = if_else(any(gifted == "Yes"), "Yes", "No"))
+
+table(IEP_EVER = test_df$iep_ever)
+#> IEP_EVER
+#>   No  Yes 
+#>  150 1850
+table(ELL_EVER = test_df$ell_ever)
+#> ELL_EVER
+#>   No  Yes 
+#> 1504  496
+table(FRPL_EVER = test_df$frpl_ever)
+#> FRPL_EVER
+#>   No  Yes 
+#>   88 1912
+table(GIFTED_EVER = test_df$gifted_ever)
+#> GIFTED_EVER
+#>   No  Yes 
+#> 1791  209
 ```
 
 Package Dependencies

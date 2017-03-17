@@ -474,7 +474,7 @@ function, we can further simulate discrete processes for students based on
 other characteristics. This can be done in a group. 
 
 
-```{r eval=TRUE}
+```{r randomFRPL}
 rm(tm, test_res, results, plotdf, bl_data, i, lst, maxyear, minyear)
 
 # Need Race for this process
@@ -590,17 +590,20 @@ names(lst) <- results$Sex
 
 ```
 
+Now let's add grades:
 
+```{r gradeadvanace}
+# grade_mat <- read.csv("data-raw/grade_matrix.csv")
+# zzz <- as.matrix(grade_mat[, 2:15])
+# dimnames(zzz) <- list(grade_mat[, 1], grade_mat[, 1])
+# 
+# make_markov_series(10, tm = zzz, t0 = "2")
 
-```{r diagnostics, eval=FALSE, include=FALSE}
-grade_mat <- read.csv("data-raw/grade_matrix.csv")
-zzz <- as.matrix(grade_mat[, 2:15])
-dimnames(zzz) <- list(grade_mat[, 1], grade_mat[, 1])
-
-make_markov_series(10, tm = zzz, t0 = "2")
-
-gradeNames <- c("1", "0", "-1")
-tm_grade <- matrix(c(900, 50, 10, 900, 20, 10, 900, 20, 10), nrow = 3, byrow=TRUE, 
+gradeNames <- c("2", "1", "0", "-1")
+tm_grade <- matrix(c(0, 800, 20, 2, 
+                     10, 1200, 20, 2, 
+                     12, 1200, 16, 0, 
+                     20, 1200, 2, 1), nrow = 4, byrow=TRUE, 
                dimnames = list(gradeNames, gradeNames))
 testMC <- as(tm_grade/rowSums(tm_grade), "markovchain")
 
@@ -610,41 +613,73 @@ tm_grade_m[, 2] <- tm_grade_m[, 2] + 30
 tm_grade_m[, 3] <- tm_grade_m[, 3] + 5
 tm_grade_m <- tm_grade_m/rowSums(tm_grade_m)
 
-
-emp_tm <- out %>% group_by(ell_first) %>% split(.$ID) %>% 
-  map(~ createSequenceMatrix(.x$ell, possibleStates = c("Yes", "No"))) %>% 
-  reduce(`+`)
-
-emp_tm <- out %>% split(.$ID) %>% 
-  map(~ createSequenceMatrix(.x$ell, possibleStates = c("Yes", "No"))) %>% 
-  reduce(`+`)
-
-library(tidyr); library(viridis)
-stu_year %>% split(.$ID) %>% 
-  map(~ createSequenceMatrix(.x$grade_adv, possibleStates = c("-1", "0", "1"))) %>% 
-  reduce(`+`) %>% tidy() %>% 
-  gather(2:ncol(.), key = "to", value = "n") %>% 
-  rename(from = .rownames) %>% 
-  ggplot(aes(x = from, y = to, fill = n)) + geom_tile() + 
-  scale_fill_viridis(direction = -1) + geom_text(aes(label = n))
+# make_markov_series(100, tm = tm_grade_m, t0 = "-1")
 
 
-
-ggplot(stu_year[stu_year$ID %in% unique(stu_year$ID)[1:50],], 
-       aes(x = year, y = as.numeric(factor(frpl)), 
-       group = ID)) + 
-  geom_step(stat = "identity", alpha = I(0.1)) + 
-  scale_y_discrete("FRPL", breaks = c(1, 2), labels = c("No", "Yes")) + 
-  scale_x_continuous(breaks = c(1998:2017))
+grade_list <- list("Male" = list(f = make_markov_series, 
+                                     pars = list(tm = tm_grade_m)),
+                       "Female" = list(f = make_markov_series, 
+                                       pars = list(tm = tm_grade_f)))
 
 
-ggplot(out, aes(x = year, y = as.numeric(factor(ell)))) + 
-  geom_step(stat = "identity") + 
-  theme_bw() + 
-  scale_y_discrete(name = "State", breaks = c(1, 2), 
-                   labels = c("No", "Yes"))
+stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>% 
+  mutate(grade_adv = markov_cond_list(Sex[1], n = n(), grade_list))
+
+
+results <- stu_year %>% group_by(Sex) %>% 
+  do(.out = createSequenceMatrix(.$grade_adv, possibleStates = c("-1", "0", "1", "2"))) %>% 
+  ungroup %>%
+  nest(-Sex) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+## Turn this into a list for easier manipulation
+lst <- results$summed
+names(lst) <- results$Sex
+lst
+```
+
+
+Cleanup workspace and data
+
+```{r cleanupdata}
+rm(tm_gifted_f, tm_gifted_m, tm_grade, tm_grade_f, tm_grade_m, results, 
+   tm_iep_f, tm_iep_m, grade_mat, gifted_list, grade_list, gradeNames, ses_list, 
+   ses_list_b, ses_list_MC, statesNames, testMC, tm_list, lst, iep_list, zzz)
+
+stu_year$ell_first <- NULL
+
+# Look at by year patterns of relationships by student year
+table(FRL = stu_year$frpl, GIFTED = stu_year$gifted)
+table(FRL = stu_year$frpl, IEP = stu_year$iep)
+table(FRL = stu_year$gifted, IEP = stu_year$iep)
+
+gamma_GK(stu_year$gifted, stu_year$iep)
+gamma_GK(stu_year$frpl, stu_year$iep)
+gamma_GK(stu_year$frpl, stu_year$ell)
+
+gamma_GK(stu_year$Race, stu_year$ell)
+gamma_GK(stu_year$Sex, stu_year$iep)
+gamma_GK(stu_year$Sex, stu_year$gifted)
 
 ```
+
+Collapse down
+
+```{r collapseEver}
+
+test_df <- stu_year %>% group_by(ID) %>% 
+  summarize(iep_ever = if_else(any(iep == "Yes"), "Yes", "No"), 
+            ell_ever = if_else(any(ell == "Yes"), "Yes", "No"), 
+            frpl_ever = if_else(any(frpl == "Yes"), "Yes", "No"), 
+            gifted_ever = if_else(any(gifted == "Yes"), "Yes", "No"))
+
+table(IEP_EVER = test_df$iep_ever)
+table(ELL_EVER = test_df$ell_ever)
+table(FRPL_EVER = test_df$frpl_ever)
+table(GIFTED_EVER = test_df$gifted_ever)
+
+```
+
 
 
 ## Package Dependencies

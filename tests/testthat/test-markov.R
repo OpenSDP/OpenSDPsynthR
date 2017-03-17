@@ -7,6 +7,8 @@ test_that("Markov Chain works", {
   statesNames <- c("No", "Yes")
   tm <- matrix(c(800, 10, 200, 200), nrow = 2, byrow = TRUE,
                dimnames = list(statesNames, statesNames))
+  expect_warning(make_markov_series(10, tm = tm))
+  expect_error(make_markov_series(0, tm = tm))
   tm <- tm / rowSums(tm)
   expect_equal(length(make_markov_series(10, tm = tm)), 10)
   expect_equal(length(make_markov_series(10, tm = tm, t0 = "Yes")), 10)

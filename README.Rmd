@@ -507,32 +507,92 @@ ses_list_MC <- list("White" = list(f = make_markov_series,
                  "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series, 
                                 pars = list(tm = tm_list[[8]])))
 
-testDF <- cond_prob(stu_year, factor = "Race", 
+stu_year <- cond_prob(stu_year, factor = "Race", 
                  newvar = "frpl", prob_list = ses_list_MC)
 
-
-results <- testDF %>% group_by(Race, ID) %>% 
+## Create the matrix by student by race, 
+## Sum the student matrices within each race so that there is 1 matrix 
+## per category
+results <- stu_year %>% group_by(Race, ID) %>% 
   do(.out = createSequenceMatrix(.$frpl, possibleStates = c("Yes", "No"))) %>% 
   ungroup %>%
   nest(-Race) %>%
   mutate(summed = map(data, ~ reduce(.$.out, `+`)))
 
+## Turn this into a list for easier manipulation
 lst <- results$summed
 names(lst) <- results$Race
 # lst 
 
-# 
+# create a list that you can use to compare the observed matrix to
 names(tm_list) <- names(ses_list_MC)
 tm_list <- tm_list[names(lst)]
-map2(lst, tm_list, ~ test_fit_m(obs = .x, expected = .y, tol = 0.15))
+# Run the test_fit_m function over both lists simultaneously
+map2(lst, tm_list, ~ test_fit_m(obs = .x, expected = .y, tol = 0.15)) %>% 
+  map_lgl(all)
 ```
 
-Now, let's take this to scale. 
+Now, let's take this to scale. We can make a by-variable list that specifies 
+the way to generate status sequences. The list is structured as: 
 
-```{r eval=FALSE}
+- Group category (e.g. "Male")
+  - `f` = function to be called, unquoted
+  - `pars` = list of parameters to pass to `f`
+    - For `markovchain` these parameters are:
+       - `tm` = transition matrix to use, in probability format
+       - `t0` = probability of being in initial state, wrap in `quote` so probability 
+      sample is repeated for each time the function is called (per group or perID)
+
+```{r iepngifted}
+stu_year <- left_join(stu_year, demog_master[, c("ID", "Sex")])
 # gifted
-# iep
-# grade_level
+tm_gifted_f <- matrix(c(500, 1, 2, 500), nrow = 2, byrow = TRUE, 
+                      dimnames = list(c("Yes", "No"), c("Yes", "No")))
+tm_gifted_m <- tm_gifted_f
+# Make the TM different for boys, boys less likely to transition out of gifted status
+tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
+
+# Set initial condition as 10% gifted / 90% not for boys, 8%/88% for girls
+gifted_list <- list("Male" = list(f = make_markov_series, 
+                                   pars = list(tm = tm_gifted_m/ rowSums(tm_gifted_m), 
+                                    # Use quote so for each call in the loop sample is redrawn
+                                         t0 = quote(sample(c("Yes", "No"), 1, prob = c(10, 90))))),
+                       "Female" = list(f = make_markov_series, 
+                                     pars = list(tm_gifted_f / rowSums(tm_gifted_f), 
+                                        t0 = quote(sample(c("Yes", "No"), 1, prob = c(8, 92))))))
+# IEP
+tm_iep_f <- matrix(c(250, 50, 150, 900), nrow = 2, byrow = TRUE, 
+                      dimnames = list(c("Yes", "No"), c("Yes", "No")))
+tm_iep_m <- tm_iep_f
+tm_iep_m[, 1] <- tm_iep_m[, 1] + 50
+
+iep_list <- list("Male" = list(f = make_markov_series, 
+                                     pars = list(tm = tm_iep_m / rowSums(tm_iep_m), 
+                                       t0 = quote(sample(c("Yes", "No"), 1, prob = c(20, 80))))),
+                       "Female" = list(f = make_markov_series, 
+                                       pars = list(tm_iep_f / rowSums(tm_iep_f)), 
+                                       t0 = quote(sample(c("Yes", "No"), 1, prob = c(16, 84)))))
+
+
+stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>% 
+  mutate(iep = markov_cond_list(Sex[1], n = n(), iep_list),
+          gifted = markov_cond_list(Sex[1], n = n(), gifted_list))
+
+results <- stu_year %>% group_by(Sex) %>% 
+  do(.out = createSequenceMatrix(.$gifted, possibleStates = c("Yes", "No"))) %>% 
+  ungroup %>%
+  nest(-Sex) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+## Turn this into a list for easier manipulation
+lst <- results$summed
+names(lst) <- results$Sex
+
+```
+
+
+
+```{r diagnostics, eval=FALSE, include=FALSE}
 grade_mat <- read.csv("data-raw/grade_matrix.csv")
 zzz <- as.matrix(grade_mat[, 2:15])
 dimnames(zzz) <- list(grade_mat[, 1], grade_mat[, 1])
@@ -550,18 +610,7 @@ tm_grade_m[, 2] <- tm_grade_m[, 2] + 30
 tm_grade_m[, 3] <- tm_grade_m[, 3] + 5
 tm_grade_m <- tm_grade_m/rowSums(tm_grade_m)
 
-retention_list <- list("Male" = list(f = make_markov_series, 
-                                     pars = list(tm = tm_grade_m)),
-                       "Female" = list(f = make_markov_series, 
-                                       pars = list(tm_grade_f)))
 
-testDF <- left_join(stu_year[, c(1:4)], demog_master[, c(1, 2, 4)])
-
-```
-
-
-
-```{r diagnostics, eval=FALSE, include=FALSE}
 emp_tm <- out %>% group_by(ell_first) %>% split(.$ID) %>% 
   map(~ createSequenceMatrix(.x$ell, possibleStates = c("Yes", "No"))) %>% 
   reduce(`+`)

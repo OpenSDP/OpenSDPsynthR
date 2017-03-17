@@ -24,6 +24,10 @@
 make_markov_series <- function(n, tm, ...){
   stopifnot(is.matrix(tm))
   stopifnot(n > 0)
+  if(any(tm > 1)){
+    warning("TM elements exceed 1, adjusting by dividing by rowSums")
+    tm <- tm / rowSums(tm)
+  }
   mc <- new("markovchain", transitionMatrix = tm)
   series <- markovchainSequence(n, mc, ...)
   return(series)

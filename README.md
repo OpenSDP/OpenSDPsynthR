@@ -53,12 +53,12 @@ head(demog_master)
 #> # A tibble: 6 × 4
 #>      ID    Sex        DOB                         Race
 #>   <chr> <fctr>     <date>                       <fctr>
-#> 1  1304 Female 1999-02-15 Hispanic or Latino Ethnicity
-#> 2  1006   Male 1993-06-12 Hispanic or Latino Ethnicity
-#> 3  0546 Female 1999-04-22 Hispanic or Latino Ethnicity
-#> 4  0356 Female 1993-12-06                        White
-#> 5  0324 Female 1996-04-30                        White
-#> 6  0989   Male 1999-03-16 Hispanic or Latino Ethnicity
+#> 1  1304 Female 1999-02-16 Hispanic or Latino Ethnicity
+#> 2  1006   Male 1993-06-13 Hispanic or Latino Ethnicity
+#> 3  0546 Female 1999-04-23 Hispanic or Latino Ethnicity
+#> 4  0356 Female 1993-12-07                        White
+#> 5  0324 Female 1996-05-01                        White
+#> 6  0989   Male 1999-03-17 Hispanic or Latino Ethnicity
 ```
 
 Next, let's break the "Race" variable into a series of indicator variables.
@@ -131,12 +131,12 @@ demog_master <- cond_prob(demog_master, factor = "Race",
 
 head(demog_master)
 #>     ID    Sex        DOB                         Race White
-#> 1 1304 Female 1999-02-15 Hispanic or Latino Ethnicity    No
-#> 2 1006   Male 1993-06-12 Hispanic or Latino Ethnicity    No
-#> 3 0546 Female 1999-04-22 Hispanic or Latino Ethnicity    No
-#> 4 0356 Female 1993-12-06                        White   Yes
-#> 5 0324 Female 1996-04-30                        White   Yes
-#> 6 0989   Male 1999-03-16 Hispanic or Latino Ethnicity    No
+#> 1 1304 Female 1999-02-16 Hispanic or Latino Ethnicity    No
+#> 2 1006   Male 1993-06-13 Hispanic or Latino Ethnicity    No
+#> 3 0546 Female 1999-04-23 Hispanic or Latino Ethnicity    No
+#> 4 0356 Female 1993-12-07                        White   Yes
+#> 5 0324 Female 1996-05-01                        White   Yes
+#> 6 0989   Male 1999-03-17 Hispanic or Latino Ethnicity    No
 #>   Hispanic.or.Latino.Ethnicity Black.or.African.American Asian
 #> 1                          Yes                        No    No
 #> 2                          Yes                        No    No
@@ -192,12 +192,12 @@ stu_year$age <- age_calc(dob = stu_year$DOB,
 
 head(stu_year)
 #>     ID        DOB year       age
-#> 1 1304 1999-02-15 2004  5.595628
-#> 2 1304 1999-02-15 2005  6.597260
-#> 3 1304 1999-02-15 2006  7.597260
-#> 4 1304 1999-02-15 2007  8.597260
-#> 5 1304 1999-02-15 2008  9.595628
-#> 6 1304 1999-02-15 2009 10.597260
+#> 1 1304 1999-02-16 2004  5.592896
+#> 2 1304 1999-02-16 2005  6.594521
+#> 3 1304 1999-02-16 2006  7.594521
+#> 4 1304 1999-02-16 2007  8.594521
+#> 5 1304 1999-02-16 2008  9.592896
+#> 6 1304 1999-02-16 2009 10.594521
 ```
 
 ELL is a good example. A student's initial ELL status determines future ELL status to a high degree. To generate a student's ELL status over time, first the initial ELL status of a student needs to be set. Below, a dataframe of the first observation for each student in the dataset is created, this contains the `ID`, `year`, `age` in years, and `Race` of the student.
@@ -254,7 +254,7 @@ The function that will be used is `rbinom` and it will be passed one parameter, 
 ``` r
 bl_data$fun
 #> function(x) rbinom(1, 1, x)
-#> <environment: 0x000000000ea14ee0>
+#> <environment: 0x000000000e95dbf0>
 ```
 
 The `bl_data$data` object tells us what the value of `x` will be:
@@ -302,7 +302,7 @@ table(stu_first$race, stu_first$Race)[, 1:4]
 #>   hawaiian_pi     0                            0                         0
 #>   hispanic        0                          347                         0
 #>   multiracial     0                            0                         0
-#>   white        1288                            0                         0
+#>   white        1289                            0                         0
 #>              
 #>               Asian
 #>   amerind         0
@@ -370,12 +370,12 @@ Let's look at an example. First, we combine the first observation for each stude
 stu_year <- left_join(stu_year, stu_first[, c(1, 6)])
 head(stu_year)
 #>     ID        DOB year       age ell_first
-#> 1 1304 1999-02-15 2004  5.595628       Yes
-#> 2 1304 1999-02-15 2005  6.597260       Yes
-#> 3 1304 1999-02-15 2006  7.597260       Yes
-#> 4 1304 1999-02-15 2007  8.597260       Yes
-#> 5 1304 1999-02-15 2008  9.595628       Yes
-#> 6 1304 1999-02-15 2009 10.597260       Yes
+#> 1 1304 1999-02-16 2004  5.592896       Yes
+#> 2 1304 1999-02-16 2005  6.594521       Yes
+#> 3 1304 1999-02-16 2006  7.594521       Yes
+#> 4 1304 1999-02-16 2007  8.594521       Yes
+#> 5 1304 1999-02-16 2008  9.592896       Yes
+#> 6 1304 1999-02-16 2009 10.594521       Yes
 ```
 
 Now we define the transition matrix. Conveniently, we can input the observed pattern and then normalize it to a transition matrix by dividing it by the `rowSums()`.
@@ -396,7 +396,7 @@ Now, for each student we need to apply the transition matrix. Using the `OpenSDP
 
 ``` r
 make_markov_series(10, tm = tm)
-#>  [1] "Yes" "No"  "No"  "No"  "No"  "No"  "No"  "No"  "No"  "No"
+#>  [1] "No" "No" "No" "No" "No" "No" "No" "No" "No" "No"
 ```
 
 And applying it to each student:
@@ -414,8 +414,8 @@ stu_year <- stu_year %>%
 table(initialELL =stu_year$ell_first, byyear = stu_year$ell)
 #>           byyear
 #> initialELL    No   Yes
-#>        No  20568   432
-#>        Yes  2444   556
+#>        No  20345   427
+#>        Yes  2649   591
 ```
 
 ### Diagnostics
@@ -436,10 +436,10 @@ plotdf %>% group_by(Transition) %>% filter(Transition != "total") %>%
 #> # A tibble: 4 × 2
 #>   Transition `sum(Count)`
 #>        <chr>        <dbl>
-#> 1      No-No        20802
+#> 1      No-No        20784
 #> 2     No-Yes          263
-#> 3     Yes-No          460
-#> 4    Yes-Yes          475
+#> 3     Yes-No          480
+#> 4    Yes-Yes          485
 
 
 plotdf <- plotdf %>% filter(Transition != "total")  %>% 
@@ -466,7 +466,7 @@ Looking at this chart we can see that most students went from the No state to a 
 table(stu_first$ell_first)
 #> 
 #>   No  Yes 
-#> 1750  250
+#> 1731  270
 
 # Ever ELL after Markov
 plotdf %>% group_by(ID, To) %>% 
@@ -474,7 +474,7 @@ plotdf %>% group_by(ID, To) %>%
   filter(Count > 0) %>% with(., table(ELL = To))
 #> ELL
 #> Yes 
-#> 363
+#> 370
 ```
 
 Through this process we've gained students in the ELL status who were not initially ELL. Depending on our application this may not be desirable and we may want to modify the transition matrix to avoid this. Otherwise, later, this becomes an exercise in data cleaning.
@@ -532,7 +532,7 @@ test_res <- stu_year %>% group_by(ID) %>%
 table(test_res$fit_ok)
 #> 
 #> FALSE  TRUE 
-#>   364  1636
+#>   394  1606
 ```
 
 A better test might be to look at the summed aggregate pattern across students. This involves creating a TM per student. These will be different depending on whether a student is an initial ELL or not. This will provide a more stable estimate of how the algorithm is working.
@@ -549,13 +549,13 @@ names(lst) <- results$ell_first
 lst 
 #> $No
 #>        No Yes
-#> No  20337 230
-#> Yes   230 202
+#> No  20112 232
+#> Yes   232 195
 #> 
 #> $Yes
 #>       No Yes
-#> No  2170 273
-#> Yes  274 282
+#> No  2355 293
+#> Yes  294 297
 
 test_fit_m <- function(obs, expected, tol){
   obs <- obs / rowSums(obs)
@@ -610,89 +610,98 @@ ses_list_MC <- list("White" = list(f = make_markov_series,
                  "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series, 
                                 pars = list(tm = tm_list[[8]])))
 
-testDF <- cond_prob(stu_year, factor = "Race", 
+stu_year <- cond_prob(stu_year, factor = "Race", 
                  newvar = "frpl", prob_list = ses_list_MC)
 
-
-results <- testDF %>% group_by(Race, ID) %>% 
+## Create the matrix by student by race, 
+## Sum the student matrices within each race so that there is 1 matrix 
+## per category
+results <- stu_year %>% group_by(Race, ID) %>% 
   do(.out = createSequenceMatrix(.$frpl, possibleStates = c("Yes", "No"))) %>% 
   ungroup %>%
   nest(-Race) %>%
   mutate(summed = map(data, ~ reduce(.$.out, `+`)))
 
+## Turn this into a list for easier manipulation
 lst <- results$summed
 names(lst) <- results$Race
 # lst 
 
-# 
+# create a list that you can use to compare the observed matrix to
 names(tm_list) <- names(ses_list_MC)
 tm_list <- tm_list[names(lst)]
-map2(lst, tm_list, ~ test_fit_m(obs = .x, expected = .y, tol = 0.15))
-#> $White
-#>       No  Yes
-#> No  TRUE TRUE
-#> Yes TRUE TRUE
-#> 
-#> $`Hispanic or Latino Ethnicity`
-#>       No  Yes
-#> No  TRUE TRUE
-#> Yes TRUE TRUE
-#> 
-#> $`Black or African American`
-#>       No  Yes
-#> No  TRUE TRUE
-#> Yes TRUE TRUE
-#> 
-#> $Asian
-#>       No  Yes
-#> No  TRUE TRUE
-#> Yes TRUE TRUE
-#> 
-#> $`American Indian or Alaska Native`
-#>       No  Yes
-#> No  TRUE TRUE
-#> Yes TRUE TRUE
-#> 
-#> $`Native Hawaiian or Other Pacific Islander`
-#>       No  Yes
-#> No  TRUE TRUE
-#> Yes TRUE TRUE
-#> 
-#> $`Demographic Race Two or More Races`
-#>       No  Yes
-#> No  TRUE TRUE
-#> Yes TRUE TRUE
+# Run the test_fit_m function over both lists simultaneously
+map2(lst, tm_list, ~ test_fit_m(obs = .x, expected = .y, tol = 0.15)) %>% 
+  map_lgl(all)
+#>                                     White 
+#>                                      TRUE 
+#>              Hispanic or Latino Ethnicity 
+#>                                      TRUE 
+#>                 Black or African American 
+#>                                      TRUE 
+#>                                     Asian 
+#>                                      TRUE 
+#>          American Indian or Alaska Native 
+#>                                      TRUE 
+#> Native Hawaiian or Other Pacific Islander 
+#>                                      TRUE 
+#>        Demographic Race Two or More Races 
+#>                                      TRUE
 ```
 
-Now, let's take this to scale.
+Now, let's take this to scale. We can make a by-variable list that specifies the way to generate status sequences. The list is structured as:
+
+-   Group category (e.g. "Male")
+-   `f` = function to be called, unquoted
+-   `pars` = list of parameters to pass to `f`
+    -   For `markovchain` these parameters are:
+    -   `tm` = transition matrix to use, in probability format
+    -   `t0` = probability of being in initial state, wrap in `quote` so probability sample is repeated for each time the function is called (per group or perID)
 
 ``` r
+stu_year <- left_join(stu_year, demog_master[, c("ID", "Sex")])
 # gifted
-# iep
-# grade_level
-grade_mat <- read.csv("data-raw/grade_matrix.csv")
-zzz <- as.matrix(grade_mat[, 2:15])
-dimnames(zzz) <- list(grade_mat[, 1], grade_mat[, 1])
+tm_gifted_f <- matrix(c(500, 1, 2, 500), nrow = 2, byrow = TRUE, 
+                      dimnames = list(c("Yes", "No"), c("Yes", "No")))
+tm_gifted_m <- tm_gifted_f
+# Make the TM different for boys, boys less likely to transition out of gifted status
+tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
 
-make_markov_series(10, tm = zzz, t0 = "2")
-
-gradeNames <- c("1", "0", "-1")
-tm_grade <- matrix(c(900, 50, 10, 900, 20, 10, 900, 20, 10), nrow = 3, byrow=TRUE, 
-               dimnames = list(gradeNames, gradeNames))
-testMC <- as(tm_grade/rowSums(tm_grade), "markovchain")
-
-tm_grade_f <- tm_grade/rowSums(tm_grade)
-tm_grade_m <- tm_grade
-tm_grade_m[, 2] <- tm_grade_m[, 2] + 30
-tm_grade_m[, 3] <- tm_grade_m[, 3] + 5
-tm_grade_m <- tm_grade_m/rowSums(tm_grade_m)
-
-retention_list <- list("Male" = list(f = make_markov_series, 
-                                     pars = list(tm = tm_grade_m)),
+# Set initial condition as 10% gifted / 90% not for boys, 8%/88% for girls
+gifted_list <- list("Male" = list(f = make_markov_series, 
+                                   pars = list(tm = tm_gifted_m/ rowSums(tm_gifted_m), 
+                                    # Use quote so for each call in the loop sample is redrawn
+                                         t0 = quote(sample(c("Yes", "No"), 1, prob = c(10, 90))))),
                        "Female" = list(f = make_markov_series, 
-                                       pars = list(tm_grade_f)))
+                                     pars = list(tm_gifted_f / rowSums(tm_gifted_f), 
+                                        t0 = quote(sample(c("Yes", "No"), 1, prob = c(8, 92))))))
+# IEP
+tm_iep_f <- matrix(c(250, 50, 150, 900), nrow = 2, byrow = TRUE, 
+                      dimnames = list(c("Yes", "No"), c("Yes", "No")))
+tm_iep_m <- tm_iep_f
+tm_iep_m[, 1] <- tm_iep_m[, 1] + 50
 
-testDF <- left_join(stu_year[, c(1:4)], demog_master[, c(1, 2, 4)])
+iep_list <- list("Male" = list(f = make_markov_series, 
+                                     pars = list(tm = tm_iep_m / rowSums(tm_iep_m), 
+                                       t0 = quote(sample(c("Yes", "No"), 1, prob = c(20, 80))))),
+                       "Female" = list(f = make_markov_series, 
+                                       pars = list(tm_iep_f / rowSums(tm_iep_f)), 
+                                       t0 = quote(sample(c("Yes", "No"), 1, prob = c(16, 84)))))
+
+
+stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>% 
+  mutate(iep = markov_cond_list(Sex[1], n = n(), iep_list),
+          gifted = markov_cond_list(Sex[1], n = n(), gifted_list))
+
+results <- stu_year %>% group_by(Sex) %>% 
+  do(.out = createSequenceMatrix(.$gifted, possibleStates = c("Yes", "No"))) %>% 
+  ungroup %>%
+  nest(-Sex) %>%
+  mutate(summed = map(data, ~ reduce(.$.out, `+`)))
+
+## Turn this into a list for easier manipulation
+lst <- results$summed
+names(lst) <- results$Sex
 ```
 
 Package Dependencies

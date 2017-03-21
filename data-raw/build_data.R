@@ -17,5 +17,23 @@ for(i in 1:nrow(xwalk)){
   xwalk$schema[i] <- I(list(OpenSDP.data:::get_code_values(xwalk$Option.Set[i])))
 }
 
+ses_list <- list("White" = list(f = rbinom,
+                            pars = list(size = 1, prob = 0.4)),
+                   "Hispanic or Latino Ethnicity" = list(f = rbinom,
+                                           pars = list(size = 1, prob = 0.6)),
+                   "Black or African American" = list(f = rbinom,
+                                    pars = list(size = 1, prob = 0.65)),
+                   "Asian" = list(f = rbinom,
+                                  pars = list(size = 1, prob = 0.375)),
+                   "Demographic Race Two or More Races" = list(f = rbinom,
+                                           pars = list(size = 1, prob = 0.4)),
+                   "American Indian or Alaska Native" = list(f = rbinom,
+                                           pars = list(size = 1, prob = 0.4)),
+                   "Other" = list(f = rbinom,
+                                  pars = list(size = 1, prob = 0.4)),
+                   "Native Hawaiian or Other Pacific Islander" = list(f = rbinom,
+                                          pars = list(size = 1, prob = 0.4)))
+
+
 # saveRDS(xwalk, "data/sdp_ceds_map.rds")
-devtools::use_data(ell, xwalk, internal = TRUE, overwrite = TRUE)
+devtools::use_data(ell, xwalk, ses_list, internal = TRUE, overwrite = TRUE)

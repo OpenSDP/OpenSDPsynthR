@@ -1,8 +1,13 @@
 ---
-output: github_document
+title: "Simulation Function Details"
+author: "Jared E. Knowles"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulation Function Details}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
@@ -28,16 +33,6 @@ A project to generate realistic synthetic unit-level longitudinal education data
  in their agency. 
 3. The package should be modular and extendable allowing new data topics to be generated as needed so synthetic 
  data coverage can grow. 
-
-# Get Started
-
-To use `OpenSDP.data`, follow the instructions below:
-
-## Install Package
-
-```{r eval=FALSE}
-devtools::install_github("strategicdataproject/OpenSDP.data")
-```
 
 ## Make some data
 

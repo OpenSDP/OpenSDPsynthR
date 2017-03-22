@@ -4,23 +4,15 @@
 \alias{popsim_control}
 \title{Grand simulation}
 \usage{
-popsim_control(n, seed, race_groups = NULL, race_prob = NULL,
-  ses_list = NULL, minyear = 1997, maxyear = 2017)
+popsim_control(n, seed, control = sim_control())
 }
 \arguments{
 \item{n}{integer, number of students to simulate}
 
 \item{seed}{integer, random seed to use}
-
-\item{race_groups}{vector of labels for race groups}
-
-\item{race_prob}{vector of numerics, same length as \code{race_groups}}
-
-\item{ses_list}{a probability list}
-
-\item{minyear}{integer, year to start data}
-
-\item{maxyear}{integer, year to end data}
+}
+\value{
+a list with simulated data
 }
 \description{
 Grand simulation

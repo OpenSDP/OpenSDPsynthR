@@ -1,7 +1,6 @@
 ## Break into discrete functions
 
-## Simulate students
-## Convert students to student years
+## Calculate ages, toss out non-sensical records
 ## add longitudinal indicators
 
 
@@ -65,28 +64,43 @@ popsim_control <- function(n, seed, control = sim_control()){
   demog_master <- gen_students(n = n, seed = seed, race_groups = control$race_groups,
                                race_prob = control$race_prob,
                                ses_list = control$ses_list)
-
-  stu_year <- vector(mode = "list", nrow(demog_master))
-
-  # Make a list of dataframes, one for each student, for each year
-  for(i in 1:nrow(demog_master)){
-    tmp <- expand_grid_df(demog_master[i, c(1, 3)],
-                          data.frame(year = 1:12))
-
-    tmp$year <- lubridate::year(tmp$DOB + (tmp$year + 4) * 365)
-    tmp$year - lubridate::year(tmp$DOB)
-    stu_year[[i]] <- tmp; rm(tmp)
-  }
-
-  stu_year <- bind_rows(stu_year) %>% as.data.frame()
-  stu_year$age <- age_calc(dob = stu_year$DOB,
-                           enddate = as.Date(paste0(stu_year$year, "-09-21")),
-                           units = "years", precise = TRUE)
-
-
+  stu_year <- gen_student_years(data = demog_master, control = control)
+  # stu_year$age <- age_calc(dob = stu_year$DOB,
+  #                          enddate = as.Date(paste0(stu_year$year, "-09-21")),
+  #                          units = "years", precise = TRUE)
   return(list(demog_master = demog_master, stu_year = stu_year))
 }
 
+
+#' Generate annual student observations
+#'
+#' @param data students to generate annual data for
+#' @param control a list defining the parameters of the simulation
+#'
+#' @return a data.frame
+#' @export
+gen_student_years <- function(data, control){
+  stu_year <- vector(mode = "list", nrow(data))
+  stopifnot(any(c("ID", "id", "sid") %in% names(data)))
+  if(is.null(control$minyear)){
+    control$minyear <- 1997
+  }
+  if(is.null(control$maxyear)){
+    control$maxyear <- 2017
+  }
+  idvar <- names(data)[which(names(data) %in% c("ID", "id", "sid"))]
+  # Make a list of dataframes, one for each student, for each year
+  for(i in 1:nrow(data)){
+    tmp <- expand_grid_df(data[i, idvar],
+                          data.frame(year = control$minyear:control$maxyear))
+    # tmp$year <- lubridate::year(tmp$DOB + (tmp$year + 4) * 365)
+    # tmp$year - lubridate::year(tmp$DOB)
+    stu_year[[i]] <- tmp; rm(tmp)
+  }
+  stu_year <- bind_rows(stu_year) %>% as.data.frame()
+  names(stu_year) <- c(idvar, "year")
+  return(stu_year)
+}
 
 
 #' Set control parameters for simulated data

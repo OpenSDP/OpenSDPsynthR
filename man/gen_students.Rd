@@ -4,19 +4,14 @@
 \alias{gen_students}
 \title{Generate student-level attributes}
 \usage{
-gen_students(n, seed, race_groups = NULL, race_prob = NULL,
-  ses_list = NULL)
+gen_students(n, seed, control)
 }
 \arguments{
 \item{n}{integer, number of students to simulate}
 
 \item{seed}{integer, random seed to use}
 
-\item{race_groups}{vector of labels for race groups}
-
-\item{race_prob}{vector of numerics, same length as \code{race_groups}}
-
-\item{ses_list}{a probability list}
+\item{control}{a list, defined by \code{\link{sim_control}}}
 }
 \value{
 a data.frame

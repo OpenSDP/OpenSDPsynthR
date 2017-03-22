@@ -10,6 +10,8 @@ popsim_control(n, seed, control = sim_control())
 \item{n}{integer, number of students to simulate}
 
 \item{seed}{integer, random seed to use}
+
+\item{control}{a list, defined by \code{\link{sim_control}}}
 }
 \value{
 a list with simulated data

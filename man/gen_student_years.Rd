@@ -9,7 +9,7 @@ gen_student_years(data, control)
 \arguments{
 \item{data}{students to generate annual data for}
 
-\item{control}{a list defining the parameters of the simulation}
+\item{control}{a list, defined by \code{\link{sim_control}}}
 }
 \value{
 a data.frame

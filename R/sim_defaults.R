@@ -2,46 +2,57 @@
 
 ## Calculate ages, toss out non-sensical records
 ## add longitudinal indicators
-
+##
 
 #' Generate student-level attributes
 #'
 #' @param n integer, number of students to simulate
 #' @param seed integer, random seed to use
-#' @param race_groups vector of labels for race groups
-#' @param race_prob vector of numerics, same length as \code{race_groups}
-#' @param ses_list a probability list
+#' @param control a list, defined by \code{\link{sim_control}}
 #' @import dplyr
+#' @importFrom wakefield sex
+#' @importFrom wakefield dob
+#' @importFrom wakefield id
+#' @importFrom wakefield race
 #' @return a data.frame
 #' @export
-gen_students <- function(n, seed, race_groups=NULL, race_prob=NULL,
-                         ses_list=NULL){
+gen_students <- function(n, seed, control){
   set.seed(seed)
-  if(is.null(race_groups)){ # use is.null because sim_control passes null values
-    race_groups <- xwalk$CEDS_name[xwalk$category == "Demographic"]
-    race_groups <- race_groups[race_groups != ""]
+  if(is.null(control$race_groups)){ # use is.null because sim_control passes null values
+    control$race_groups <- xwalk$CEDS_name[xwalk$category == "Demographic"]
+    control$race_groups <- control$race_groups[!control$race_groups %in% c("Sex", "","Birthdate")]
   }
-  if(is.null(race_prob)){
-    race_prob <- c(0.637, 0.047, 0.007, 0.122, 0.163, 0.021, 0.0015)
+  if(is.null(control$race_prob)){
+    control$race_prob <- c(0.637, 0.047, 0.007, 0.122, 0.163, 0.021, 0.0015)
+  }
+  if(!is.null(control$minyear)){
+    tmp <- paste0(minyear, "-01-01")
+    start <- as.integer(Sys.Date() - as.Date(tmp))
+    start <- start + (365 * 4.25)
+  }
+  if(is.null(control$n_cohorts)){
+    K <- 365L * 8L # Need to test these integers
+  } else{
+    K <- 365L * n_cohorts
   }
   demog_master <- data.frame(
-    id = wakefield::id(n, random = TRUE),
+    sid = wakefield::id(n, random = TRUE),
     "Sex" = wakefield::sex(n),
-    "DOB" = wakefield::dob(n, start = Sys.Date() - 365*25,
-                           k = 365 * 8, by = "1 days"),
-    "Race" = wakefield::race(n, x = race_groups, prob = race_prob)
+    "Birthdate" = wakefield::dob(n, start = Sys.Date() - start,
+                           k = K, by = "1 days"),
+    "Race" = wakefield::race(n, x = control$race_groups, prob = control$race_prob)
   )
   demog_master$Race <- factor(demog_master$Race)
-
   demog_master %<>% make_inds("Race")
+  # What does this line do?
   demog_master %<>% mutate_at(5:ncol(demog_master),
                               funs(recode(., `0` = "No", `1` = "Yes")))
-  if(is.null(ses_list)){
-    ses_list <- OpenSDP.data:::ses_list
+  if(is.null(control$ses_list)){
+    control$ses_list <- OpenSDP.data:::ses_list
   }
   demog_master <- as.data.frame(demog_master)
   demog_master <- cond_prob(demog_master, factor = "Race",
-                            newvar = "ses", prob_list = ses_list)
+                            newvar = "ses", prob_list = control$ses_list)
   return(demog_master)
 
 }
@@ -51,9 +62,8 @@ gen_students <- function(n, seed, race_groups=NULL, race_prob=NULL,
 #' @rdname popsim_control
 #' @param n integer, number of students to simulate
 #' @param seed integer, random seed to use
-#'
+#' @param control a list, defined by \code{\link{sim_control}}
 #' @return a list with simulated data
-#' @importFrom wakefield r_data_frame
 #' @importFrom lubridate year
 #' @import dplyr
 #' @export
@@ -61,9 +71,7 @@ gen_students <- function(n, seed, race_groups=NULL, race_prob=NULL,
 #' out <- popsim_control(20, seed = 213)
 popsim_control <- function(n, seed, control = sim_control()){
   ## Generate student-year data
-  demog_master <- gen_students(n = n, seed = seed, race_groups = control$race_groups,
-                               race_prob = control$race_prob,
-                               ses_list = control$ses_list)
+  demog_master <- gen_students(n = n, seed = seed, control = control)
   stu_year <- gen_student_years(data = demog_master, control = control)
   # stu_year$age <- age_calc(dob = stu_year$DOB,
   #                          enddate = as.Date(paste0(stu_year$year, "-09-21")),
@@ -75,8 +83,7 @@ popsim_control <- function(n, seed, control = sim_control()){
 #' Generate annual student observations
 #'
 #' @param data students to generate annual data for
-#' @param control a list defining the parameters of the simulation
-#'
+#' @param control a list, defined by \code{\link{sim_control}}
 #' @return a data.frame
 #' @export
 gen_student_years <- function(data, control){
@@ -113,7 +120,8 @@ gen_student_years <- function(data, control){
 #' @return a named list
 #' @export
 sim_control <- function(race_groups=NULL, race_prob=NULL,
-                        ses_list=NULL, minyear=1997, maxyear=2017){
+                        ses_list=NULL, minyear=1997, maxyear=2017,
+                        n_cohorts = NULL){
 
 
   structure(namedList(

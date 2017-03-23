@@ -43,6 +43,7 @@ library(OpenSDP.data)
 library(magrittr)
 library(wakefield)
 library(lubridate)
+library(purrr)
 set.seed(612)
 
 demog_master <- r_data_frame(n = 2000, 

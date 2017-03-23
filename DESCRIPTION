@@ -13,7 +13,9 @@ Imports: lubridate,
   purrr
 Suggests: testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    ggplot2,
+    tidyr
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false

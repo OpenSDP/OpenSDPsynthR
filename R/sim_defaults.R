@@ -12,7 +12,6 @@
 #' @import dplyr
 #' @importFrom wakefield sex
 #' @importFrom wakefield dob
-#' @importFrom wakefield id
 #' @importFrom wakefield race
 #' @return a data.frame
 #' @export
@@ -92,10 +91,17 @@ popsim_control <- function(n, seed, control = sim_control()){
   stu_first$ell <- gen_initial_status(stu_first, baseline = "ell")
   message("Assigning ", n, " students to initial SES status...")
   stu_first$ses <- gen_initial_status(stu_first, baseline = "ses")
-  message("Organizing everything for you...")
+  message("Organizing status variables for you...")
   stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell")], by = idvar)
   demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")], by = idvar)
   rm(stu_first)
+  message("Assigning ", n, " students longitudinal status trajectories...")
+  cond_vars <- get_sim_groupvars(control)
+  stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)])
+  stu_year <- gen_annual_status(stu_year, control = control)
+  stu_year <- stu_year %>% select_(idvar, "year", "age", "ell", "iep", "gifted")
+  message("Sorting your records")
+  stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year))
 }
@@ -119,12 +125,23 @@ gen_initial_status <- function(data, baseline){
   return(out)
 }
 
-gen_annual_status <- function(data, control){
-
-  stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>%
-    mutate(iep = markov_cond_list(Sex[1], n = n(), iep_list),
-           gifted = markov_cond_list(Sex[1], n = n(), gifted_list))
-
+#' Generate annual status trajectories per student
+#'
+#' @param data student-year data
+#' @param control control list
+#'
+#' @return the \code{data} object, with additional variables appended
+#' @export
+gen_annual_status <- function(data, control = sim_control()){
+  reqdVars <- get_sim_groupvars(control)
+  stopifnot(all(reqdVars %in% names(data)))
+  idvar <- names(data)[which(names(data) %in% c("ID", "id", "sid"))]
+  data <- data %>% group_by_(idvar) %>% arrange(year) %>%
+    mutate(iep = markov_cond_list(Sex[1], n = n(), control$iep_list),
+           gifted = markov_cond_list(Sex[1], n = n(), control$gifted_list),
+           ell = markov_cond_list("ALL", n = n() - 1, control$ell_list,
+                                  t0 = ell[1], include.t0 = TRUE))
+  return(data)
 }
 
 
@@ -170,15 +187,59 @@ gen_student_years <- function(data, control=sim_control()){
 #' Set control parameters for simulated data
 #' @param race_groups vector of labels for race groups
 #' @param race_prob vector of numerics, same length as \code{race_groups}
-#' @param ses_list a probability list
 #' @param minyear an integer
 #' @param maxyear an integer
-#'
+#' @param ses_list a probability list
+#' @param iep_list a probability list
+#' @param ell_list a probability list
+#' @param gifted_list a probability list
+#' @param n_cohorts number of cohorts to produce
 #' @return a named list
 #' @export
 sim_control <- function(race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=1997, maxyear=2017,
-                        n_cohorts = NULL, gifted_list=NULL, iep_list=NULL){
+                        n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
+                        ell_list=NULL){
+
+  # temporarily hardcoding these values here for testing
+  tm_gifted_f <- matrix(c(500, 1, 2, 500), nrow = 2, byrow = TRUE,
+                        dimnames = list(c("Yes", "No"), c("Yes", "No")))
+  tm_gifted_m <- tm_gifted_f
+  tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
+  tm_gifted_m <- tm_gifted_m / rowSums(tm_gifted_m)
+  tm_gifted_f <- tm_gifted_f / rowSums(tm_gifted_f)
+
+  gifted_list <- list("Male" = list(f = make_markov_series,
+                             pars = list(tm = tm_gifted_m,
+                              # Use quote so for each call in the loop sample is redrawn
+                      t0 = quote(sample(c("Yes", "No"), 1, prob = c(10, 90))))),
+                      "Female" = list(f = make_markov_series,
+                          pars = list(tm = tm_gifted_f,
+                       t0 = quote(sample(c("Yes", "No"), 1, prob = c(8, 92))))),
+                      "GROUPVARS" = c("Sex"))
+
+  # IEP
+  tm_iep_f <- matrix(c(250, 50, 150, 900), nrow = 2, byrow = TRUE,
+                     dimnames = list(c("Yes", "No"), c("Yes", "No")))
+  tm_iep_m <- tm_iep_f
+  tm_iep_m[, 1] <- tm_iep_m[, 1] + 50
+  tm_iep_m <- tm_iep_m / rowSums(tm_iep_m)
+  tm_iep_f <- tm_iep_f / rowSums(tm_iep_f)
+
+    iep_list <- list("Male" = list(f = make_markov_series,
+               pars = list(tm = tm_iep_m,
+                     t0 = quote(sample(c("Yes", "No"), 1, prob = c(20, 80))))),
+                   "Female" = list(f = make_markov_series,
+                     pars = list(tm = tm_iep_f,
+                 t0 = quote(sample(c("Yes", "No"), 1, prob = c(16, 84))))),
+               "GROUPVARS" = c("Sex"))
+
+    tm <- matrix(c(800, 20, 5, 800), nrow = 2, byrow = TRUE,
+                 dimnames = list(c("Yes", "No"), c("Yes", "No")))
+    tm <- tm / rowSums(tm)
+    ell_list <- list("ALL" = list(f = make_markov_series,
+                                  pars = list(tm = tm)),
+                     "GROUPVARS" = c("ell"))
   structure(namedList(
                  race_groups,
                  race_prob,
@@ -186,7 +247,8 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
                  maxyear,
                  gifted_list,
                  iep_list,
-                 ses_list))
+                 ses_list,
+                 ell_list))
 
 }
 
@@ -203,4 +265,15 @@ namedList <- function(...) {
   if (any(nonames <- nm == "")) nm[nonames] <- snm[nonames]
   setNames(L,nm)
 }
+
+
+get_sim_groupvars <- function(control = sim_control()){
+  # consider
+  #https://stat.ethz.ch/R-manual/R-devel/library/base/html/rapply.html
+  out <- c(control$iep_list$GROUPVARS,
+           control$gifted_list$GROUPVARS,
+           control$ses_list$GROUPVARS)
+  unique(out)
+}
+
 

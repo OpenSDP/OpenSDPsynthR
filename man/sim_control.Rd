@@ -6,7 +6,7 @@
 \usage{
 sim_control(race_groups = NULL, race_prob = NULL, ses_list = NULL,
   minyear = 1997, maxyear = 2017, n_cohorts = NULL, gifted_list = NULL,
-  iep_list = NULL)
+  iep_list = NULL, ell_list = NULL)
 }
 \arguments{
 \item{race_groups}{vector of labels for race groups}
@@ -18,6 +18,14 @@ sim_control(race_groups = NULL, race_prob = NULL, ses_list = NULL,
 \item{minyear}{an integer}
 
 \item{maxyear}{an integer}
+
+\item{n_cohorts}{number of cohorts to produce}
+
+\item{gifted_list}{a probability list}
+
+\item{iep_list}{a probability list}
+
+\item{ell_list}{a probability list}
 }
 \value{
 a named list

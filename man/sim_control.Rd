@@ -5,7 +5,8 @@
 \title{Set control parameters for simulated data}
 \usage{
 sim_control(race_groups = NULL, race_prob = NULL, ses_list = NULL,
-  minyear = 1997, maxyear = 2017, n_cohorts = NULL)
+  minyear = 1997, maxyear = 2017, n_cohorts = NULL, gifted_list = NULL,
+  iep_list = NULL)
 }
 \arguments{
 \item{race_groups}{vector of labels for race groups}

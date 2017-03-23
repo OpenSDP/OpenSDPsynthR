@@ -5,7 +5,7 @@ library(tidyr)
 ## Build example ELL baseline data
 ell <- read.csv("data-raw/ellDist.csv")
 ell <- na.omit(ell)
-ell %<>% gather(-age, key = "race", value = "prob")
+ell <-  ell %>% gather(-age, key = "race", value = "prob")
 # ell <- ell[-1,]
 # saveRDS(ell, "data/ell.rds")
 # use_data(ell, internal = TRUE)
@@ -17,23 +17,10 @@ for(i in 1:nrow(xwalk)){
   xwalk$schema[i] <- I(list(OpenSDP.data:::get_code_values(xwalk$Option.Set[i])))
 }
 
-ses_list <- list("White" = list(f = rbinom,
-                            pars = list(size = 1, prob = 0.4)),
-                   "Hispanic or Latino Ethnicity" = list(f = rbinom,
-                                           pars = list(size = 1, prob = 0.6)),
-                   "Black or African American" = list(f = rbinom,
-                                    pars = list(size = 1, prob = 0.65)),
-                   "Asian" = list(f = rbinom,
-                                  pars = list(size = 1, prob = 0.375)),
-                   "Demographic Race Two or More Races" = list(f = rbinom,
-                                           pars = list(size = 1, prob = 0.4)),
-                   "American Indian or Alaska Native" = list(f = rbinom,
-                                           pars = list(size = 1, prob = 0.4)),
-                   "Other" = list(f = rbinom,
-                                  pars = list(size = 1, prob = 0.4)),
-                   "Native Hawaiian or Other Pacific Islander" = list(f = rbinom,
-                                          pars = list(size = 1, prob = 0.4)))
+ses <- data.frame(race = c("black", "asian", "hispanic", "amerind", "white",
+                           "other", "multiracial", "hawaiian_pi"),
+                  prob = c(0.65, 0.375, 0.6, 0.4, 0.4, 0.4, 0.4, 0.4))
 
 
 # saveRDS(xwalk, "data/sdp_ceds_map.rds")
-devtools::use_data(ell, xwalk, ses_list, internal = TRUE, overwrite = TRUE)
+devtools::use_data(ell, xwalk, ses, internal = TRUE, overwrite = TRUE)

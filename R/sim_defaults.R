@@ -28,7 +28,7 @@ gen_students <- function(n, seed, control = sim_control()){
   if(!is.null(control$minyear)){
     tmp <- paste0(control$minyear, "-01-01")
     start <- as.integer(Sys.Date() - as.Date(tmp))
-    start <- start + (365 * 4.25)
+    start <- start + (365 * 6) # trying to not generate PK data
   }
   if(is.null(control$n_cohorts)){
     K <- 365L * 8L # Need to test these integers
@@ -47,15 +47,8 @@ gen_students <- function(n, seed, control = sim_control()){
   # What does this line do?
   demog_master %<>% mutate_at(5:ncol(demog_master),
                               funs(recode(., `0` = "No", `1` = "Yes")))
-  if(is.null(control$ses_list)){
-    control$ses_list <- OpenSDP.data:::ses_list
-  }
   demog_master <- as.data.frame(demog_master)
   # Do not need to be warned about NAs in binomial
-  suppressWarnings({
-    demog_master <- cond_prob(demog_master, factor = "Race",
-                              newvar = "ses", prob_list = control$ses_list)
-  })
   return(demog_master)
 }
 
@@ -96,8 +89,12 @@ popsim_control <- function(n, seed, control = sim_control()){
   # place outside of this function
   # This should also be controlled somehow by control eventually
   message("Assigning ", n, " students to initial ELL status...")
-  stu_first <- gen_initial_status(stu_first, baseline = "ell")
+  stu_first$ell <- gen_initial_status(stu_first, baseline = "ell")
+  message("Assigning ", n, " students to initial SES status...")
+  stu_first$ses <- gen_initial_status(stu_first, baseline = "ses")
+  message("Organizing everything for you...")
   stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell")], by = idvar)
+  demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")], by = idvar)
   rm(stu_first)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year))
@@ -116,10 +113,18 @@ gen_initial_status <- function(data, baseline){
   # Move CEDS Xwalk out of this function eventually
   stopifnot(all(bl_data$keys %in% names(data)))
   # Assign baseline creates a new vector, so assign it
-  data[, baseline] <- assign_baseline(baseline = baseline, data = data)
+  out <- assign_baseline(baseline = baseline, data = data)
   # Recode it
-  data[, baseline] <- ifelse(data[, baseline] == 1, "Yes", "No")
-  return(data)
+  out <- ifelse(out == 1, "Yes", "No")
+  return(out)
+}
+
+gen_annual_status <- function(data, control){
+
+  stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>%
+    mutate(iep = markov_cond_list(Sex[1], n = n(), iep_list),
+           gifted = markov_cond_list(Sex[1], n = n(), gifted_list))
+
 }
 
 
@@ -128,6 +133,7 @@ gen_initial_status <- function(data, baseline){
 #' @param data students to generate annual data for
 #' @param control a list, defined by \code{\link{sim_control}}
 #' @importFrom lubridate year
+#' @importFrom magrittr %<>%
 #' @return a data.frame
 #' @export
 gen_student_years <- function(data, control=sim_control()){
@@ -155,6 +161,8 @@ gen_student_years <- function(data, control=sim_control()){
   stu_year$age <- age_calc(dob = stu_year[, bdvar],
                           enddate = as.Date(paste0(stu_year$year, "-09-21")),
                           units = "years", precise = TRUE)
+  # Cut off ages before X
+  stu_year %<>% filter(stu_year$age >= 4)
   return(stu_year)
 }
 
@@ -170,13 +178,15 @@ gen_student_years <- function(data, control=sim_control()){
 #' @export
 sim_control <- function(race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=1997, maxyear=2017,
-                        n_cohorts = NULL){
+                        n_cohorts = NULL, gifted_list=NULL, iep_list=NULL){
   structure(namedList(
                  race_groups,
                  race_prob,
-                 ses_list,
                  minyear,
-                 maxyear))
+                 maxyear,
+                 gifted_list,
+                 iep_list,
+                 ses_list))
 
 }
 

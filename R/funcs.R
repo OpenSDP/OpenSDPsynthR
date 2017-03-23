@@ -193,6 +193,10 @@ get_baseline <- function(bl){
     data <- ell
     keys <- c("race", "age")
     fun <- function(x) rbinom(1, 1, x)
+  } else if(bl == "ses"){
+    data <- ses
+    keys <- c("race")
+    fun <- function(x) rbinom(1, 1, x)
   } else{
     stop("Baseline not currently defined. Maybe you can write your own?")
   }

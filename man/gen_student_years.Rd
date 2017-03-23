@@ -4,7 +4,7 @@
 \alias{gen_student_years}
 \title{Generate annual student observations}
 \usage{
-gen_student_years(data, control)
+gen_student_years(data, control = sim_control())
 }
 \arguments{
 \item{data}{students to generate annual data for}

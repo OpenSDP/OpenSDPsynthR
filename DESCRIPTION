@@ -4,12 +4,13 @@ Version: 0.0.0.9000
 Authors@R: person("Jared", "Knowles", email = "jknowles@gmail.com", role = c("aut", "cre"))
 Description: Generate realistic synthetic unit-level education system data suitable for analysis.
 Depends: R (>= 3.0.0),
-  wakefield,
   dplyr,
   markovchain,
-  purrr,
-  magrittr,
   methods
+Imports: lubridate,
+  magrittr,
+  wakefield,
+  purrr
 Suggests: testthat,
     knitr,
     rmarkdown

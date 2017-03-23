@@ -221,7 +221,10 @@ assign_baseline <- function(baseline = NULL, data){
   if(length(var) > 1){
     stop("Variables are labeled wrong in data.")
   }
-  out <- sapply(data[, var], bl_data$fun)
+  # Avoid binomial NA in ELL baseline
+  suppressWarnings({
+    out <- sapply(data[, var], bl_data$fun)
+  })
   return(out)
 }
 

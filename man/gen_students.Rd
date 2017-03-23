@@ -4,7 +4,7 @@
 \alias{gen_students}
 \title{Generate student-level attributes}
 \usage{
-gen_students(n, seed, control)
+gen_students(n, seed, control = sim_control())
 }
 \arguments{
 \item{n}{integer, number of students to simulate}

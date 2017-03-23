@@ -16,7 +16,7 @@
 #' @importFrom wakefield race
 #' @return a data.frame
 #' @export
-gen_students <- function(n, seed, control){
+gen_students <- function(n, seed, control = sim_control()){
   set.seed(seed)
   if(is.null(control$race_groups)){ # use is.null because sim_control passes null values
     control$race_groups <- xwalk$CEDS_name[xwalk$category == "Demographic"]
@@ -26,7 +26,7 @@ gen_students <- function(n, seed, control){
     control$race_prob <- c(0.637, 0.047, 0.007, 0.122, 0.163, 0.021, 0.0015)
   }
   if(!is.null(control$minyear)){
-    tmp <- paste0(minyear, "-01-01")
+    tmp <- paste0(control$minyear, "-01-01")
     start <- as.integer(Sys.Date() - as.Date(tmp))
     start <- start + (365 * 4.25)
   }
@@ -51,10 +51,12 @@ gen_students <- function(n, seed, control){
     control$ses_list <- OpenSDP.data:::ses_list
   }
   demog_master <- as.data.frame(demog_master)
-  demog_master <- cond_prob(demog_master, factor = "Race",
-                            newvar = "ses", prob_list = control$ses_list)
+  # Do not need to be warned about NAs in binomial
+  suppressWarnings({
+    demog_master <- cond_prob(demog_master, factor = "Race",
+                              newvar = "ses", prob_list = control$ses_list)
+  })
   return(demog_master)
-
 }
 
 
@@ -71,12 +73,53 @@ gen_students <- function(n, seed, control){
 #' out <- popsim_control(20, seed = 213)
 popsim_control <- function(n, seed, control = sim_control()){
   ## Generate student-year data
-  demog_master <- gen_students(n = n, seed = seed, control = control)
-  stu_year <- gen_student_years(data = demog_master, control = control)
-  # stu_year$age <- age_calc(dob = stu_year$DOB,
-  #                          enddate = as.Date(paste0(stu_year$year, "-09-21")),
-  #                          units = "years", precise = TRUE)
+  message("Preparing student identities for ", n, " students...")
+  suppressMessages({
+    demog_master <- gen_students(n = n, seed = seed, control = control)
+  })
+  message("Creating annual enrollment for ", n, " students...")
+  suppressMessages({
+    stu_year <- gen_student_years(data = demog_master, control = control)
+  })
+  idvar <- names(demog_master)[which(names(demog_master) %in% c("ID", "id", "sid"))]
+  # Get first observed year for student
+  stu_first <- stu_year %>% group_by_(idvar) %>%
+    mutate(flag = if_else(age == min(age), 1, 0)) %>%
+    filter(flag == 1) %>% select(-flag) %>% as.data.frame() %>%
+    select_(idvar, "year", "age")
+  stu_first <- inner_join(stu_first, demog_master[, c(idvar, "Race")],
+                          by = idvar)
+  stu_first$age <- round(stu_first$age, 0)
+  #stu_year <- left_join(stu_year, stu_first[, c(1, 6)])
+  # Needs to become flexible to multipe inputs and outputs
+  # Needs to avoid hardcoding Race transformations, CEDS Xwalk should take
+  # place outside of this function
+  # This should also be controlled somehow by control eventually
+  message("Assigning ", n, " students to initial ELL status...")
+  stu_first <- gen_initial_status(stu_first, baseline = "ell")
+  stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell")], by = idvar)
+  rm(stu_first)
+  message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year))
+}
+
+#' Generate initial studen status indicators
+#'
+#' @param data that includes the pre-requsites for generating each status
+#' @param baseline character, name of a baseline status to calculate
+#'
+#' @return the data with status variables appended
+#' @export
+gen_initial_status <- function(data, baseline){
+  bl_data <- get_baseline(baseline)
+  data$race <- map_CEDS(data$Race)
+  # Move CEDS Xwalk out of this function eventually
+  stopifnot(all(bl_data$keys %in% names(data)))
+  # Assign baseline creates a new vector, so assign it
+  data[, baseline] <- assign_baseline(baseline = baseline, data = data)
+  # Recode it
+  data[, baseline] <- ifelse(data[, baseline] == 1, "Yes", "No")
+  return(data)
 }
 
 
@@ -84,9 +127,10 @@ popsim_control <- function(n, seed, control = sim_control()){
 #'
 #' @param data students to generate annual data for
 #' @param control a list, defined by \code{\link{sim_control}}
+#' @importFrom lubridate year
 #' @return a data.frame
 #' @export
-gen_student_years <- function(data, control){
+gen_student_years <- function(data, control=sim_control()){
   stu_year <- vector(mode = "list", nrow(data))
   stopifnot(any(c("ID", "id", "sid") %in% names(data)))
   if(is.null(control$minyear)){
@@ -100,12 +144,17 @@ gen_student_years <- function(data, control){
   for(i in 1:nrow(data)){
     tmp <- expand_grid_df(data[i, idvar],
                           data.frame(year = control$minyear:control$maxyear))
-    # tmp$year <- lubridate::year(tmp$DOB + (tmp$year + 4) * 365)
-    # tmp$year - lubridate::year(tmp$DOB)
     stu_year[[i]] <- tmp; rm(tmp)
   }
   stu_year <- bind_rows(stu_year) %>% as.data.frame()
   names(stu_year) <- c(idvar, "year")
+  bdvar <- names(data)[which(names(data) %in% c("DOB", "dob", "Birthdate"))]
+  stu_year <- left_join(stu_year, data[, c(idvar, bdvar)])
+  # Drop rows that occur before the birthdate
+  stu_year %<>% filter(stu_year$year > lubridate::year(stu_year[, bdvar]))
+  stu_year$age <- age_calc(dob = stu_year[, bdvar],
+                          enddate = as.Date(paste0(stu_year$year, "-09-21")),
+                          units = "years", precise = TRUE)
   return(stu_year)
 }
 
@@ -122,8 +171,6 @@ gen_student_years <- function(data, control){
 sim_control <- function(race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=1997, maxyear=2017,
                         n_cohorts = NULL){
-
-
   structure(namedList(
                  race_groups,
                  race_prob,

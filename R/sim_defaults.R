@@ -17,9 +17,11 @@
 #' @export
 gen_students <- function(n, seed, control = sim_control()){
   set.seed(seed)
-  if(is.null(control$race_groups)){ # use is.null because sim_control passes null values
+  if(is.null(control$race_groups)){
+    # use is.null because sim_control passes null values
     control$race_groups <- xwalk$CEDS_name[xwalk$category == "Demographic"]
-    control$race_groups <- control$race_groups[!control$race_groups %in% c("Sex", "","Birthdate")]
+    control$race_groups <- control$race_groups[!control$race_groups %in%
+                                                 c("Sex", "","Birthdate")]
   }
   if(is.null(control$race_prob)){
     control$race_prob <- c(0.637, 0.047, 0.007, 0.122, 0.163, 0.021, 0.0015)
@@ -73,7 +75,8 @@ popsim_control <- function(n, seed, control = sim_control()){
   suppressMessages({
     stu_year <- gen_student_years(data = demog_master, control = control)
   })
-  idvar <- names(demog_master)[which(names(demog_master) %in% c("ID", "id", "sid"))]
+  idvar <- names(demog_master)[which(names(demog_master) %in%
+                                       c("ID", "id", "sid"))]
   # Get first observed year for student
   stu_first <- stu_year %>% group_by_(idvar) %>%
     mutate(flag = if_else(age == min(age), 1, 0)) %>%
@@ -93,15 +96,21 @@ popsim_control <- function(n, seed, control = sim_control()){
   stu_first$ses <- gen_initial_status(stu_first, baseline = "ses")
   message("Organizing status variables for you...")
   stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell")], by = idvar)
-  demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")], by = idvar)
+  demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")],
+                            by = idvar)
   rm(stu_first)
   message("Assigning ", n, " students longitudinal status trajectories...")
   cond_vars <- get_sim_groupvars(control)
-  stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)])
+  stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)],
+                        by = idvar)
   stu_year <- gen_annual_status(stu_year, control = control)
-  stu_year <- stu_year %>% select_(idvar, "year", "age", "ell", "iep", "gifted")
+  # Create longitudinal ell and ses here
+  stu_year <- stu_year %>%
+    select_(idvar, "year", "age", "ses", "ell", "iep", "gifted")
   message("Sorting your records")
   stu_year <- stu_year %>% arrange_(idvar, "year")
+  message("Cleaning up...")
+  stu_year$age <- round(stu_year$age, 0)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year))
 }
@@ -140,7 +149,9 @@ gen_annual_status <- function(data, control = sim_control()){
     mutate(iep = markov_cond_list(Sex[1], n = n(), control$iep_list),
            gifted = markov_cond_list(Sex[1], n = n(), control$gifted_list),
            ell = markov_cond_list("ALL", n = n() - 1, control$ell_list,
-                                  t0 = ell[1], include.t0 = TRUE))
+                                  t0 = ell[1], include.t0 = TRUE),
+           ses = markov_cond_list(Race[1], n = n()-1, control$ses_list,
+                                  t0 = ses[1], include.t0 = TRUE))
   return(data)
 }
 
@@ -211,7 +222,7 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
 
   gifted_list <- list("Male" = list(f = make_markov_series,
                              pars = list(tm = tm_gifted_m,
-                              # Use quote so for each call in the loop sample is redrawn
+            # Use quote so for each call in the loop sample is redrawn
                       t0 = quote(sample(c("Yes", "No"), 1, prob = c(10, 90))))),
                       "Female" = list(f = make_markov_series,
                           pars = list(tm = tm_gifted_f,
@@ -240,7 +251,32 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
     ell_list <- list("ALL" = list(f = make_markov_series,
                                   pars = list(tm = tm)),
                      "GROUPVARS" = c("ell"))
-  structure(namedList(
+
+    tm <- matrix(c(800, 100, 300, 800), nrow = 2, byrow = TRUE,
+                 dimnames = list(c("Yes", "No"), c("Yes", "No")))
+    tm <- tm / rowSums(tm)
+
+    ses_list <- list(
+      "White" = list(f = make_markov_series,
+                     pars = list(tm = tm)),
+      "Hispanic or Latino Ethnicity" = list(f = make_markov_series,
+                                            pars = list(tm = tm)),
+      "Black or African American" = list(f = make_markov_series,
+                                         pars = list(tm = tm)),
+      "Asian" = list(f = make_markov_series,
+                     pars = list(tm = tm)),
+      "Demographic Race Two or More Races" = list(f = make_markov_series,
+                                                  pars = list(tm = tm)),
+      "American Indian or Alaska Native" = list(f = make_markov_series,
+                                                pars = list(tm = tm)),
+      "Other" = list(f = make_markov_series,
+                     pars = list(tm = tm)),
+      "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series,
+                                                         pars = list(tm = tm)),
+      "GROUPVARS" = c("Race", "ses")
+    )
+
+    structure(namedList(
                  race_groups,
                  race_prob,
                  minyear,

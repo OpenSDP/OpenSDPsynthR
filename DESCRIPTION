@@ -5,9 +5,9 @@ Authors@R: person("Jared", "Knowles", email = "jknowles@gmail.com", role = c("au
 Description: Generate realistic synthetic unit-level education system data suitable for analysis.
 Depends: R (>= 3.0.0),
   dplyr,
-  markovchain,
   methods
 Imports: lubridate,
+  markovchain,
   magrittr,
   wakefield,
   purrr

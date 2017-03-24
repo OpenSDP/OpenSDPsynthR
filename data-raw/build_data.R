@@ -20,7 +20,7 @@ for(i in 1:nrow(xwalk)){
 ses <- data.frame(race = c("black", "asian", "hispanic", "amerind", "white",
                            "other", "multiracial", "hawaiian_pi"),
                   prob = c(0.65, 0.375, 0.6, 0.4, 0.4, 0.4, 0.4, 0.4))
-
+ses$race <- as.character(ses$race)
 
 # saveRDS(xwalk, "data/sdp_ceds_map.rds")
 devtools::use_data(ell, xwalk, ses, internal = TRUE, overwrite = TRUE)

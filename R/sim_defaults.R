@@ -284,7 +284,8 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
                  gifted_list,
                  iep_list,
                  ses_list,
-                 ell_list))
+                 ell_list,
+                 n_cohorts))
 
 }
 

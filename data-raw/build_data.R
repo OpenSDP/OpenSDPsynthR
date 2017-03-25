@@ -22,11 +22,26 @@ ses <- data.frame(race = c("black", "asian", "hispanic", "amerind", "white",
                   prob = c(0.65, 0.375, 0.6, 0.4, 0.4, 0.4, 0.4, 0.4))
 ses$race <- as.character(ses$race)
 
-# prog_baseline <- read.csv("data-raw/program_baseline.csv")
-# names(prog_baseline) <- tolower(names(prog_baseline))
-# names(prog_baseline)[1:3] <- map_CEDS(names(prog_baseline)[1:3])
-# # Next map values
-# prog_baseline
+prog_baseline <- read.csv("data-raw/program_baseline.csv")
+names(prog_baseline) <- tolower(names(prog_baseline))
+names(prog_baseline)[1:3] <- map_CEDS(names(prog_baseline)[1:3])
+# Next map values
+prog_baseline
+
+varName <- "Economic Disadvantage Status"
+#
+OpenSDP.data:::xwalk$schema[OpenSDP.data:::xwalk$CEDS_name == varName]
+get_code_values(OpenSDP.data:::xwalk$SDP_option_match[OpenSDP.data:::xwalk$sdp_name == "iep"])
+prog_baseline[, 1] <- as.character(prog_baseline[, 1])
+prog_baseline[, 2] <- as.character(prog_baseline[, 2])
+recode_options(prog_baseline[, 1:2], from = "SDP")
+#
+#   flat_name_list <- function(list){
+#     char <- trimws(list[[1]])
+#     names(char) <- trimws(list[[2]])
+#     return(char)
+#   }
+
 
 
 # saveRDS(xwalk, "data/sdp_ceds_map.rds")

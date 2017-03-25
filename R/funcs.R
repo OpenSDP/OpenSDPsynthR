@@ -274,10 +274,11 @@ map_CEDS <- function(user, category = NULL, CEDS = NULL){
 get_code_values <- function(x){
   tmp <- strsplit(x, split = ";")
   tmp <- sapply(tmp, strsplit, split = "[[:punct:]]")
-  levels <- map(tmp, 1) %>% unlist
+  values <- map(tmp, 1) %>% unlist
   labels <- map(tmp, 2) %>% unlist
-  labels <- trimws(labels, which = )
-  return(list(levels = levels, labels = labels))
+  labels <- trimws(labels)
+  values <- trimws(values)
+  return(list(values = values, labels = labels))
 }
 
 # TODO: This should always append
@@ -334,4 +335,29 @@ make_inds <- function(data, col) {
 #     return(y[value])
 #   }
 # }
+
+
+recode_options <- function(data, from = c("SDP", "CEDS")){
+  if(missing(from)){
+    from <- "CEDS"
+  }
+  if(from == "CEDS"){
+    stopifnot(all(names(data) %in% OpenSDP.data:::xwalk$CEDS_name))
+  } else if(from == "SDP"){
+    stopifnot(all(names(data) %in% OpenSDP.data:::xwalk$sdp_name))
+  }
+  recode_ceds_value <- function(var, options){
+    var <- options$labels[match(var, options$values)]
+    return(var)
+  }
+  for(i in names(data)){
+    if(from == "SDP"){
+      codes <- get_code_values(OpenSDP.data:::xwalk$SDP_option_match[OpenSDP.data:::xwalk$sdp_name == i])
+    } else{
+      CEDS <- OpenSDP.data:::xwalk$schema[OpenSDP.data:::xwalk$CEDS_name == i][[1]]
+    }
+    data[, i] <- recode_ceds_value(data[, i], codes)
+  }
+  return(data)
+}
 

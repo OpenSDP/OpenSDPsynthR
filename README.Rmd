@@ -43,7 +43,7 @@ devtools::install_github("strategicdataproject/OpenSDP.data")
 
 Ljoad the package
 
-```{r, message=FALSE}
+```{r, message=TRUE}
 library(OpenSDP.data)
 ```
 

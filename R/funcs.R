@@ -235,14 +235,28 @@ assign_baseline <- function(baseline = NULL, data){
 
 #' Map to and from CEDS column names
 #'
-#' @param local character vector of variable names to match
+#' @param user character vector of variable names to match
 #' @param category character, a category of CEDS data to match
 #' @param CEDS optional
 #'
 #' @return mapped CEDS names
 #' @export
-map_CEDS <- function(local, category = NULL, CEDS = NULL){
-  out <- xwalk$sdp_name[match(local, xwalk$CEDS_name)]
+map_CEDS <- function(user, category = NULL, CEDS = NULL){
+  # TODO: Create a crosswalk from CEDS to SDP and SDP to CEDS with clearer lookup
+  sdp <- xwalk$sdp_name[match(user, xwalk$CEDS_name)]
+  ceds <- xwalk$CEDS_name[match(user, xwalk$sdp_name)]
+  checkLength <- function(x, y){
+    x_l <- length(x[!is.na(x)])
+    y_l <- length(y[!is.na(y)])
+    if(x_l > y_l){
+      return(x)
+    } else if(y_l > x_l){
+      return(y)
+    } else{
+      stop("I could not determine this")
+    }
+  }
+  out <- checkLength(sdp, ceds)
   if(all(is.na(out))){
     out <- NULL
   } else{
@@ -255,7 +269,7 @@ map_CEDS <- function(local, category = NULL, CEDS = NULL){
 #' @param x the data.frame character element that contains the codes
 #' @importFrom purrr map
 #' @importFrom magrittr %>%
-#'
+#' @export
 #' @return a list with the labels and levels properly formatted
 get_code_values <- function(x){
   tmp <- strsplit(x, split = ";")

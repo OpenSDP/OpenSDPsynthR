@@ -55,7 +55,7 @@ gen_students <- function(n, seed, control = sim_control()){
 
 
 #' Grand simulation
-#' @rdname popsim_control
+#' @rdname simpop
 #' @param n integer, number of students to simulate
 #' @param seed integer, random seed to use
 #' @param control a list, defined by \code{\link{sim_control}}
@@ -64,8 +64,8 @@ gen_students <- function(n, seed, control = sim_control()){
 #' @import dplyr
 #' @export
 #' @examples
-#' out <- popsim_control(20, seed = 213)
-popsim_control <- function(n, seed, control = sim_control()){
+#' out <- simpop(20, seed = 213)
+simpop <- function(n, seed, control = sim_control()){
   ## Generate student-year data
   message("Preparing student identities for ", n, " students...")
   suppressMessages({
@@ -115,7 +115,7 @@ popsim_control <- function(n, seed, control = sim_control()){
   return(list(demog_master = demog_master, stu_year = stu_year))
 }
 
-#' Generate initial studen status indicators
+#' Generate initial student status indicators
 #'
 #' @param data that includes the pre-requsites for generating each status
 #' @param baseline character, name of a baseline status to calculate

@@ -4,10 +4,10 @@
 \alias{map_CEDS}
 \title{Map to and from CEDS column names}
 \usage{
-map_CEDS(local, category = NULL, CEDS = NULL)
+map_CEDS(user, category = NULL, CEDS = NULL)
 }
 \arguments{
-\item{local}{character vector of variable names to match}
+\item{user}{character vector of variable names to match}
 
 \item{category}{character, a category of CEDS data to match}
 

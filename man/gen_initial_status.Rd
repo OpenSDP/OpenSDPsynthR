@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim_defaults.R
 \name{gen_initial_status}
 \alias{gen_initial_status}
-\title{Generate initial studen status indicators}
+\title{Generate initial student status indicators}
 \usage{
 gen_initial_status(data, baseline)
 }
@@ -15,5 +15,5 @@ gen_initial_status(data, baseline)
 the data with status variables appended
 }
 \description{
-Generate initial studen status indicators
+Generate initial student status indicators
 }

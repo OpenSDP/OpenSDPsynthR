@@ -14,13 +14,20 @@ ell <-  ell %>% gather(-age, key = "race", value = "prob")
 xwalk <- read.csv("data-raw/CEDS_SDP_map.csv", stringsAsFactors = FALSE)
 xwalk$schema <- NA
 for(i in 1:nrow(xwalk)){
-  xwalk$schema[i] <- I(list(OpenSDP.data:::get_code_values(xwalk$Option.Set[i])))
+  xwalk$schema[i] <- I(list(OpenSDP.data:::get_code_values(xwalk$CEDS_Option_set[i])))
 }
 
 ses <- data.frame(race = c("black", "asian", "hispanic", "amerind", "white",
                            "other", "multiracial", "hawaiian_pi"),
                   prob = c(0.65, 0.375, 0.6, 0.4, 0.4, 0.4, 0.4, 0.4))
 ses$race <- as.character(ses$race)
+
+# prog_baseline <- read.csv("data-raw/program_baseline.csv")
+# names(prog_baseline) <- tolower(names(prog_baseline))
+# names(prog_baseline)[1:3] <- map_CEDS(names(prog_baseline)[1:3])
+# # Next map values
+# prog_baseline
+
 
 # saveRDS(xwalk, "data/sdp_ceds_map.rds")
 devtools::use_data(ell, xwalk, ses, internal = TRUE, overwrite = TRUE)

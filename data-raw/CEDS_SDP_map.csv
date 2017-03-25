@@ -1,18 +1,18 @@
-entity,category,CEDS_name,sdp_name,Option Set
-K12Student,Demographic,Birthdate,dob,YYYY-MM-DD
-K12Student,Demographic,White,white,Yes - Yes;No - No;NotSelected - Not Selected
-K12Student,Demographic,Asian,asian,Yes - Yes;No - No;NotSelected - Not Selected
-K12Student,Demographic,American Indian or Alaska Native,amerind,Yes - Yes;No - No;NotSelected - Not Selected
-K12Student,Demographic,Black or African American,black,Yes - Yes;No - No;NotSelected - Not Selected
-K12Student,Demographic,Hispanic or Latino Ethnicity,hispanic,Yes - Yes;No - No;NotSelected - Not Selected
-K12Student,Demographic,Demographic Race Two or More Races,multiracial,Yes - Yes;No - No;NotSelected - Not Selected
-K12Student,Demographic,Native Hawaiian or Other Pacific Islander,hawaiian_pi,Yes - Yes;No - No;NotSelected - Not Selected
+entity,category,CEDS_name,sdp_name,CEDS_Option_set,SDP_option_match,
+K12Student,Demographic,Birthdate,dob,YYYY-MM-DD,YYYY-MM-DD
+K12Student,Demographic,White,white,Yes - Yes;No - No;NotSelected - Not Selected,Yes - 1;No - 0;Not Selected - NA
+K12Student,Demographic,Asian,asian,Yes - Yes;No - No;NotSelected - Not Selected,Yes - 1;No - 0;Not Selected - NA
+K12Student,Demographic,American Indian or Alaska Native,amerind,Yes - Yes;No - No;NotSelected - Not Selected,Yes - 1;No - 0;Not Selected - NA
+K12Student,Demographic,Black or African American,black,Yes - Yes;No - No;NotSelected - Not Selected,Yes - 1;No - 0;Not Selected - NA
+K12Student,Demographic,Hispanic or Latino Ethnicity,hispanic,Yes - Yes;No - No;NotSelected - Not Selected,Yes - 1;No - 0;Not Selected - NA
+K12Student,Demographic,Demographic Race Two or More Races,multiracial,Yes - Yes;No - No;NotSelected - Not Selected,Yes - 1;No - 0;Not Selected - NA
+K12Student,Demographic,Native Hawaiian or Other Pacific Islander,hawaiian_pi,Yes - Yes;No - No;NotSelected - Not Selected,Yes - 1;No - 0;Not Selected - NA
 K12Student,Demographic,,other
-K12Student,Limited English Proficiency,Limited English Proficiency Status,ell,Yes - Yes;No - No
+K12Student,Limited English Proficiency,Limited English Proficiency Status,ell,Yes - Yes;No - No,Yes - 1;No - 0
 K12Student,Disability,Primary Disability Type,iep,AUT - Autism; DB - Deaf-blindness; DD - Developmental Delay; EMN - Emotional disturbance; HI - Hearing Impariment; ID - Intellectual Disability; MD - Multiple disabilities; OI - Orthopedic impairment; OHI - Other health impairment; SLD - Specific learning disability; SLI - Speech or language impairment; TBI - Traumatic brain injury; VI - Visual impairment
-K12Student,Enrollment,Gifted and Talented Indicator,gifted,Yes - Yes; No - No; Unknown - Unknown
-K12Student,Economically Disadvantaged,Economic Disadvantage Status,frpl,Yes - Yes;No - No
-K12Student,Disability,IDEA Indicator,iep,Yes - Yes; No -No
+K12Student,Enrollment,Gifted and Talented Indicator,gifted,Yes - Yes; No - No; Unknown - Unknown,Yes - 1;No - 0;Not Selected - NA
+K12Student,Economically Disadvantaged,Economic Disadvantage Status,frpl,Yes - Yes;No - No,Yes - 1;No - 0;Not Selected - NA
+K12Student,Disability,IDEA Indicator,iep,Yes - Yes; No -No,Yes - 1;No - 0;Not Selected - NA
 K12Student,Identity,Student Identifier,sid,xxxx
 K12Student,Demographic,Sex,sex,Male - Male; Female - Female; NotSelected - Not Selected
 K12Student,Demographic,,age,,

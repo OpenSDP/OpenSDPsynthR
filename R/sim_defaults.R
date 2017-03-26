@@ -187,7 +187,7 @@ gen_student_years <- function(data, control=sim_control()){
   stu_year <- bind_rows(stu_year) %>% as.data.frame()
   names(stu_year) <- c(idvar, "year")
   bdvar <- names(data)[which(names(data) %in% c("DOB", "dob", "Birthdate"))]
-  stu_year <- left_join(stu_year, data[, c(idvar, bdvar)])
+  stu_year <- left_join(stu_year, data[, c(idvar, bdvar)], by = idvar)
   # Drop rows that occur before the birthdate
   stu_year %<>% filter(stu_year$year > lubridate::year(stu_year[, bdvar]))
   stu_year$age <- age_calc(dob = stu_year[, bdvar],

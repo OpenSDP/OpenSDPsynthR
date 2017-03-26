@@ -29,9 +29,9 @@ names(prog_baseline) <- tolower(names(prog_baseline))
 prog_baseline$frpl[prog_baseline$frpl == "2"] <- "1"
 prog_baseline <- prog_baseline %>% group_by(ell, iep, frpl) %>%
   summarize(count = sum(count), prob = sum(prob)) %>% as.data.frame()
-prog_baseline[, 1:3] <- recode_options(prog_baseline[, 1:3], from = "SDP")
-# Map column names
-names(prog_baseline)[1:3] <- map_CEDS(names(prog_baseline)[1:3])
+# Map CEDS names and option names
+# prog_baseline[, 1:3] <- recode_options(prog_baseline[, 1:3], from = "SDP")
+# names(prog_baseline)[1:3] <- map_CEDS(names(prog_baseline)[1:3])
 
 ## Pull in age_grade baseline
 age_grade <- read.csv("data-raw/age_grade_baseline.csv")

@@ -50,7 +50,7 @@ library(OpenSDP.data)
 
 
 ```{r, message=TRUE}
-out <- popsim_control(200, seed = 213)
+out <- simpop(200, seed = 213)
 head(out$demog_master %>% arrange(sid) %>% select(1:4, ses))
 head(out$stu_year, 10)
 ```

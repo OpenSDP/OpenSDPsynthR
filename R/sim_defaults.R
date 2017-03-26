@@ -90,14 +90,17 @@ simpop <- function(n, seed, control = sim_control()){
   # Needs to avoid hardcoding Race transformations, CEDS Xwalk should take
   # place outside of this function
   # This should also be controlled somehow by control eventually
-  message("Assigning ", n, " students to initial ELL status...")
-  stu_first$ell <- gen_initial_status(stu_first, baseline = "ell")
-  message("Assigning ", n, " students to initial SES status...")
-  stu_first$ses <- gen_initial_status(stu_first, baseline = "ses")
+  # message("Assigning ", n, " students to initial ELL status...")
+  # stu_first$ell <- gen_initial_status(stu_first, baseline = "ell")
+  # message("Assigning ", n, " students to initial SES status...")
+  # stu_first$ses <- gen_initial_status(stu_first, baseline = "ses")
+  message("Assigning ", n, " students to initial FRPL, IEP, and ELL status")
+  stu_first <- assign_baseline(baseline = "program", stu_first)
   message("Organizing status variables for you...")
-  stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell")], by = idvar)
-  demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")],
-                            by = idvar)
+  stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell", "iep", "frpl")],
+                        by = idvar)
+  # demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")],
+  #                           by = idvar)
   rm(stu_first)
   message("Assigning ", n, " students longitudinal status trajectories...")
   cond_vars <- get_sim_groupvars(control)
@@ -106,7 +109,7 @@ simpop <- function(n, seed, control = sim_control()){
   stu_year <- gen_annual_status(stu_year, control = control)
   # Create longitudinal ell and ses here
   stu_year <- stu_year %>%
-    select_(idvar, "year", "age", "ses", "ell", "iep", "gifted")
+    select_(idvar, "year", "age", "frpl", "ell", "iep", "gifted")
   message("Sorting your records")
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
@@ -146,12 +149,13 @@ gen_annual_status <- function(data, control = sim_control()){
   stopifnot(all(reqdVars %in% names(data)))
   idvar <- names(data)[which(names(data) %in% c("ID", "id", "sid"))]
   data <- data %>% group_by_(idvar) %>% arrange(year) %>%
-    mutate(iep = markov_cond_list(Sex[1], n = n(), control$iep_list),
+    mutate(iep = markov_cond_list(Sex[1], n = n(), control$iep_list,
+                                  t0 = iep[1], include.t0 = TRUE),
            gifted = markov_cond_list(Sex[1], n = n(), control$gifted_list),
            ell = markov_cond_list("ALL", n = n() - 1, control$ell_list,
                                   t0 = ell[1], include.t0 = TRUE),
-           ses = markov_cond_list(Race[1], n = n()-1, control$ses_list,
-                                  t0 = ses[1], include.t0 = TRUE))
+           frpl = markov_cond_list(Race[1], n = n()-1, control$ses_list,
+                                  t0 = frpl[1], include.t0 = TRUE))
   return(data)
 }
 
@@ -238,11 +242,9 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
   tm_iep_f <- tm_iep_f / rowSums(tm_iep_f)
 
     iep_list <- list("Male" = list(f = make_markov_series,
-               pars = list(tm = tm_iep_m,
-                     t0 = quote(sample(c("Yes", "No"), 1, prob = c(20, 80))))),
+               pars = list(tm = tm_iep_m)),
                    "Female" = list(f = make_markov_series,
-                     pars = list(tm = tm_iep_f,
-                 t0 = quote(sample(c("Yes", "No"), 1, prob = c(16, 84))))),
+                     pars = list(tm = tm_iep_f)),
                "GROUPVARS" = c("Sex"))
 
     tm <- matrix(c(800, 20, 5, 800), nrow = 2, byrow = TRUE,
@@ -273,7 +275,7 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
                      pars = list(tm = tm)),
       "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series,
                                                          pars = list(tm = tm)),
-      "GROUPVARS" = c("Race", "ses")
+      "GROUPVARS" = c("Race")
     )
 
     structure(namedList(

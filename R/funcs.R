@@ -117,7 +117,8 @@ cond_prob <- function(data, factor, newvar, prob_list){
 ##' age
 age_calc <- function (dob, enddate = Sys.Date(),
                       units = "months", precise = TRUE){
-  if (!inherits(dob, "Date") | !inherits(enddate, "Date")) {
+  if (!inherits(dob, "Date") |
+      !inherits(enddate, "Date")) {
     stop("Both dob and enddate must be Date class objects")
   }
   if (any(enddate < dob)) {
@@ -126,29 +127,58 @@ age_calc <- function (dob, enddate = Sys.Date(),
   start <- as.POSIXlt(dob)
   end <- as.POSIXlt(enddate)
   if (precise) {
-    start_is_leap <- ifelse(start$year%%400 == 0, TRUE, ifelse(start$year%%100 ==
-                                                                 0, FALSE, ifelse(start$year%%4 == 0, TRUE, FALSE)))
-    end_is_leap <- ifelse(end$year%%400 == 0, TRUE, ifelse(end$year%%100 ==
-                                                             0, FALSE, ifelse(end$year%%4 == 0, TRUE, FALSE)))
+    start_is_leap <-
+      ifelse(start$year %% 400 == 0,
+             TRUE,
+             ifelse(
+               start$year %% 100 ==
+                 0,
+               FALSE,
+               ifelse(start$year %% 4 == 0, TRUE, FALSE)
+             ))
+    end_is_leap <-
+      ifelse(end$year %% 400 == 0,
+             TRUE,
+             ifelse(end$year %% 100 ==
+                      0, FALSE, ifelse(end$year %%
+                                         4 == 0, TRUE, FALSE)))
   }
   if (units == "days") {
     result <- difftime(end, start, units = "days")
   }
   else if (units == "months") {
-    months <- sapply(mapply(seq, as.POSIXct(start), as.POSIXct(end),
-                            by = "months", SIMPLIFY = FALSE), length) - 1
+    months <- sapply(mapply(
+      seq,
+      as.POSIXct(start),
+      as.POSIXct(end),
+      by = "months",
+      SIMPLIFY = FALSE
+    ),
+    length) - 1
     if (precise) {
       month_length_end <- ifelse(end$mon == 1 & end_is_leap,
-                                 29, ifelse(end$mon == 1, 28, ifelse(end$mon %in%
-                                                                       c(3, 5, 8, 10), 30, 31)))
+                                 29,
+                                 ifelse(end$mon == 1, 28, ifelse(end$mon %in%
+                                                                   c(3, 5, 8, 10), 30, 31)))
       month_length_prior <- ifelse((end$mon - 1) == 1 &
-                                     start_is_leap, 29, ifelse((end$mon - 1) == 1,
-                                                               28, ifelse((end$mon - 1) %in% c(3, 5, 8, 10),
-                                                                          30, 31)))
-      month_frac <- ifelse(end$mday > start$mday, (end$mday -
-                                                     start$mday)/month_length_end, ifelse(end$mday <
-                                                                                            start$mday, (month_length_prior - start$mday)/month_length_prior +
-                                                                                            end$mday/month_length_end, 0))
+                                     start_is_leap,
+                                   29,
+                                   ifelse((end$mon - 1) == 1,
+                                          28, ifelse((end$mon - 1) %in% c(3, 5, 8, 10),
+                                                     30, 31)))
+      month_frac <- ifelse(
+        end$mday > start$mday,
+        (end$mday -
+           start$mday) / month_length_end,
+        ifelse(
+          end$mday <
+            start$mday,
+          (month_length_prior - start$mday) / month_length_prior +
+            end$mday /
+            month_length_end,
+          0
+        )
+      )
       result <- months + month_frac
     }
     else {
@@ -156,8 +186,14 @@ age_calc <- function (dob, enddate = Sys.Date(),
     }
   }
   else if (units == "years") {
-    years <- sapply(mapply(seq, as.POSIXct(start), as.POSIXct(end),
-                           by = "years", SIMPLIFY = FALSE), length) - 1
+    years <- sapply(mapply(
+      seq,
+      as.POSIXct(start),
+      as.POSIXct(end),
+      by = "years",
+      SIMPLIFY = FALSE
+    ),
+    length) - 1
     if (precise) {
       start_length <- ifelse(start_is_leap, 366, 365)
       end_length <- ifelse(end_is_leap, 366, 365)
@@ -165,10 +201,17 @@ age_calc <- function (dob, enddate = Sys.Date(),
                             60, start$yday - 1, start$yday)
       end_day <- ifelse(end_is_leap & end$yday >= 60, end$yday -
                           1, end$yday)
-      year_frac <- ifelse(start_day < end_day, (end_day -
-                                                  start_day)/end_length, ifelse(start_day > end_day,
-                                                                                (start_length - start_day)/start_length + end_day/end_length,
-                                                                                0))
+      year_frac <- ifelse(
+        start_day < end_day,
+        (end_day -
+           start_day) / end_length,
+        ifelse(
+          start_day > end_day,
+          (start_length - start_day) /
+            start_length + end_day / end_length,
+          0
+        )
+      )
       result <- years + year_frac
     }
     else {
@@ -197,13 +240,17 @@ get_baseline <- function(bl){
     data <- ses
     keys <- c("race")
     fun <- function(x) rbinom(1, 1, x)
+  } else if(bl == "program"){
+    data <- prog_baseline
+    keys <- NULL
+    fun <- function() {prog_baseline[sample(rownames(prog_baseline), 1,
+                                prob = prog_baseline$prob), 1:3]}
+
   } else{
     stop("Baseline not currently defined. Maybe you can write your own?")
   }
   return(list(data = data, keys = keys, fun = fun))
 }
-
-
 
 #' Append baseline data to initial data
 #'
@@ -215,20 +262,26 @@ get_baseline <- function(bl){
 #' @export
 assign_baseline <- function(baseline = NULL, data){
   bl_data <- get_baseline(baseline)
-  if(any(!bl_data$keys %in% names(data))){
-    msg <- paste("Data supplied does not have right keys to merge. Please use columns:",
-                 paste(bl_data$keys, collapse = ", "), sep = " \n ")
-    stop(msg)
+  if(is.null(bl_data$keys)){
+    out <- replicate(nrow(data), bl_data$fun(), simplify=FALSE) %>%
+      Reduce("rbind", .)
+    out <- cbind(data, out)
+  } else {
+    if(any(!bl_data$keys %in% names(data))){
+      msg <- paste("Data supplied does not have right keys to merge. Please use columns:",
+                   paste(bl_data$keys, collapse = ", "), sep = " \n ")
+      stop(msg)
+    }
+    data <- as.data.frame(left_join(data, bl_data$data, by = bl_data$keys))
+    var <- names(bl_data$data)[!names(bl_data$data) %in% bl_data$keys]
+    if(length(var) > 1){
+      stop("Variables are labeled wrong in data.")
+    }
+    # Avoid binomial NA warning in ELL baseline
+    suppressWarnings({
+      out <- sapply(data[, var], bl_data$fun)
+    })
   }
-  data <- as.data.frame(left_join(data, bl_data$data, by = bl_data$keys))
-  var <- names(bl_data$data)[!names(bl_data$data) %in% bl_data$keys]
-  if(length(var) > 1){
-    stop("Variables are labeled wrong in data.")
-  }
-  # Avoid binomial NA in ELL baseline
-  suppressWarnings({
-    out <- sapply(data[, var], bl_data$fun)
-  })
   return(out)
 }
 
@@ -357,9 +410,9 @@ recode_options <- function(data, from = c("SDP", "CEDS")){
   }
   for(i in names(data)){
     if(from == "SDP"){
-      codes <- get_code_values(OpenSDP.data:::xwalk$SDP_option_match[OpenSDP.data:::xwalk$sdp_name == i])
+      codes <- get_code_values(xwalk$SDP_option_match[xwalk$sdp_name == i])
     } else{
-      CEDS <- OpenSDP.data:::xwalk$schema[OpenSDP.data:::xwalk$CEDS_name == i][[1]]
+      CEDS <- xwalk$schema[xwalk$CEDS_name == i][[1]]
     }
     data[, i] <- recode_ceds_value(data[, i], codes)
   }

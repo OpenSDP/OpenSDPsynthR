@@ -295,6 +295,11 @@ assign_baseline <- function(baseline = NULL, data){
 #' @return mapped CEDS names
 #' @export
 map_CEDS <- function(user, category = NULL, CEDS = NULL){
+  if(!all(class(user) %in% c("factor", "character"))){ # is all right conditional?
+    msg <- "Please supply a character vector of names to be converted. Consider
+    passing or reassigning names(object)"
+    stop(msg)
+  }
   # TODO: Create a crosswalk from CEDS to SDP and SDP to CEDS with clearer lookup
   sdp <- xwalk$sdp_name[match(user, xwalk$CEDS_name)]
   ceds <- xwalk$CEDS_name[match(user, xwalk$sdp_name)]
@@ -402,8 +407,8 @@ recode_options <- function(data, from = c("SDP", "CEDS")){
   if(missing(from)){
     from <- "CEDS"
   }
-  stopifnot(all(names(data) %in% OpenSDP.data:::xwalk$CEDS_name) |
-              all(names(data) %in% OpenSDP.data:::xwalk$sdp_name))
+  stopifnot(all(names(data) %in% xwalk$CEDS_name) |
+              all(names(data) %in% xwalk$sdp_name))
   recode_ceds_value <- function(var, options){
     var <- options$labels[match(var, options$values)]
     return(var)

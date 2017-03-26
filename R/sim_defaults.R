@@ -34,7 +34,7 @@ gen_students <- function(n, seed, control = sim_control()){
   if(is.null(control$n_cohorts)){
     K <- 365L * 8L # Need to test these integers
   } else{
-    K <- 365L * n_cohorts
+    K <- 365L * control$n_cohorts
   }
   demog_master <- data.frame(
     sid = wakefield::id(n, random = TRUE),
@@ -149,7 +149,7 @@ gen_annual_status <- function(data, control = sim_control()){
   stopifnot(all(reqdVars %in% names(data)))
   idvar <- names(data)[which(names(data) %in% c("ID", "id", "sid"))]
   data <- data %>% group_by_(idvar) %>% arrange(year) %>%
-    mutate(iep = markov_cond_list(Sex[1], n = n(), control$iep_list,
+    mutate(iep = markov_cond_list(Sex[1], n = n()-1, control$iep_list,
                                   t0 = iep[1], include.t0 = TRUE),
            gifted = markov_cond_list(Sex[1], n = n(), control$gifted_list),
            ell = markov_cond_list("ALL", n = n() - 1, control$ell_list,
@@ -218,7 +218,7 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
 
   # temporarily hardcoding these values here for testing
   tm_gifted_f <- matrix(c(500, 1, 2, 500), nrow = 2, byrow = TRUE,
-                        dimnames = list(c("Yes", "No"), c("Yes", "No")))
+                        dimnames = list(c("1", "0"), c("1", "0")))
   tm_gifted_m <- tm_gifted_f
   tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
   tm_gifted_m <- tm_gifted_m / rowSums(tm_gifted_m)
@@ -227,15 +227,15 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
   gifted_list <- list("Male" = list(f = make_markov_series,
                              pars = list(tm = tm_gifted_m,
             # Use quote so for each call in the loop sample is redrawn
-                      t0 = quote(sample(c("Yes", "No"), 1, prob = c(10, 90))))),
+                      t0 = quote(sample(c("1", "0"), 1, prob = c(10, 90))))),
                       "Female" = list(f = make_markov_series,
                           pars = list(tm = tm_gifted_f,
-                       t0 = quote(sample(c("Yes", "No"), 1, prob = c(8, 92))))),
+                       t0 = quote(sample(c("1", "0"), 1, prob = c(8, 92))))),
                       "GROUPVARS" = c("Sex"))
 
   # IEP
   tm_iep_f <- matrix(c(250, 50, 150, 900), nrow = 2, byrow = TRUE,
-                     dimnames = list(c("Yes", "No"), c("Yes", "No")))
+                     dimnames = list(c("1", "0"), c("1", "0")))
   tm_iep_m <- tm_iep_f
   tm_iep_m[, 1] <- tm_iep_m[, 1] + 50
   tm_iep_m <- tm_iep_m / rowSums(tm_iep_m)
@@ -248,14 +248,14 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
                "GROUPVARS" = c("Sex"))
 
     tm <- matrix(c(800, 20, 5, 800), nrow = 2, byrow = TRUE,
-                 dimnames = list(c("Yes", "No"), c("Yes", "No")))
+                 dimnames = list(c("1", "0"), c("1", "0")))
     tm <- tm / rowSums(tm)
     ell_list <- list("ALL" = list(f = make_markov_series,
                                   pars = list(tm = tm)),
                      "GROUPVARS" = c("ell"))
 
     tm <- matrix(c(800, 100, 300, 800), nrow = 2, byrow = TRUE,
-                 dimnames = list(c("Yes", "No"), c("Yes", "No")))
+                 dimnames = list(c("1", "0"), c("1", "0")))
     tm <- tm / rowSums(tm)
 
     ses_list <- list(

@@ -16,7 +16,7 @@
 #' @return a list of summed matrix elements
 #' @importFrom magrittr %>%
 m_sum <- function(l) {
-  reduce(l, `+`) %>% list()
+  Reduce(l, `+`) %>% list()
 }
 
 #' Tidy a two-state markov sequence for output
@@ -56,3 +56,4 @@ markov_cond_list <- function(groupname, n, lst, ...){
           quote = FALSE)
 }
 
+utils::globalVariables(c("Sex", "iep", "Race", "frpl", "age"))

@@ -443,7 +443,8 @@ estimate of how the algorithm is working.
 
 ```{r aggregateTest}
 results <- stu_year %>% group_by(ell_first) %>% 
-  do(.out = createSequenceMatrix(.$ell, possibleStates = c("Yes", "No"))) %>% 
+  do(.out = markovchain::createSequenceMatrix(.$ell, 
+                                          possibleStates = c("Yes", "No"))) %>% 
   ungroup %>%
   nest(-ell_first) %>%
   mutate(summed = map(data, ~ reduce(.$.out, `+`)))
@@ -510,7 +511,8 @@ stu_year <- cond_prob(stu_year, factor = "Race",
 ## Sum the student matrices within each race so that there is 1 matrix 
 ## per category
 results <- stu_year %>% group_by(Race, ID) %>% 
-  do(.out = createSequenceMatrix(.$frpl, possibleStates = c("Yes", "No"))) %>% 
+  do(.out = markovchain::createSequenceMatrix(.$frpl, 
+                                              possibleStates = c("Yes", "No"))) %>% 
   ungroup %>%
   nest(-Race) %>%
   mutate(summed = map(data, ~ reduce(.$.out, `+`)))
@@ -575,7 +577,8 @@ stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>%
           gifted = markov_cond_list(Sex[1], n = n(), gifted_list))
 
 results <- stu_year %>% group_by(Sex) %>% 
-  do(.out = createSequenceMatrix(.$gifted, possibleStates = c("Yes", "No"))) %>% 
+  do(.out = markovchain::createSequenceMatrix(.$gifted, 
+                                              possibleStates = c("Yes", "No"))) %>% 
   ungroup %>%
   nest(-Sex) %>%
   mutate(summed = map(data, ~ reduce(.$.out, `+`)))
@@ -623,7 +626,8 @@ stu_year <- stu_year %>% group_by(ID) %>% arrange(year) %>%
 
 
 results <- stu_year %>% group_by(Sex) %>% 
-  do(.out = createSequenceMatrix(.$grade_adv, possibleStates = c("-1", "0", "1", "2"))) %>% 
+  do(.out = markovchain::createSequenceMatrix(.$grade_adv, 
+                                  possibleStates = c("-1", "0", "1", "2"))) %>% 
   ungroup %>%
   nest(-Sex) %>%
   mutate(summed = map(data, ~ reduce(.$.out, `+`)))

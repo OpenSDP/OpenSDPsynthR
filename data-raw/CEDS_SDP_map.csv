@@ -12,7 +12,7 @@ K12Student,Limited English Proficiency,Limited English Proficiency Status,ell,Ye
 K12Student,Disability,Primary Disability Type,iep,AUT - Autism; DB - Deaf-blindness; DD - Developmental Delay; EMN - Emotional disturbance; HI - Hearing Impariment; ID - Intellectual Disability; MD - Multiple disabilities; OI - Orthopedic impairment; OHI - Other health impairment; SLD - Specific learning disability; SLI - Speech or language impairment; TBI - Traumatic brain injury; VI - Visual impairment
 K12Student,Enrollment,Gifted and Talented Indicator,gifted,Yes - Yes; No - No; Unknown - Unknown,1 - Yes;0 - No;NA - Not Selected
 K12Student,Economically Disadvantaged,Economic Disadvantage Status,frpl,Yes - Yes;No - No,1 - Yes;0 - No;NA - Not Selected
-K12Student,Disability,IDEA Indicator,iep,Yes - Yes; No - No,1 - Yes;0 - No;NA - Not Selected
+K12Student,Disability,IDEA Indicator,iep,Yes - Yes; No - No,1 - Yes;0 - No
 K12Student,Identity,Student Identifier,sid,xxxx
 K12Student,Demographic,Sex,sex,Male - Male; Female - Female; NotSelected - Not Selected
 K12Student,Demographic,,age,,

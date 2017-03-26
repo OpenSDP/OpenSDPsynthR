@@ -272,7 +272,7 @@ map_CEDS <- function(user, category = NULL, CEDS = NULL){
 #' @export
 #' @return a list with the labels and levels properly formatted
 get_code_values <- function(x){
-  tmp <- strsplit(x, split = ";")
+  tmp <- unlist(strsplit(x, split = ";"))
   tmp <- sapply(tmp, strsplit, split = "[[:punct:]]")
   values <- map(tmp, 1) %>% unlist
   labels <- map(tmp, 2) %>% unlist
@@ -337,15 +337,20 @@ make_inds <- function(data, col) {
 # }
 
 
+#' Recode options
+#'
+#' @param data a data.frame to recode the variables to CEDS from
+#' @param from the data definitions you are recoding from
+#'
+#' @return the data object, but with all values matching CEDS specification
+#' recoded to meet the CEDS specification
+#' @export
 recode_options <- function(data, from = c("SDP", "CEDS")){
   if(missing(from)){
     from <- "CEDS"
   }
-  if(from == "CEDS"){
-    stopifnot(all(names(data) %in% OpenSDP.data:::xwalk$CEDS_name))
-  } else if(from == "SDP"){
-    stopifnot(all(names(data) %in% OpenSDP.data:::xwalk$sdp_name))
-  }
+  stopifnot(all(names(data) %in% OpenSDP.data:::xwalk$CEDS_name) |
+              all(names(data) %in% OpenSDP.data:::xwalk$sdp_name))
   recode_ceds_value <- function(var, options){
     var <- options$labels[match(var, options$values)]
     return(var)

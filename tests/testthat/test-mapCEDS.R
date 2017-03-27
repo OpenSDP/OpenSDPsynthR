@@ -32,6 +32,14 @@ test_that("Check names return dimensions", {
   expect_equal(length(allCEDSnames), length(cleaned))
 })
 
+test_that("Errors make sense when column names are mixed", {
+  mixNames <- c("Birthdate", "white", "asian", "black", "hispanic",
+                "Primary Disability Type")
+  cleaned <- map_CEDS(mixNames)
+
+
+})
+
 
 # test error when names are mixed CEDS and SDP
 # test result when names are neither CEDS or SDP

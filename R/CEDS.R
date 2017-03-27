@@ -18,16 +18,27 @@ map_CEDS <- function(user, category = NULL, CEDS = NULL){
   checkLength <- function(x, y){
     x_l <- length(x[!is.na(x)])
     y_l <- length(y[!is.na(y)])
+    if(x_l > 0 & y_l > 0){
+      msg <- ("Both SDP and CEDS names detected.")
+    } else{
+      msg <- " " # empty space to allow compound messages below
+    }
     if(x_l > y_l){
+      message("Majority of names match SDP names, returning SDP names. ", msg)
       return(x)
     } else if(y_l > x_l){
+      message("Majority of names match CEDS names, returning CEDS names. ", msg)
       return(y)
-    } else{
-      stop("I could not determine this")
+    } else {
+      stop("Equal number of CEDS and SDP names identified, check names.")
     }
   }
   out <- checkLength(sdp, ceds)
+  if(any(is.na(out))){
+    message("Not all names successfully matched. Returning NA for those not matched.")
+  }
   if(all(is.na(out))){
+    warning("No names could be matched, please check names for typos.")
     out <- NULL
   } else{
     return(out)
@@ -47,7 +58,9 @@ get_code_values <- function(x){
   values <- map(tmp, 1) %>% unlist
   labels <- map(tmp, 2) %>% unlist
   labels <- trimws(labels)
+  names(labels) <- NULL
   values <- trimws(values)
+  names(values) <- NULL
   return(list(values = values, labels = labels))
 }
 
@@ -80,33 +93,6 @@ make_inds <- function(data, col) {
   data
 }
 
-# TODO:
-# Structure baseline
-# Make it a list
-# Make the list include the key variables needed
-# Make the list include the levels of factors to match on
-
-
-# # x and y are vectors of labels
-# reconcile_labels <- function(x, y){
-#   list(x, y[pmatch(tolower(x), tolower(y))])
-# }
-#
-# try_label <- function(x, y, value){
-#   lookup <- reconcile_labels(x, y)
-#   if(is.na(y[value])){
-#     out <- lookup[[2]][which(lookup[[1]] == value)]
-#     if(length(out) != 0){
-#       return(out)
-#     } else{
-#       return(NA)
-#     }
-#   } else{
-#     return(y[value])
-#   }
-# }
-
-
 #' Recode options
 #'
 #' @param data a data.frame to recode the variables to CEDS from
@@ -136,3 +122,21 @@ recode_options <- function(data, from = c("SDP", "CEDS")){
   return(data)
 }
 
+# # x and y are vectors of labels
+# reconcile_labels <- function(x, y){
+#   list(x, y[pmatch(tolower(x), tolower(y))])
+# }
+#
+# try_label <- function(x, y, value){
+#   lookup <- reconcile_labels(x, y)
+#   if(is.na(y[value])){
+#     out <- lookup[[2]][which(lookup[[1]] == value)]
+#     if(length(out) != 0){
+#       return(out)
+#     } else{
+#       return(NA)
+#     }
+#   } else{
+#     return(y[value])
+#   }
+# }

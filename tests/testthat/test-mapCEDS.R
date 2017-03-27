@@ -35,13 +35,60 @@ test_that("Check names return dimensions", {
 test_that("Errors make sense when column names are mixed", {
   mixNames <- c("Birthdate", "white", "asian", "black", "hispanic",
                 "Primary Disability Type")
+  expect_message(map_CEDS(mixNames), "Not all names successfully matched.", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "Returning NA for those not matched.", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "Majority of names match CEDS names", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "returning CEDS names", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "Both SDP and CEDS names detected.", fixed = TRUE)
   cleaned <- map_CEDS(mixNames)
+  expect_equal(length(cleaned[is.na(cleaned)]), 2)
+  expect_equal(length(cleaned[!is.na(cleaned)]), 4)
+  expect_identical(cleaned[!is.na(cleaned)], c("White", "Asian", "Black or African American",
+                                               "Hispanic or Latino Ethnicity"))
+  mixNames <- c("Birthdate", "White", "Asian", "black", "hispanic",
+                "Primary Disability Type")
+  expect_message(map_CEDS(mixNames), "Not all names successfully matched.", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "Returning NA for those not matched.", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "Majority of names match SDP names", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "returning SDP names", fixed = TRUE)
+  expect_message(map_CEDS(mixNames), "Both SDP and CEDS names detected.", fixed = TRUE)
+  cleaned <- map_CEDS(mixNames)
+  expect_equal(length(cleaned[is.na(cleaned)]), 2)
+  expect_equal(length(cleaned[!is.na(cleaned)]), 4)
+  expect_identical(cleaned[!is.na(cleaned)], c("dob", "white", "asian", "disab_type"))
+})
 
+test_that("get_code_values extracts values", {
+  test_string <- c("Yes - Yes;No - No;NotSelected - Not Selected")
+  codes <- get_code_values(test_string)
+  expect_equal(length(codes), 2)
+  expect_identical(names(codes), c("values", "labels"))
+  expect_null(names(codes$values))
+  expect_null(names(codes$labels))
+  expect_equal(length(codes$values), 3)
+  expect_equal(length(codes$labels), 3)
+  expect_identical(codes$labels, c("Yes", "No", "Not Selected"))
+  expect_identical(codes$values, c("Yes", "No", "NotSelected"))
+  bad_string <- c("Yes - Yes,No - No,NotSelected - Not Selected")
+  codes <- get_code_values(bad_string)
 
 })
 
+test_that("make_inds makes indicator variables", {
+  testDat <- data.frame(id = 1:30,
+                        group = sample(letters[1:5], 30, replace=TRUE))
+  outDat <- make_inds(testDat, col = "group")
+  expect_true(ncol(outDat) > ncol(testDat))
+  expect_equal(ncol(outDat), 7)
+  expect_equal(nrow(testDat), nrow(outDat))
+  expect_identical(names(outDat)[3:7], letters[1:5])
+  expect_identical(names(outDat)[1:2], names(testDat)[1:2])
+})
+#
+# test_that("recode_options successfully recodes", {
+#
+#
+#
+# })
 
-# test error when names are mixed CEDS and SDP
-# test result when names are neither CEDS or SDP
-# test dimensions returned
-
+# recode_options

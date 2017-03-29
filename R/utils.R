@@ -145,3 +145,22 @@ age_calc <- function (dob, enddate = Sys.Date(),
   }
   return(result)
 }
+
+
+#' Generate positive random numbers that sum to a value
+#'
+#' @param N number of numbers to generate
+#' @param M constraint on the sum
+#' @param sd standard deviation of values
+#'
+#' @return a vector of numerics, length N
+#' @importFrom stats rlnorm
+#' @export
+#' @examples
+#' out <- rand_vect_cont(N = 10, M = 2, sd = 1)
+#' sum(out)
+#' length(out)
+rand_vect_cont <- function(N, M, sd = 1) {
+  vec <- rlnorm(N, M/N, sd)
+  vec / sum(vec) * M
+}

@@ -51,7 +51,7 @@ library(OpenSDP.data)
 
 ```{r, message=TRUE}
 out <- simpop(200, seed = 213)
-head(out$demog_master %>% arrange(sid) %>% select(1:4, ses))
+head(out$demog_master %>% arrange(sid) %>% select(1:4))
 head(out$stu_year, 10)
 ```
 
@@ -88,7 +88,7 @@ the frequency of transition states observed per student.
 library(ggplot2)
 library(tidyr)
 plotdf <- stu_year %>% arrange(sid, year) %>% group_by(sid) %>% 
-  do(tidy_sequence(.$ell, states = c("Yes", "No")))
+  do(tidy_sequence(.$ell, states = c(1, 0)))
 
 plotdf$total <- rowSums(plotdf[, -1])
 plotdf <- plotdf %>% gather(-sid, key = "Transition", value = "Count")
@@ -176,9 +176,9 @@ Let's look at co-occurrence of status over time.
 
 ```{r CrossTabs}
 # Look at by year patterns of relationships by student year
-table(FRL = stu_year$ses, GIFTED = stu_year$gifted)
-table(FRL = stu_year$ses, IEP = stu_year$iep)
-table(FRL = stu_year$gifted, IEP = stu_year$iep)
+table(FRL = stu_year$frpl, GIFTED = stu_year$gifted)
+table(FRL = stu_year$frpl, IEP = stu_year$iep)
+table(GIFTED = stu_year$gifted, IEP = stu_year$iep)
 
 ```
 
@@ -186,8 +186,8 @@ Let's check polychoric correlations:
 
 ```{r}
 gamma_GK(stu_year$gifted, stu_year$iep)
-gamma_GK(stu_year$ses, stu_year$iep)
-gamma_GK(stu_year$ses, stu_year$ell)
+gamma_GK(stu_year$frpl, stu_year$iep)
+gamma_GK(stu_year$frpl, stu_year$ell)
 ```
 
 
@@ -196,15 +196,29 @@ Finally, let's see who winds up "ever" in each category
 ```{r collapseEver}
 
 test_df <- stu_year %>% group_by(sid) %>% 
-  summarize(iep_ever = if_else(any(iep == "Yes"), "Yes", "No"), 
-            ell_ever = if_else(any(ell == "Yes"), "Yes", "No"), 
-            frpl_ever = if_else(any(ses == "Yes"), "Yes", "No"), 
-            gifted_ever = if_else(any(gifted == "Yes"), "Yes", "No"))
+  summarize(iep_ever = if_else(any(iep == 1), "Yes", "No"), 
+            ell_ever = if_else(any(ell == 1), "Yes", "No"), 
+            frpl_ever = if_else(any(frpl == 1), "Yes", "No"), 
+            gifted_ever = if_else(any(gifted == 1), "Yes", "No"))
 
 table(IEP_EVER = test_df$iep_ever)
 table(ELL_EVER = test_df$ell_ever)
 table(FRPL_EVER = test_df$frpl_ever)
 table(GIFTED_EVER = test_df$gifted_ever)
+
+```
+
+
+## Assigning Schools and Outcomes
+
+Students move through grades, schools, and outcomes. 
+
+```{r, include=FALSE}
+
+tmp <- head(stu_year)
+# tmp <- head(stu_year$age)
+
+zed <- assign_baseline("grade", tmp)
 
 ```
 

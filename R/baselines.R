@@ -21,7 +21,18 @@ get_baseline <- function(bl){
     keys <- NULL
     fun <- function() {prog_baseline[sample(rownames(prog_baseline), 1,
                                             prob = prog_baseline$prob), 1:3]}
-
+  } else if(bl == "grade"){
+    data <- age_grade
+    keys <- "age"
+    fun <- function(x){
+      if(x %in% age_grade$age){
+        probs <- age_grade[which(age_grade$age == x),][-1]
+        out <-sample(names(age_grade)[-1], 1, prob = probs)
+        return(out)
+      } else{
+        return(NA)
+      }
+    }
   } else{
     stop("Baseline not currently defined. Maybe you can write your own?")
   }
@@ -38,6 +49,13 @@ get_baseline <- function(bl){
 #' @export
 assign_baseline <- function(baseline = NULL, data){
   bl_data <- get_baseline(baseline)
+  if(baseline == "grade"){
+    data <- as.data.frame(data)
+    out <- sapply(data[, bl_data$keys], bl_data$fun)
+    data <- cbind(data, out)
+    names(data)[ncol(data)] <- baseline
+    return(data)
+  }
   if(is.null(bl_data$keys)){
     out <- replicate(nrow(data), bl_data$fun(), simplify=FALSE) %>%
       Reduce("rbind", .)
@@ -134,5 +152,34 @@ assign_grade <- function(age, ability){
   maxGrade <- floor(age - 4)
   out <- wakefield::level(1, x = baseGrade:maxGrade, prob = c(0.01, 0.03, 0.9, 0.06))
   return(out)
+}
+
+
+
+#' Generate a random transition matrix for school enrollments
+#'
+#' @param nschls integer, the number of schools available, default = 15
+#' @param diag_limit a numeric between 0 and 1 that sets the minimum probability that a student
+#' will stay schools
+#'
+#' @return a transition matrix nschls X nschls of transition probabilities
+#' @export
+#'
+#' @examples
+#' out <- school_transitions(12)
+#' out
+school_transitions <- function(nschls = 15L, diag_limit = 0.9){
+  stopifnot(class(nschls) %in% c("numeric", "integer"))
+  stopifnot(diag_limit > 0 & diag_limit < 1)
+  empty <- matrix(rep(0, nschls^2), nrow = nschls, ncol = nschls)
+  diag(empty) <- 1
+  for(i in 1:nschls){
+    diag(empty)[i] <- runif(1, diag_limit, 1)
+  }
+  for(i in 1:nschls){
+    empty[i, ][empty[i,] ==0] <- rand_vect_cont(nschls-1, 1-diag(empty)[i])
+  }
+  school_tm <- empty
+  return(school_tm)
 }
 

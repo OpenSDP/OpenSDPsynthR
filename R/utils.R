@@ -179,3 +179,18 @@ convert_grade <- function(x){
   x <- as.character(unlist(x))
   return(x)
 }
+
+better_sim.lm <- function(object, nsim, newdata){
+  newdata <- as.matrix(newdata)
+  se <- vcov(object)
+  eff <- coef(object)
+  coefs <- rmvnorm(nsim, mean = eff, sigma = se)
+  if(ncol(newdata) == ncol(coefs)-1){
+    warning("One too few variables in newdata, appending intercept to front")
+    newdata <- cbind("Intercept" = 1, newdata)
+  } else if(ncol(newdata) != ncol(coefs)){
+    stop("Wrong dimensions in newdata")
+  }
+  preds <- as.matrix(newdata) %*% t(coefs)
+  return(preds)
+}

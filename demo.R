@@ -1,4 +1,15 @@
 library(simglm)
+
+
+
+
+
+
+out <- zed2 %>% group_by(clustID) %>%
+  summarize(count = n(), unique = length(unique(withinID)))
+
+
+
 # sim graduation
 fixed <- ~ 1 + gifted.f + iep.f + frpl.f + ell.f + male.f
 random <- ~ 1
@@ -9,7 +20,7 @@ random_param <- list(random_var = c(0.7728), rand_gen = 'rnorm') # intercept + a
 unbalCont <- c(100, 600)
 # Total number of level 2 groups = k * n
 n <- 15 # obs per group level 2 group
-p <- 400 # obs per group?
+#p <- 400 # obs per group?
 data_str <- "long"
 cov_param <- NULL
 grad_df <- sim_glm(fixed = fixed, random = random,

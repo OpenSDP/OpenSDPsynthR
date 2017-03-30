@@ -215,8 +215,76 @@ Students move through grades, schools, and outcomes.
 
 ```{r, include=FALSE}
 # tmp <- head(stu_year$age)
-
 # school_transitions(nschls = 12L)
+
+
+out_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted.f + iep.f + frpl.f + ell.f + male.f,
+                          random_var = 0.77,
+                          cov_param = list(dist_fun = "rnorm", var_type = "lvl1", 
+                                           opts = list(list(mean=0, sd = 1))),
+                          cor_vars = c(0.247, -0.169, 0.011, -0.050, -0.036, 0.003),
+                  fixed_param = c(1.735, 0.47259, 0.12351, 0.01538, -0.56517, -0.23, -0.31298),
+                  fact_vars = list(numlevels = c(2, 2, 2, 2, 2),
+                                   var_type = c(rep('lvl1', 5)), 
+                                   prob = list(c(0.9, 0.1), 
+                                                c(0.8, 0.2), 
+                                               c(0.55, 0.45), 
+                                               c(0.9, 0.1), 
+                                               c(0.53, 0.47))),
+                  ngrps = 20, unbalanceRange = c(100, 1500))
+
+names(out_sim)[1:7] <- c("intercept", "math_ss","gifted", "iep", "frpl", "ell", "male")
+
+summary(glmer(sim_data ~ math_ss + gifted + iep + frpl + ell + male + (1|clustID), 
+              data = out_sim, family = "binomial"))
+
+out_schls <- out_sim %>% group_by(clustID) %>%
+  summarize(count = n(), 
+            gifted = mean(gifted), 
+            ell = mean(ell), 
+            frpl = mean(frpl), 
+            iep = mean(iep), 
+            male = mean(male), 
+            dv = randEff[1]) %>% as.data.frame()
+
+school_assign <- lm(dv ~ ell + frpl + iep + male, data = out_schls)
+
+stu_df <- left_join(stu_year, demog_master[, c("sid", "Sex")])
+stu_df$male <- ifelse(stu_df$Sex == "Male", 1, 0)
+
+eligible_assign <- stu_df[stu_df$grade %in% c("9", "10", "11", "12"), 
+                          c("sid","ell", "frpl", "iep", "male")]
+eligible_assign[, -1] <- apply(eligible_assign[, -1], 2, function(x) as.numeric(as.character(x)))
+
+rescale_school <- function(data, target, vars){
+  for(var in vars){
+    data[, var] <- sapply(data[, var], function(x) {
+      ifelse(x == 1, runif(1, min(target[, var]), quantile(target[, var], 0.1)[[1]]), 
+             runif(1, quantile(target[, var], 0.8)[[1]], max(target[, var])))
+      })
+  }
+  return(data)
+}
+
+eligible_assign <- rescale_school(eligible_assign, out_schls, 
+                                  vars = c("ell", "frpl", "iep", "male"))
+
+assign_probs <- better_sim.lm(school_assign, nsim = 100, newdata = eligible_assign[, -1])
+eligible_assign$y <- apply(assign_probs, 1, function(x) sample(x, 1))
+
+match_schools <- function(prob, schlList){
+  zzz <- sapply(prob, function(x) {
+    schlList$clustID[which(abs(schlList$dv - x) == min(abs(schlList$dv - x)))]
+  }
+    )
+  return(zzz)
+}
+
+eligible_assign$schid <- match_schools(eligible_assign$y, 
+                                       schlList = out_schls)
+
+
+
 ```
 
 

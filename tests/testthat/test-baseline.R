@@ -45,5 +45,11 @@ test_that("Baseline assignment errors are informative", {
                "Data supplied does not have right keys to merge")
 })
 
+## Test program baseline
+## Test grade baseline
+## Test ses baseline
+## Test baseline assignment and conditional probability
+## Test school assignment
+## Test school transition assignment
 
 

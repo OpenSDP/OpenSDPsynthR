@@ -32,9 +32,16 @@ test_that("gen_student_years longitudinal data", {
   expect_identical(names(out_l), c("sid", "year", "Birthdate", "age"))
 })
 
+
+
 # gen_annual_status
 # gen_initial_status
 # simpop
 # gen_student_years
 # make_inds
 # sim_control
+
+test_that("Simulation control works", {
+  expect_is(sim_control(), "list")
+
+})

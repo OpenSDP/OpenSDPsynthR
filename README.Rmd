@@ -214,12 +214,9 @@ table(GIFTED_EVER = test_df$gifted_ever)
 Students move through grades, schools, and outcomes. 
 
 ```{r, include=FALSE}
-
-tmp <- head(stu_year)
 # tmp <- head(stu_year$age)
 
-zed <- assign_baseline("grade", tmp)
-
+# school_transitions(nschls = 12L)
 ```
 
 

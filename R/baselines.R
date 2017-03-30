@@ -28,6 +28,7 @@ get_baseline <- function(bl){
       if(x %in% age_grade$age){
         probs <- age_grade[which(age_grade$age == x),][-1]
         out <-sample(names(age_grade)[-1], 1, prob = probs)
+        out <- convert_grade(out)
         return(out)
       } else{
         return(NA)
@@ -180,6 +181,7 @@ school_transitions <- function(nschls = 15L, diag_limit = 0.9){
     empty[i, ][empty[i,] ==0] <- rand_vect_cont(nschls-1, 1-diag(empty)[i])
   }
   school_tm <- empty
+  dimnames(school_tm) <- list(1:nschls, 1:nschls)
   return(school_tm)
 }
 

@@ -114,6 +114,8 @@ simpop <- function(n, seed, control = sim_control()){
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
   stu_year$age <- round(stu_year$age, 0)
+  message("Assiging grades...")
+  stu_year <- assign_baseline("grade", stu_year)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year))
 }

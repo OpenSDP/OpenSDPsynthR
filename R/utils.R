@@ -164,3 +164,18 @@ rand_vect_cont <- function(N, M, sd = 1) {
   vec <- rlnorm(N, M/N, sd)
   vec / sum(vec) * M
 }
+
+#' Convert auto-generated grades to better grades
+#'
+#' @param x a vector of grades formatted with g
+#'
+#' @return a character vector of grades
+convert_grade <- function(x){
+  x <- as.character(x)
+  x[x == "g-1"] <- "PK"
+  x[x == "g0"] <- "KG"
+  x[x %in% paste0("g", 1:12)] <- sapply(x[x %in% paste0("g", 1:12)],
+                                        function(x) gsub("g", "", x))
+  x <- as.character(unlist(x))
+  return(x)
+}

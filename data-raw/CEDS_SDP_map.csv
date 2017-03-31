@@ -14,5 +14,6 @@ K12Student,Enrollment,Gifted and Talented Indicator,gifted,Yes - Yes; No - No; U
 K12Student,Economically Disadvantaged,Economic Disadvantage Status,frpl,Yes - Yes;No - No,1 - Yes;0 - No;NA - Not Selected
 K12Student,Disability,IDEA Indicator,iep,Yes - Yes; No - No,1 - Yes;0 - No
 K12Student,Identity,Student Identifier,sid,xxxx
-K12Student,Demographic,Sex,sex,Male - Male; Female - Female; NotSelected - Not Selected
+K12Student,Demographic,Sex,sex,Male - Male;Female - Female;NotSelected - Not Selected
 K12Student,Demographic,,age,,
+K12Student,Enrollment,Entry Grade Level,grade_level,IT - Infant/toddler;PR - Preschool;PK - Prekindergarten;TK - Transitional Kindergarten;KG - Kindergarten;01 - First grade;02 - Second grade;03 - Third grade;04 - Fourth grade;05 - Fifth grade;06 - Sixth grade;07 - Seventh grade;08 - Eigth grade;09 - Ninth grade;10 - Tenth grade;11 - Eleventh grade;12 - Twelfth grade;13 - Grade 13;PS - Postsecondary;UG - Ungraded;Other - Other,-9 - Ungraded;-1 - Prekindergarten;-1 - Transitional Kindergarten;-1 - Preschool;0 - Kindergarten;1 - First grade;2 - Second grade;3 - Third grade;4 - Fourth grade;5 - Fifth grade;6 - Sixth grade;7 - Seventh grade;8 - Eigth grade;9 - Ninth grade;10 - Tenth grade;11 - Eleventh grade;12 - Twelfth grade;13 - Grade 13;13 - Postsecondary

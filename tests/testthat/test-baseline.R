@@ -101,22 +101,22 @@ test_that("Baseline for grade is well defined", {
 
 # cond_prob
 ses_list <- list(
-  "white" = list(f = rnorm,
-                 pars = list(mean = 0.3, sd = 1.1)),
-  "hispanic" = list(f = rnorm,
-                    pars = list(mean = -0.1, sd = 0.9)),
-  "black" = list(f = rnorm,
-                 pars = list(mean = -0.2, sd = 1.2)),
-  "asian" = list(f = rnorm,
-                 pars = list(mean = 0.23, sd = 1.2)),
-  "multiracial" = list(f = rnorm,
-                       pars = list(mean = 0.0, sd = 1)),
-  "amerind" = list(f = rnorm,
-                   pars = list(mean = -0.2, sd = 1)),
-  "other" = list(f = rnorm,
-                 pars = list(mean = 0, sd = 1)),
-  "hawaiian_pi" = list(f = rnorm,
-                       pars = list(mean = 0, sd = 1))
+  "white" = list(f = runif,
+                 pars = list(min = 10, max = 20)),
+  "hispanic" = list(f = runif,
+                    pars = list(min = 25, max = 30)),
+  "black" = list(f = runif,
+                 pars = list(min = 35, max = 40)),
+  "asian" = list(f = runif,
+                 pars = list(min = 45, max = 50)),
+  "multiracial" = list(f = runif,
+                       pars = list(min = 100, max = 105)),
+  "amerind" = list(f = runif,
+                   pars = list(min = 0, max = 5)),
+  "other" = list(f = runif,
+                 pars = list(min = -10, max = -5)),
+  "hawaiian_pi" = list(f = runif,
+                       pars = list(min = -20, max = -15))
 )
 
 
@@ -131,6 +131,16 @@ test_that("warnings but functioning", {
   expect_is(zzz, "data.frame")
   expect_identical(names(zzz), c("id", "age", "race", "ses"))
   expect_identical(zzz[, 1:3], ex_data[1:5, ])
+  expect_gt(zzz$ses[zzz$race == "amerind"], 0)
+  expect_lt(zzz$ses[zzz$race == "amerind"], 5)
+  expect_gt(zzz$ses[zzz$race == "asian"], 45)
+  expect_lt(zzz$ses[zzz$race == "asian"], 50)
+  expect_gt(zzz$ses[zzz$race == "black"], 35)
+  expect_lt(zzz$ses[zzz$race == "black"], 40)
+  expect_gt(zzz$ses[zzz$race == "hispanic"], 25)
+  expect_lt(zzz$ses[zzz$race == "hispanic"], 30)
+  expect_gt(zzz$ses[zzz$race == "multiracial"], 100)
+  expect_lt(zzz$ses[zzz$race == "multiracial"], 105)
 })
 
 

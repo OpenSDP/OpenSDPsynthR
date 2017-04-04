@@ -148,6 +148,7 @@ gen_initial_status <- function(data, baseline){
 #' @export
 gen_annual_status <- function(data, control = sim_control()){
   reqdVars <- get_sim_groupvars(control)
+  reqdVars <- c(reqdVars, c("iep", "ell", "frpl"))
   stopifnot(all(reqdVars %in% names(data)))
   idvar <- names(data)[which(names(data) %in% c("ID", "id", "sid"))]
   data <- data %>% group_by_(idvar) %>% arrange(year) %>%

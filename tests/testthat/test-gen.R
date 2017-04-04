@@ -33,6 +33,22 @@ test_that("gen_student_years longitudinal data", {
 })
 
 
+# context("Test annual status variables")
+# ex_data <- data.frame(id = 100:116,
+#                       Sex = sample(c("Male", "Female"), 17, replace = TRUE),
+#                       Race = sample(c("White", "Asian"), 17, replace = TRUE))
+#
+# gen_annual_status(ex_data)
+#
+# test_that("Does it work?", {
+#
+# })
+#
+# cond_vars <- get_sim_groupvars(control)
+# stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)],
+#                       by = idvar)
+# stu_year <- gen_annual_status(stu_year, control = control)
+
 
 # gen_annual_status
 # gen_initial_status

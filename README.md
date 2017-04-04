@@ -31,43 +31,48 @@ Ljoad the package
 
 ``` r
 library(OpenSDP.data)
+#> Loading required package: dplyr
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
 ```
 
 ``` r
-out <- popsim_control(200, seed = 213)
+out <- simpop(200, seed = 213)
 #> Preparing student identities for 200 students...
 #> Creating annual enrollment for 200 students...
-#> Assigning 200 students to initial ELL status...
-#> Assigning 200 students to initial SES status...
+#> Assigning 200 students to initial FRPL, IEP, and ELL status
 #> Organizing status variables for you...
 #> Assigning 200 students longitudinal status trajectories...
 #> Sorting your records
 #> Cleaning up...
+#> Assiging grades...
 #> Success! Returning you student and student-year data in a list.
-head(out$demog_master %>% arrange(sid) %>% select(1:4, ses))
-#>   sid    Sex  Birthdate                         Race ses
-#> 1 001 Female 1995-01-25 Hispanic or Latino Ethnicity Yes
-#> 2 002 Female 1992-08-24                        White Yes
-#> 3 003 Female 1992-05-17    Black or African American Yes
-#> 4 004 Female 1997-04-01                        White  No
-#> 5 005 Female 1992-06-16                        White  No
-#> 6 006 Female 1995-08-29                        White  No
+head(out$demog_master %>% arrange(sid) %>% select(1:4))
+#>   sid    Sex  Birthdate                         Race
+#> 1 001 Female 1995-01-25 Hispanic or Latino Ethnicity
+#> 2 002 Female 1992-08-24                        White
+#> 3 003 Female 1992-05-17    Black or African American
+#> 4 004 Female 1997-04-01                        White
+#> 5 005 Female 1992-06-16                        White
+#> 6 006 Female 1995-08-29                        White
 head(out$stu_year, 10)
-#> Source: local data frame [10 x 7]
-#> Groups: sid [1]
-#> 
-#>       sid  year   age   ses   ell   iep gifted
-#>    <fctr> <int> <dbl> <chr> <chr> <chr>  <chr>
-#> 1     001  1999     5   Yes    No   Yes     No
-#> 2     001  2000     6   Yes    No   Yes     No
-#> 3     001  2001     7   Yes    No   Yes     No
-#> 4     001  2002     8   Yes    No   Yes     No
-#> 5     001  2003     9   Yes    No   Yes     No
-#> 6     001  2004    10    No    No   Yes     No
-#> 7     001  2005    11    No    No   Yes     No
-#> 8     001  2006    12    No    No   Yes     No
-#> 9     001  2007    13    No    No   Yes     No
-#> 10    001  2008    14    No    No   Yes     No
+#>    sid year age frpl ell iep gifted grade
+#> 1  001 1999   5    0   0   0      0    KG
+#> 2  001 2000   6    0   0   0      0     1
+#> 3  001 2001   7    0   0   0      0     2
+#> 4  001 2002   8    0   0   0      0     3
+#> 5  001 2003   9    0   0   0      0     3
+#> 6  001 2004  10    0   0   0      0     4
+#> 7  001 2005  11    0   0   1      0     6
+#> 8  001 2006  12    0   0   1      0     6
+#> 9  001 2007  13    0   0   1      0     8
+#> 10 001 2008  14    0   0   0      0     9
 ```
 
 Parameters
@@ -78,7 +83,7 @@ Default parameters can be modified by the user:
 ``` r
 names(sim_control())
 #> [1] "race_groups" "race_prob"   "minyear"     "maxyear"     "gifted_list"
-#> [6] "iep_list"    "ses_list"    "ell_list"
+#> [6] "iep_list"    "ses_list"    "ell_list"    "n_cohorts"
 sim_control()$ell_list
 #> $ALL
 #> $ALL$f
@@ -98,9 +103,9 @@ sim_control()$ell_list
 #> 
 #> $ALL$pars
 #> $ALL$pars$tm
-#>            Yes         No
-#> Yes 0.97560976 0.02439024
-#> No  0.00621118 0.99378882
+#>            1          0
+#> 1 0.97560976 0.02439024
+#> 0 0.00621118 0.99378882
 #> 
 #> 
 #> 
@@ -129,7 +134,7 @@ get_baseline("ses")
 #> $fun
 #> function (x) 
 #> rbinom(1, 1, x)
-#> <environment: 0x0000000010490920>
+#> <environment: 0x000000001f3f6200>
 ```
 
 ### Diagnostics
@@ -140,7 +145,7 @@ How do we know it worked? We can look at the patterns of ELL enrollment that are
 library(ggplot2)
 library(tidyr)
 plotdf <- stu_year %>% arrange(sid, year) %>% group_by(sid) %>% 
-  do(tidy_sequence(.$ell, states = c("Yes", "No")))
+  do(tidy_sequence(.$ell, states = c(1, 0)))
 
 plotdf$total <- rowSums(plotdf[, -1])
 plotdf <- plotdf %>% gather(-sid, key = "Transition", value = "Count")
@@ -218,28 +223,28 @@ test_res <- stu_year %>% group_by(sid) %>%
 table(test_res$fit_ok)
 #> 
 #> FALSE  TRUE 
-#>    28   172
+#>    21   179
 ```
 
 Let's look at co-occurrence of status over time.
 
 ``` r
 # Look at by year patterns of relationships by student year
-table(FRL = stu_year$ses, GIFTED = stu_year$gifted)
-#>      GIFTED
-#> FRL     No  Yes
-#>   No  1155  142
-#>   Yes 2204  293
-table(FRL = stu_year$ses, IEP = stu_year$iep)
-#>      IEP
-#> FRL     No  Yes
-#>   No   783  514
-#>   Yes 1437 1060
-table(FRL = stu_year$gifted, IEP = stu_year$iep)
-#>      IEP
-#> FRL     No  Yes
-#>   No  1987 1372
-#>   Yes  233  202
+table(FRL = stu_year$frpl, GIFTED = stu_year$gifted)
+#>    GIFTED
+#> FRL    0    1
+#>   0 1903  188
+#>   1 1537  166
+table(FRL = stu_year$frpl, IEP = stu_year$iep)
+#>    IEP
+#> FRL    0    1
+#>   0 1078 1013
+#>   1  926  777
+table(GIFTED = stu_year$gifted, IEP = stu_year$iep)
+#>       IEP
+#> GIFTED    0    1
+#>      0 1782 1658
+#>      1  222  132
 ```
 
 Let's check polychoric correlations:
@@ -247,40 +252,40 @@ Let's check polychoric correlations:
 ``` r
 gamma_GK(stu_year$gifted, stu_year$iep)
 #> $gamma
-#> [1] 0.1133042
+#> [1] -0.2202089
 #> 
 #> $se
-#> [1] 0.07207095
+#> [1] 0.07735497
 #> 
 #> $z
-#> [1] 1.57212
+#> [1] -2.846732
 #> 
 #> $sig
-#> [1] 0.1159226
-gamma_GK(stu_year$ses, stu_year$iep)
+#> [1] 0.004417057
+gamma_GK(stu_year$frpl, stu_year$iep)
 #> $gamma
-#> [1] 0.05824437
+#> [1] -0.05656089
 #> 
 #> $se
-#> [1] 0.049097
+#> [1] 0.04615034
 #> 
 #> $z
-#> [1] 1.186312
+#> [1] -1.225579
 #> 
 #> $sig
-#> [1] 0.235499
-gamma_GK(stu_year$ses, stu_year$ell)
+#> [1] 0.2203572
+gamma_GK(stu_year$frpl, stu_year$ell)
 #> $gamma
-#> [1] 0.02424722
+#> [1] -0.1620324
 #> 
 #> $se
-#> [1] 0.06514072
+#> [1] 0.07966763
 #> 
 #> $z
-#> [1] 0.3722283
+#> [1] -2.033855
 #> 
 #> $sig
-#> [1] 0.7097229
+#> [1] 0.04196626
 ```
 
 Finally, let's see who winds up "ever" in each category
@@ -288,28 +293,33 @@ Finally, let's see who winds up "ever" in each category
 ``` r
 
 test_df <- stu_year %>% group_by(sid) %>% 
-  summarize(iep_ever = if_else(any(iep == "Yes"), "Yes", "No"), 
-            ell_ever = if_else(any(ell == "Yes"), "Yes", "No"), 
-            frpl_ever = if_else(any(ses == "Yes"), "Yes", "No"), 
-            gifted_ever = if_else(any(gifted == "Yes"), "Yes", "No"))
+  summarize(iep_ever = if_else(any(iep == 1), "Yes", "No"), 
+            ell_ever = if_else(any(ell == 1), "Yes", "No"), 
+            frpl_ever = if_else(any(frpl == 1), "Yes", "No"), 
+            gifted_ever = if_else(any(gifted == 1), "Yes", "No"))
 
 table(IEP_EVER = test_df$iep_ever)
 #> IEP_EVER
 #>  No Yes 
-#>  10 190
+#>   8 192
 table(ELL_EVER = test_df$ell_ever)
 #> ELL_EVER
 #>  No Yes 
-#> 152  48
+#> 169  31
 table(FRPL_EVER = test_df$frpl_ever)
 #> FRPL_EVER
 #>  No Yes 
-#>   1 199
+#>  23 177
 table(GIFTED_EVER = test_df$gifted_ever)
 #> GIFTED_EVER
 #>  No Yes 
-#> 167  33
+#> 182  18
 ```
+
+Assigning Schools and Outcomes
+------------------------------
+
+Students move through grades, schools, and outcomes.
 
 Package Dependencies
 --------------------

@@ -512,7 +512,7 @@ stu_year <- cond_prob(stu_year, factor = "Race",
 ## per category
 results <- stu_year %>% group_by(Race, ID) %>% 
   do(.out = markovchain::createSequenceMatrix(.$frpl, 
-                                              possibleStates = c("Yes", "No"))) %>% 
+                            possibleStates = c("Yes", "No"))) %>% 
   ungroup %>%
   nest(-Race) %>%
   mutate(summed = map(data, ~ reduce(.$.out, `+`)))

@@ -180,6 +180,16 @@ convert_grade <- function(x){
   return(x)
 }
 
+#' Generate simulated predictions from a linear model that account for
+#' model and parameter error
+#'
+#' @param object an object of class lm or glm
+#' @param nsim number of simulations per observation to generate
+#' @param newdata dataframe containing the observations to generate predictions
+#' for
+#'
+#' @return a matrix of predictions nrow(newdata) x nsim columns
+#' @export
 better_sim.lm <- function(object, nsim, newdata){
   newdata <- as.matrix(newdata)
   se <- vcov(object)
@@ -194,3 +204,22 @@ better_sim.lm <- function(object, nsim, newdata){
   preds <- as.matrix(newdata) %*% t(coefs)
   return(preds)
 }
+
+
+#' Covnert a matrix to a row-wise transition matrix
+#'
+#' @param matrix a matrix tof counts
+#'
+#' @return matrix M divided by the sum of its rows
+#' @export
+#'
+#' @examples
+#' base_mat <- structure(c(44985, 740, 781, 7640), .Dim = c(2L, 2L),
+#' .Dimnames = list(c("0", "1"), c("0", "1")))
+#' tm_convert(base_mat)
+tm_convert <- function(matrix){
+  stopifnot(class(matrix) == "matrix")
+  out <- matrix / rowSums(matrix)
+  return(out)
+}
+

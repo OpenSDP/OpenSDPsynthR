@@ -255,28 +255,50 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
     ell_list <- list("ALL" = list(f = make_markov_series,
                                   pars = list(tm = tm)),
                      "GROUPVARS" = c("ell"))
+    ses_dim <- list(c("0", "1"), c("0", "1"))
+    race_ses_tm <- structure(list(
+      White = structure(c(0.91859191329348, 0.112994957427461,
+                          0.0814080867065204, 0.887005042572539),
+                        .Dim = c(2L, 2L), .Dimnames = ses_dim),
+      `African American` = structure(c(0.810682926054717,
+                                       0.0835755631319266, 0.189317073945283,
+                                       0.916424436868073), .Dim = c(2L, 2L),
+                                     .Dimnames = ses_dim),
+      `Asian American` = structure(c(0.935574229691877, 0.156600974782793,
+                                     0.0644257703081232, 0.843399025217207),
+                                   .Dim = c(2L, 2L),
+                                   .Dimnames = ses_dim),
+      `American Indian` = structure(c(0.788359788359788, 0.0721177038109021,
+                                      0.211640211640212, 0.927882296189098),
+                                    .Dim = c(2L, 2L),
+                                    .Dimnames = ses_dim),
+      Multiple = structure(c(0.891008962127783, 0.0926444387884958,
+                            0.108991037872217, 0.907355561211504),
+                           .Dim = c(2L, 2L), .Dimnames = ses_dim),
+      Other = structure(c(0.835443037974684, 0.0836363636363636,
+                          0.164556962025316, 0.916363636363636),
+                        .Dim = c(2L, 2L), .Dimnames = ses_dim)),
+      .Names = c("White", "African American", "Asian American", "American Indian",
+                 "Multiple", "Other"))
 
-    tm <- matrix(c(800, 100, 300, 800), nrow = 2, byrow = TRUE,
-                 dimnames = list(c("1", "0"), c("1", "0")))
-    tm <- tm / rowSums(tm)
 
     ses_list <- list(
       "White" = list(f = make_markov_series,
-                     pars = list(tm = tm)),
+                     pars = list(tm = race_ses_tm[["White"]])),
       "Hispanic or Latino Ethnicity" = list(f = make_markov_series,
-                                            pars = list(tm = tm)),
+                                            pars = list(tm = race_ses_tm[["White"]])),
       "Black or African American" = list(f = make_markov_series,
-                                         pars = list(tm = tm)),
+                                         pars = list(tm = race_ses_tm[["African American"]])),
       "Asian" = list(f = make_markov_series,
-                     pars = list(tm = tm)),
+                     pars = list(tm = race_ses_tm[["Asian American"]])),
       "Demographic Race Two or More Races" = list(f = make_markov_series,
-                                                  pars = list(tm = tm)),
+                                                  pars = list(tm = race_ses_tm[["Multiple"]])),
       "American Indian or Alaska Native" = list(f = make_markov_series,
-                                                pars = list(tm = tm)),
+                                                pars = list(tm = race_ses_tm[["American Indian"]])),
       "Other" = list(f = make_markov_series,
-                     pars = list(tm = tm)),
+                     pars = list(tm = race_ses_tm[["Other"]])),
       "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series,
-                                                         pars = list(tm = tm)),
+                                                         pars = list(tm = race_ses_tm[["American Indian"]])),
       "GROUPVARS" = c("Race")
     )
 

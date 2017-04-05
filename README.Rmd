@@ -218,6 +218,8 @@ Students move through grades, schools, and outcomes.
 out$schools
 
 
+zzz <- assign_schools(student = out$stu_year, schools = out$schools)
+
 # Assignment techniques -- purely ignorant weighting technique
 # Non-ignorant, weighted technique
 # Model based technique

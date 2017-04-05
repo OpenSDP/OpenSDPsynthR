@@ -3,6 +3,7 @@
 export(age_calc)
 export(assign_baseline)
 export(assign_grade)
+export(assign_schools)
 export(better_sim.lm)
 export(cond_prob)
 export(expand_grid_df)

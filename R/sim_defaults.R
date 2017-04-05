@@ -121,6 +121,8 @@ simpop <- function(nstu, nschl, seed, control = sim_control()){
   school <- gen_schools(n = nschl, mean = control$school_means,
                         sigma = control$school_cov_mat,
                         names = control$school_names)
+  message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
+  stu_year <- assign_schools(student = stu_year, schools = school)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year,
               schools = school))
@@ -549,3 +551,28 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
 }
 
 
+#' Assign student enrollment spells to a school ID
+#'
+#' @param student data frame of student-year observations
+#' @param schools data frame of schools to assign from
+#' @param method currently unused, will allow for different assignment methods
+#'
+#' @return student, with additional column schid appended
+#' @export
+assign_schools <- function(student, schools, method = NULL){
+  # TODO thoroughly test inputs to make sure year exists
+  # TODO test that school ids match from schools
+  school_t_list <- list(
+    "ALL" = list(f = make_markov_series,
+                 pars = list(tm = school_transitions(nschls = nrow(schools),
+                                                     diag_limit = 0.96))),
+    "GROUPVARS" = c("ALL")
+  )
+  idvar <- names(student)[which(names(student) %in% c("ID", "id", "sid"))]
+
+  student <- student %>% group_by_(idvar) %>% arrange(year) %>%
+    mutate(schid = markov_cond_list("ALL", n = n()-1, school_t_list,
+                                    t0 = sample(schools$schid, 1, prob = schools$enroll),
+                                    include.t0 = TRUE))
+  return(student)
+}

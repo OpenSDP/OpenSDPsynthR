@@ -22,5 +22,5 @@ a list with simulated data
 Grand simulation
 }
 \examples{
-out <- simpop(20, seed = 213)
+out <- simpop(nstu = 20, nschl = 2, seed = 213)
 }

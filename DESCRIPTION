@@ -11,7 +11,8 @@ Imports: lubridate,
   magrittr,
   wakefield,
   purrr,
-  mvtnorm
+  mvtnorm,
+  simglm
 Suggests: testthat,
     knitr,
     rmarkdown,

@@ -214,6 +214,14 @@ table(GIFTED_EVER = test_df$gifted_ever)
 Students move through grades, schools, and outcomes. 
 
 ```{r, include=FALSE, eval=FALSE}
+
+out$schools
+
+
+# Assignment techniques -- purely ignorant weighting technique
+# Non-ignorant, weighted technique
+# Model based technique
+
 library(lme4)
 # tmp <- head(stu_year$age)
 # school_transitions(nschls = 12L)

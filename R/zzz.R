@@ -1,4 +1,4 @@
-#' @importFrom stats rbinom runif pnorm setNames
+#' @importFrom stats rbinom runif pnorm setNames coef rnbinom vcov
 #' @importFrom utils data head tail
 #' @importFrom methods new
 

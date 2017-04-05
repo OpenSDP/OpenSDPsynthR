@@ -65,7 +65,7 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' @import dplyr
 #' @export
 #' @examples
-#' out <- simpop(20, seed = 213)
+#' out <- simpop(nstu = 20, nschl = 2, seed = 213)
 simpop <- function(nstu, nschl, seed, control = sim_control()){
   ## Generate student-year data
   message("Preparing student identities for ", nstu, " students...")
@@ -534,13 +534,16 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
   if(length(n) > length(names)){
     stop("Please add more names or select a smaller n to generate unique names")
   }
+  ids <- wakefield::id(n)
   enroll <- rnbinom(n, size = 0.5804251, mu = 360.8085106) # starting values from existing district
   names <- sample(names, size = n, replace = FALSE)
   attribs <- mvtnorm::rmvnorm(n, mean = mean_vec, sigma = cov_mat)
   attribs[attribs < 0] <- 0
+  attribs[attribs >=1] <- 0.99
   K <- length(enroll[enroll == 0])
   enroll[enroll == 0] <- sample(1:25, K, replace = FALSE)
-  out <- data.frame(name = names, enroll = enroll)
+  out <- data.frame(schid = ids, name = names, enroll = enroll,
+                    stringsAsFactors = FALSE)
   out <- cbind(out, attribs)
   return(out)
 }

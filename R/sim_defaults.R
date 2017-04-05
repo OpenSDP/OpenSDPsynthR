@@ -6,7 +6,7 @@
 
 #' Generate student-level attributes
 #'
-#' @param n integer, number of students to simulate
+#' @param nstu integer, number of students to simulate
 #' @param seed integer, random seed to use
 #' @param control a list, defined by \code{\link{sim_control}}
 #' @import dplyr
@@ -15,7 +15,7 @@
 #' @importFrom wakefield race
 #' @return a data.frame
 #' @export
-gen_students <- function(n, seed, control = sim_control()){
+gen_students <- function(nstu, seed, control = sim_control()){
   set.seed(seed)
   if(is.null(control$race_groups)){
     # use is.null because sim_control passes null values
@@ -37,11 +37,11 @@ gen_students <- function(n, seed, control = sim_control()){
     K <- 365L * control$n_cohorts
   }
   demog_master <- data.frame(
-    sid = wakefield::id(n, random = TRUE),
-    "Sex" = wakefield::sex(n),
-    "Birthdate" = wakefield::dob(n, start = Sys.Date() - start,
+    sid = wakefield::id(nstu, random = TRUE),
+    "Sex" = wakefield::sex(nstu),
+    "Birthdate" = wakefield::dob(nstu, start = Sys.Date() - start,
                            k = K, by = "1 days"),
-    "Race" = wakefield::race(n, x = control$race_groups, prob = control$race_prob)
+    "Race" = wakefield::race(nstu, x = control$race_groups, prob = control$race_prob)
   )
   demog_master$Race <- factor(demog_master$Race)
   demog_master %<>% make_inds("Race")
@@ -56,7 +56,8 @@ gen_students <- function(n, seed, control = sim_control()){
 
 #' Grand simulation
 #' @rdname simpop
-#' @param n integer, number of students to simulate
+#' @param nstu integer, number of students to simulate
+#' @param nschl integer, number of schools to simulate
 #' @param seed integer, random seed to use
 #' @param control a list, defined by \code{\link{sim_control}}
 #' @return a list with simulated data
@@ -65,13 +66,13 @@ gen_students <- function(n, seed, control = sim_control()){
 #' @export
 #' @examples
 #' out <- simpop(20, seed = 213)
-simpop <- function(n, seed, control = sim_control()){
+simpop <- function(nstu, nschl, seed, control = sim_control()){
   ## Generate student-year data
-  message("Preparing student identities for ", n, " students...")
+  message("Preparing student identities for ", nstu, " students...")
   suppressMessages({
-    demog_master <- gen_students(n = n, seed = seed, control = control)
+    demog_master <- gen_students(nstu = nstu, seed = seed, control = control)
   })
-  message("Creating annual enrollment for ", n, " students...")
+  message("Creating annual enrollment for ", nstu, " students...")
   suppressMessages({
     stu_year <- gen_student_years(data = demog_master, control = control)
   })
@@ -94,7 +95,7 @@ simpop <- function(n, seed, control = sim_control()){
   # stu_first$ell <- gen_initial_status(stu_first, baseline = "ell")
   # message("Assigning ", n, " students to initial SES status...")
   # stu_first$ses <- gen_initial_status(stu_first, baseline = "ses")
-  message("Assigning ", n, " students to initial FRPL, IEP, and ELL status")
+  message("Assigning ", nstu, " students to initial FRPL, IEP, and ELL status")
   stu_first <- assign_baseline(baseline = "program", stu_first)
   message("Organizing status variables for you...")
   stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell", "iep", "frpl")],
@@ -102,7 +103,7 @@ simpop <- function(n, seed, control = sim_control()){
   # demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")],
   #                           by = idvar)
   rm(stu_first)
-  message("Assigning ", n, " students longitudinal status trajectories...")
+  message("Assigning ", nstu, " students longitudinal status trajectories...")
   cond_vars <- get_sim_groupvars(control)
   stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)],
                         by = idvar)
@@ -116,8 +117,13 @@ simpop <- function(n, seed, control = sim_control()){
   stu_year$age <- round(stu_year$age, 0)
   message("Assiging grades...")
   stu_year <- assign_baseline("grade", stu_year)
+  message("Creating ", nschl, " schools for you...")
+  school <- gen_schools(n = nschl, mean = control$school_means,
+                        sigma = control$school_cov_mat,
+                        names = control$school_names)
   message("Success! Returning you student and student-year data in a list.")
-  return(list(demog_master = demog_master, stu_year = stu_year))
+  return(list(demog_master = demog_master, stu_year = stu_year,
+              schools = school))
 }
 
 #' Generate initial student status indicators

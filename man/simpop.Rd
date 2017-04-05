@@ -4,10 +4,12 @@
 \alias{simpop}
 \title{Grand simulation}
 \usage{
-simpop(n, seed, control = sim_control())
+simpop(nstu, nschl, seed, control = sim_control())
 }
 \arguments{
-\item{n}{integer, number of students to simulate}
+\item{nstu}{integer, number of students to simulate}
+
+\item{nschl}{integer, number of schools to simulate}
 
 \item{seed}{integer, random seed to use}
 

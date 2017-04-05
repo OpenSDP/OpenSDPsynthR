@@ -43,7 +43,7 @@ library(OpenSDP.data)
 ```
 
 ``` r
-out <- simpop(200, seed = 213)
+out <- simpop(nstu = 200, nschl = 2, seed = 213)
 #> Preparing student identities for 200 students...
 #> Creating annual enrollment for 200 students...
 #> Assigning 200 students to initial FRPL, IEP, and ELL status
@@ -52,6 +52,7 @@ out <- simpop(200, seed = 213)
 #> Sorting your records
 #> Cleaning up...
 #> Assiging grades...
+#> Creating 2 schools for you...
 #> Success! Returning you student and student-year data in a list.
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 #>   sid    Sex  Birthdate                         Race
@@ -82,8 +83,9 @@ Default parameters can be modified by the user:
 
 ``` r
 names(sim_control())
-#> [1] "race_groups" "race_prob"   "minyear"     "maxyear"     "gifted_list"
-#> [6] "iep_list"    "ses_list"    "ell_list"    "n_cohorts"
+#>  [1] "race_groups"    "race_prob"      "minyear"        "maxyear"       
+#>  [5] "gifted_list"    "iep_list"       "ses_list"       "ell_list"      
+#>  [9] "n_cohorts"      "school_means"   "school_cov_mat" "school_names"
 sim_control()$ell_list
 #> $ALL
 #> $ALL$f
@@ -134,7 +136,7 @@ get_baseline("ses")
 #> $fun
 #> function (x) 
 #> rbinom(1, 1, x)
-#> <environment: 0x000000001f3f6200>
+#> <environment: 0x000000001d3aca88>
 ```
 
 ### Diagnostics

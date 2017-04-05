@@ -6,7 +6,8 @@
 \usage{
 sim_control(race_groups = NULL, race_prob = NULL, ses_list = NULL,
   minyear = 1997, maxyear = 2017, n_cohorts = NULL, gifted_list = NULL,
-  iep_list = NULL, ell_list = NULL)
+  iep_list = NULL, ell_list = NULL, school_means, school_cov_mat,
+  school_names)
 }
 \arguments{
 \item{race_groups}{vector of labels for race groups}
@@ -26,6 +27,12 @@ sim_control(race_groups = NULL, race_prob = NULL, ses_list = NULL,
 \item{iep_list}{a probability list}
 
 \item{ell_list}{a probability list}
+
+\item{school_means}{a named vector of means for school level attributes}
+
+\item{school_cov_mat}{a covariance matrix for the school level attributes}
+
+\item{school_names}{a vector to draw school names from}
 }
 \value{
 a named list

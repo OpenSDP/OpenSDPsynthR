@@ -158,3 +158,99 @@ stu_year %<>% group_by(ID) %>% arrange(ID, year) %>%
          gifted = make_markov_series(n(), tm = tm_g/rowSums(tm_g)),
          iep = make_markov_series(n(), tm = tm_i/rowSums(tm_i)),
          grade_adv = make_markov_series(n(), tm = tm_grade/rowSums(tm_grade)))
+
+
+## Erratta
+## Investigation into how simglm propogates covariances
+
+
+standardize <- function(x, mean, sd) {
+  new <- (x - mean) / sd
+  return(new)
+}
+
+
+# Let's bang out a better variance/covariance matrix
+cov_param <- list(dist_fun = c("rnorm", rep("rbinom", 5)),
+                  var_type = rep("lvl1", 6),
+                  opts = list(list(mean = 0, sd = 1),
+                              list(size = 1, prob =0.1),
+                              list(size = 1, prob = 0.2),
+                              list(size = 1, prob = 0.45),
+                              list(size = 1, prob = 0.1),
+                              list(size = 1, prob = 0.47)))
+zzz <- sim_fixef_nested(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
+                        fixed_vars = c("math_ss", "gifted", "iep", "frpl", "ell", "male"),
+                        cov_param = cov_param,
+                        n = 30, p = 1000,
+                        data_str = "cross",
+                        cor_vars = c(rep(0.4, 10), rep(-0.23, 5)))
+
+df <- sim_glm(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
+              random = ~ 1,
+              fixed_param =  c(1.735, 0.47259, 0.12351, 0.01538, -0.56517, -0.23, -0.31298),
+              random_param = list(random_var = 0.77, rand_gen = "rnorm"),
+              random3 = NULL,
+              random_param3 = NULL,
+              cov_param = cov_param,
+              fact_vars = NULL, k = NULL,
+              n = 30, p = 100,
+              cor_vars = c(rep(0.4, 10), rep(-0.23, 5)),
+              data_str = "cross", unbal = FALSE,
+              unbalCont = NULL)
+
+
+
+cor_vars = c(0.247, -0.169, 0.011, -0.050, -0.036, 0.003)
+n.cont <- 6
+
+n = 100
+p = 20
+
+cov_param_args <- lapply(seq_len(n.cont), function(xx)
+  c(cov_param$dist_fun[[xx]], cov_param$var_type[[xx]],
+    cov_param$opts[[xx]]))
+
+Xmat <- do.call(cbind, purrr::invoke_map(lapply(seq_len(n.cont),
+                                                function(xx) sim_continuous),
+                                         cov_param_args,
+                                         n = n,
+                                         k = NULL,
+                                         p = 100
+))
+
+cov_data <- purrr::invoke_map(cov_param$dist_fun, cov_param$opts,
+                              n = 1000000)
+
+cov_mu <- round(sapply(cov_data, mean), 2)
+cov_sd <- round(sapply(cov_data, sd), 2)
+
+Xmat <- do.call('cbind', lapply(seq_len(ncol(Xmat)), function(xx)
+  standardize(Xmat[, xx], mean = cov_mu[xx], sd = cov_sd[xx])))
+
+
+c_mat <- matrix(nrow = n.cont, ncol = n.cont)
+diag(c_mat) <- 1
+c_mat[upper.tri(c_mat)] <- c_mat[lower.tri(c_mat)] <- cor_vars
+cov <- diag(cov_sd) %*% c_mat %*% diag(cov_sd)
+es <- eigen(cov, symmetric = TRUE)
+ev <- es$values
+Xmat <- t(cov_mu + es$vectors %*% diag(sqrt(pmax(ev, 0)),
+                                       length(cov_sd)) %*% t(Xmat))
+
+## Factor version of random gen
+out_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted.f + iep.f + frpl.f + ell.f + male.f,
+                             random_var = 0.77,
+                             cov_param = list(dist_fun = "rnorm",
+                                              var_type = "lvl1",
+                                              opts = list(list(mean=0, sd = 1))),
+                             cor_vars = c(0.247, -0.169, 0.011, -0.050, -0.036, 0.003),
+                             fixed_param = c(1.735, 0.47259, 0.12351, 0.01538, -0.56517, -0.23, -0.31298),
+                             fact_vars = list(numlevels = c(2, 2, 2, 2, 2),
+                                              var_type = c(rep('lvl1', 5)),
+                                              prob = list(c(0.9, 0.1),
+                                                          c(0.8, 0.2),
+                                                          c(0.55, 0.45),
+                                                          c(0.9, 0.1),
+                                                          c(0.53, 0.47))),
+                             ngrps = 30, unbalanceRange = c(100, 1500))

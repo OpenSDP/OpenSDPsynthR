@@ -10,7 +10,8 @@ Imports: lubridate,
   markovchain,
   magrittr,
   wakefield,
-  purrr
+  purrr,
+  mvtnorm
 Suggests: testthat,
     knitr,
     rmarkdown,

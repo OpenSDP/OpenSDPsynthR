@@ -187,6 +187,7 @@ convert_grade <- function(x){
 #' @param nsim number of simulations per observation to generate
 #' @param newdata dataframe containing the observations to generate predictions
 #' for
+#' @importFrom mvtnorm rmvnorm
 #'
 #' @return a matrix of predictions nrow(newdata) x nsim columns
 #' @export
@@ -194,7 +195,7 @@ better_sim.lm <- function(object, nsim, newdata){
   newdata <- as.matrix(newdata)
   se <- vcov(object)
   eff <- coef(object)
-  coefs <- rmvnorm(nsim, mean = eff, sigma = se)
+  coefs <- mvtnorm::rmvnorm(nsim, mean = eff, sigma = se)
   if(ncol(newdata) == ncol(coefs)-1){
     warning("One too few variables in newdata, appending intercept to front")
     newdata <- cbind("Intercept" = 1, newdata)

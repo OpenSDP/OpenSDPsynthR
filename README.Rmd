@@ -214,30 +214,42 @@ table(GIFTED_EVER = test_df$gifted_ever)
 Students move through grades, schools, and outcomes. 
 
 ```{r, include=FALSE, eval=FALSE}
+library(lme4)
 # tmp <- head(stu_year$age)
 # school_transitions(nschls = 12L)
 
+# Replace factors with binary values so correlation structure is captured
+# cor_vars should be the upper or lower triangle of the correlation matrix of all 
+# fixed predictors
+# Fills left to right, first row first, second row second, etc.
 
-out_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted.f + iep.f + frpl.f + ell.f + male.f,
+out_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
                           random_var = 0.77,
-                          cov_param = list(dist_fun = "rnorm", var_type = "lvl1", 
-                                           opts = list(list(mean=0, sd = 1))),
-                          cor_vars = c(0.247, -0.169, 0.011, -0.050, -0.036, 0.003),
+              cov_param = list(dist_fun = c("rnorm", rep("rbinom", 5)), 
+                                           var_type = rep("lvl1", 6), 
+                               opts = list(list(mean = 0, sd = 1), 
+                                           list(size = 1, prob =0.1), 
+                                           list(size = 1, prob = 0.2), 
+                                           list(size = 1, prob = 0.45), 
+                                           list(size = 1, prob = 0.1), 
+                                           list(size = 1, prob = 0.47))),
+                          cor_vars = c(0.453, -0.276, -0.309, -0.046, -0.033, 
+                                       -0.135, -0.210, -0.030, -0.029, 
+                                        0.143, -0.003, 0.127, 
+                                       0.060, 0.007, 0.001),
                   fixed_param = c(1.735, 0.47259, 0.12351, 0.01538, -0.56517, -0.23, -0.31298),
-                  fact_vars = list(numlevels = c(2, 2, 2, 2, 2),
-                                   var_type = c(rep('lvl1', 5)), 
-                                   prob = list(c(0.9, 0.1), 
-                                                c(0.8, 0.2), 
-                                               c(0.55, 0.45), 
-                                               c(0.9, 0.1), 
-                                               c(0.53, 0.47))),
-                  ngrps = 20, unbalanceRange = c(100, 1500))
+                        ngrps = 30, unbalanceRange = c(100, 1500))
 
+# Simulation is solid
+
+# Rename to match naming scheme
 names(out_sim)[1:7] <- c("intercept", "math_ss","gifted", "iep", "frpl", "ell", "male")
 
-summary(glmer(sim_data ~ math_ss + gifted + iep + frpl + ell + male + (1|clustID), 
-              data = out_sim, family = "binomial"))
+# # Test that model recaptures parameters sent to gen_outcome_model
+# summary(glmer(sim_data ~ math_ss + gifted + iep + frpl + ell + male + (1|clustID), 
+#               data = out_sim, family = "binomial"))
 
+# Create schools
 out_schls <- out_sim %>% group_by(clustID) %>%
   summarize(count = n(), 
             gifted = mean(gifted), 
@@ -247,6 +259,19 @@ out_schls <- out_sim %>% group_by(clustID) %>%
             male = mean(male), 
             dv = randEff[1]) %>% as.data.frame()
 
+plotdf <- out_schls %>% 
+  gather(key = "iv", value = "per", 3:7)
+
+library(ggplot2)
+
+ggplot(plotdf, aes(y = dv, x = per)) + 
+  geom_point() + facet_wrap(~iv, scale = "free") + geom_smooth(method = "lm")
+
+## Create a data frame of schools with different quality parameters that can be attached 
+## to any simulation model
+
+
+# Model relationship between percentages and random effect
 school_assign <- lm(dv ~ ell + frpl + iep + male, data = out_schls)
 
 stu_df <- left_join(stu_year, demog_master[, c("sid", "Sex")])
@@ -284,6 +309,17 @@ eligible_assign$schid <- match_schools(eligible_assign$y,
                                        schlList = out_schls)
 
 
+outcome_mod <- lmer(math_ss ~ iep + frpl + ell + male + (1|clustID), 
+              data = out_sim)
+
+eligible_assign$clustID <- eligible_assign$schid
+
+y <- predict(outcome_mod, newdata = eligible_assign)
+
+
+ctrl <- sim_control()
+schools <- gen_schools(n = 30, mean = ctrl$school_means, 
+                       sigma = ctrl$school_cov_mat, names = ctrl$school_names)
 
 ```
 

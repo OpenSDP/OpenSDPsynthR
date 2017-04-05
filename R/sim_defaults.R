@@ -212,76 +212,149 @@ gen_student_years <- function(data, control=sim_control()){
 #' @param ell_list a probability list
 #' @param gifted_list a probability list
 #' @param n_cohorts number of cohorts to produce
+#' @param school_means a named vector of means for school level attributes
+#' @param school_cov_mat a covariance matrix for the school level attributes
+#' @param school_names a vector to draw school names from
 #' @return a named list
 #' @export
 sim_control <- function(race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=1997, maxyear=2017,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
-                        ell_list=NULL){
+                        ell_list=NULL, school_means=NULL, school_cov_mat=NULL,
+                        school_names=NULL){
 
   # temporarily hardcoding these values here for testing
-  tm_gifted_f <- matrix(c(500, 1, 2, 500), nrow = 2, byrow = TRUE,
-                        dimnames = list(c("1", "0"), c("1", "0")))
+  tm_gifted_f <- matrix(
+    c(500, 1, 2, 500),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(c("1", "0"), c("1", "0"))
+  )
   tm_gifted_m <- tm_gifted_f
   tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
   tm_gifted_m <- tm_gifted_m / rowSums(tm_gifted_m)
   tm_gifted_f <- tm_gifted_f / rowSums(tm_gifted_f)
 
-  gifted_list <- list("Male" = list(f = make_markov_series,
-                             pars = list(tm = tm_gifted_m,
-            # Use quote so for each call in the loop sample is redrawn
-                      t0 = quote(sample(c("1", "0"), 1, prob = c(10, 90))))),
-                      "Female" = list(f = make_markov_series,
-                          pars = list(tm = tm_gifted_f,
-                       t0 = quote(sample(c("1", "0"), 1, prob = c(8, 92))))),
-                      "GROUPVARS" = c("Sex"))
+  gifted_list <- list(
+    "Male" = list(f = make_markov_series,
+                  pars = list(tm = tm_gifted_m,
+                              # Use quote so for each call in the loop sample is redrawn
+                              t0 = quote(
+                                sample(c("1", "0"), 1, prob = c(10, 90))
+                              ))),
+    "Female" = list(f = make_markov_series,
+                    pars = list(tm = tm_gifted_f,
+                                t0 = quote(
+                                  sample(c("1", "0"), 1, prob = c(8, 92))
+                                ))),
+    "GROUPVARS" = c("Sex")
+  )
 
   # IEP
-  tm_iep_f <- matrix(c(250, 50, 150, 900), nrow = 2, byrow = TRUE,
-                     dimnames = list(c("1", "0"), c("1", "0")))
+  tm_iep_f <- matrix(
+    c(250, 50, 150, 900),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(c("1", "0"), c("1", "0"))
+  )
   tm_iep_m <- tm_iep_f
   tm_iep_m[, 1] <- tm_iep_m[, 1] + 50
   tm_iep_m <- tm_iep_m / rowSums(tm_iep_m)
   tm_iep_f <- tm_iep_f / rowSums(tm_iep_f)
 
-    iep_list <- list("Male" = list(f = make_markov_series,
-               pars = list(tm = tm_iep_m)),
-                   "Female" = list(f = make_markov_series,
-                     pars = list(tm = tm_iep_f)),
-               "GROUPVARS" = c("Sex"))
+  iep_list <- list(
+    "Male" = list(f = make_markov_series,
+                  pars = list(tm = tm_iep_m)),
+    "Female" = list(f = make_markov_series,
+                    pars = list(tm = tm_iep_f)),
+    "GROUPVARS" = c("Sex")
+  )
 
-    tm <- matrix(c(800, 20, 5, 800), nrow = 2, byrow = TRUE,
-                 dimnames = list(c("1", "0"), c("1", "0")))
-    tm <- tm / rowSums(tm)
-    ell_list <- list("ALL" = list(f = make_markov_series,
-                                  pars = list(tm = tm)),
-                     "GROUPVARS" = c("ell"))
-    ses_dim <- list(c("0", "1"), c("0", "1"))
-    race_ses_tm <- structure(list(
-      White = structure(c(0.91859191329348, 0.112994957427461,
-                          0.0814080867065204, 0.887005042572539),
-                        .Dim = c(2L, 2L), .Dimnames = ses_dim),
-      `African American` = structure(c(0.810682926054717,
-                                       0.0835755631319266, 0.189317073945283,
-                                       0.916424436868073), .Dim = c(2L, 2L),
-                                     .Dimnames = ses_dim),
-      `Asian American` = structure(c(0.935574229691877, 0.156600974782793,
-                                     0.0644257703081232, 0.843399025217207),
-                                   .Dim = c(2L, 2L),
-                                   .Dimnames = ses_dim),
-      `American Indian` = structure(c(0.788359788359788, 0.0721177038109021,
-                                      0.211640211640212, 0.927882296189098),
-                                    .Dim = c(2L, 2L),
-                                    .Dimnames = ses_dim),
-      Multiple = structure(c(0.891008962127783, 0.0926444387884958,
-                            0.108991037872217, 0.907355561211504),
-                           .Dim = c(2L, 2L), .Dimnames = ses_dim),
-      Other = structure(c(0.835443037974684, 0.0836363636363636,
-                          0.164556962025316, 0.916363636363636),
-                        .Dim = c(2L, 2L), .Dimnames = ses_dim)),
-      .Names = c("White", "African American", "Asian American", "American Indian",
-                 "Multiple", "Other"))
-
+  tm <- matrix(
+    c(800, 20, 5, 800),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(c("1", "0"), c("1", "0"))
+  )
+  tm <- tm / rowSums(tm)
+  ell_list <- list(
+    "ALL" = list(f = make_markov_series,
+                 pars = list(tm = tm)),
+    "GROUPVARS" = c("ell")
+  )
+  ses_dim <- list(c("0", "1"), c("0", "1"))
+    race_ses_tm <- structure(
+      list(
+        White = structure(
+          c(
+            0.91859191329348,
+            0.112994957427461,
+            0.0814080867065204,
+            0.887005042572539
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        `African American` = structure(
+          c(
+            0.810682926054717,
+            0.0835755631319266,
+            0.189317073945283,
+            0.916424436868073
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        `Asian American` = structure(
+          c(
+            0.935574229691877,
+            0.156600974782793,
+            0.0644257703081232,
+            0.843399025217207
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        `American Indian` = structure(
+          c(
+            0.788359788359788,
+            0.0721177038109021,
+            0.211640211640212,
+            0.927882296189098
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        Multiple = structure(
+          c(
+            0.891008962127783,
+            0.0926444387884958,
+            0.108991037872217,
+            0.907355561211504
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        Other = structure(
+          c(
+            0.835443037974684,
+            0.0836363636363636,
+            0.164556962025316,
+            0.916363636363636
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        )
+      ),
+      .Names = c(
+        "White",
+        "African American",
+        "Asian American",
+        "American Indian",
+        "Multiple",
+        "Other"
+      )
+    )
 
     ses_list <- list(
       "White" = list(f = make_markov_series,
@@ -303,6 +376,31 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
       "GROUPVARS" = c("Race")
     )
 
+    school_means <-  structure(
+      c(0.513956976686301, 0.618015258420426, 0.111746668239179,
+        0.0507135275386248,0.145418091756103),
+      .Names = c("male_per",
+                 "frpl_per", "sped_per", "lep_per", "gifted_per")
+    )
+    school_cov_mat <- structure(
+      c(0.00626039350019743, 0.00269577401236515, 0.00217008472097632,
+        -0.000567299979898903,-0.00514050994295009, 0.00269577401236515,
+        0.0553769100560957, 0.00958652234495279, 0.00973569135335458,
+        -0.0269235256547852, 0.00217008472097632, 0.00958652234495279,
+        0.00760512262055834, -0.000782211474167252, -0.00596964683827119,
+        -0.000567299979898903, 0.00973569135335458,-0.000782211474167252,
+        0.0176676813362968, -0.00355548955881028, -0.00514050994295009,
+        -0.0269235256547852, -0.00596964683827119,-0.00355548955881028,
+        0.0307478369601188),
+      .Dim = c(5L, 5L),
+      .Dimnames = list(
+        c("male_per", "frpl_per", "sped_per", "lep_per", "gifted_per"),
+        c("male_per","frpl_per", "sped_per", "lep_per", "gifted_per")
+      )
+    )
+
+    school_names <- sch_names
+
     structure(namedList(
                  race_groups,
                  race_prob,
@@ -312,7 +410,10 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
                  iep_list,
                  ses_list,
                  ell_list,
-                 n_cohorts))
+                 n_cohorts,
+                 school_means,
+                 school_cov_mat,
+                 school_names))
 
 }
 
@@ -383,9 +484,59 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars, cov_par
                 cov_param = cov_param,
                 fact_vars = fact_vars, k = NULL,
                 n = ngrps, p = NULL,
-                cor_vars = NULL, data_str = "cross", unbal = TRUE,
+                cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                 unbalCont = unbalanceRange)
   return(df)
 
 }
+
+#' Generate a roster of schools to assign students to
+#'
+#' @param n number of schools
+#' @param mean a vector of means for the school attributes
+#' @param sigma a covariance matrix for the school attributes
+#' @param names vector to draw names from
+#'
+#' @return a data.frame with schools and their attributes
+#' @importFrom mvtnorm rmvnorm
+#' @export
+gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
+  if(missing(mean)){
+    mean_vec <- structure(
+      c(0, 0, 0, 0, 0),
+      .Names = c("male_per",
+                 "frpl_per", "sped_per", "lep_per", "gifted_per")
+    )
+  } else{
+    mean_vec <- mean
+  }
+  if(missing(sigma)){
+    cov_mat <- structure(
+      c(rep(0, 25)),
+      .Dim = c(5L, 5L),
+      .Dimnames = list(
+        c("male_per", "frpl_per", "sped_per", "lep_per", "gifted_per"),
+        c("male_per","frpl_per", "sped_per", "lep_per", "gifted_per")
+      )
+    )
+  } else{
+    cov_mat <- sigma
+  }
+  if(missing(names)){
+    names <- c(LETTERS, letters)
+  }
+  if(length(n) > length(names)){
+    stop("Please add more names or select a smaller n to generate unique names")
+  }
+  enroll <- rnbinom(n, size = 0.5804251, mu = 360.8085106) # starting values from existing district
+  names <- sample(names, size = n, replace = FALSE)
+  attribs <- mvtnorm::rmvnorm(n, mean = mean_vec, sigma = cov_mat)
+  attribs[attribs < 0] <- 0
+  K <- length(enroll[enroll == 0])
+  enroll[enroll == 0] <- sample(1:25, K, replace = FALSE)
+  out <- data.frame(name = names, enroll = enroll)
+  out <- cbind(out, attribs)
+  return(out)
+}
+
 

@@ -50,7 +50,7 @@ library(OpenSDP.data)
 
 
 ```{r, message=TRUE}
-out <- simpop(nstu = 500, nschl = 3, seed = 213)
+out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 head(out$stu_year, 10)
 ```
@@ -214,10 +214,13 @@ table(GIFTED_EVER = test_df$gifted_ever)
 Students move through grades, schools, and outcomes. 
 
 ```{r, include=FALSE, eval=FALSE}
-
+library(lme4)
 g12_cohort <- out$stu_year[out$stu_year$grade == "12", ]
 g12_cohort <- na.omit(g12_cohort)
 g12_cohort <- left_join(g12_cohort, out$demog_master[, 1:4], by = "sid")
+g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
+g12_cohort$gpa <- gen_gpa(data = g12_cohort, control = sim_control(nschls = 3))
+
 
 # Outcome assignment, outcomes are assigned in order
 ## cum_gpa_final
@@ -231,6 +234,10 @@ g12_cohort <- left_join(g12_cohort, out$demog_master[, 1:4], by = "sid")
 
 ### GPA model
 # 0.1839742 theta
+
+
+
+#TODO, add code to validate the gpa_sim_parameters list prior to execution
 
 gpa_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
                              random_var = 0.02173,
@@ -253,10 +260,11 @@ gpa_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell +
 gpa_mod <- lmer(sim_data ~ 1 + gifted + iep + frpl + ell + male + 
                   (1|clustID), data = gpa_sim)
 
-g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
-g12_cohort$clustID <- as.numeric(g12_cohort$schid)
 
-g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
+# g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
+zed <- simulate(gpa_mod, nsim = 500, newdata = g12_cohort)
+g12_cohort$gpa <- apply(zed, 1, function(x) sample(x, 1))
+
 #mean 2.6266
 # sd  0.85406
 # zzz <- unscale(zzz, mean = 2.6266, sd = 0.85406)
@@ -287,12 +295,18 @@ grad_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gpa + gifted + iep + frpl 
                         ngrps = 30, unbalanceRange = c(100, 1500))
 library(lme4)
 hs_dipl_mod <- glmer(sim_data ~ gpa + gifted + iep + frpl + ell + male + (1|clustID), 
-                     data = out_sim, family = "binomial")
+                     data = grad_sim, family = "binomial")
+
+g12_cohort$grad_prob <- predict(hs_dipl_mod, newdata = g12_cohort, type = "response")
 
 
+zed <- simulate(hs_dipl_mod, nsim = 500, newdata = g12_cohort, 
+                family = "binomial")
+g12_cohort$grad_prob <- apply(zed, 1, mean)
+g12_cohort$grad <- sapply(g12_cohort$grad_prob, function(x) rbinom(1, 1, x))
 
-zzz <- predict(hs_dipl_mod, newdata = g12_cohort, type = "response")
-
+# For non-grads sample from the options proportionately
+# For grads, model ps_enrollment
 
 
 # Assignment techniques -- purely ignorant weighting technique

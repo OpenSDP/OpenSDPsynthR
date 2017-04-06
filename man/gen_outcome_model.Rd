@@ -33,7 +33,7 @@ type to generate}
 \item{error_var}{integer values to pass to err_gen, optional}
 }
 \value{
-a data.frame
+a list with two elements
 }
 \description{
 Generate data for a multilevel outcome

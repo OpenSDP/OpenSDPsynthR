@@ -15,7 +15,9 @@
 #' @param error_var integer values to pass to err_gen, optional
 #' @importFrom simglm sim_glm
 #' @importFrom simglm sim_reg
-#' @return a data.frame
+#' @importFrom lme4 lmer
+#' @importFrom lme4 glmer
+#' @return a list with two elements
 #' @export
 #'
 #' @examples
@@ -44,6 +46,8 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars, cov_par
   # data_str <- "long"
   # cov_param <- NULL
   if(type == "binary"){
+    # TODO - document that an omitted variable is generated and then ignored
+    # in the second stage
     df <- sim_glm(fixed = fixed, random = random,
                   fixed_param = fixed_param, random_param = random_param,
                   random3 = NULL,
@@ -53,6 +57,8 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars, cov_par
                   n = ngrps, p = NULL,
                   cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                   unbalCont = unbalanceRange)
+    mod <- glmer(update(fixed, "sim_data ~ . + -math_ss + (1|clustID)"),
+                 data = df, family = "binomial")
   } else if(type == "linear"){
     if(missing(error_var)){
       error_var <- 1.75
@@ -70,8 +76,37 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars, cov_par
                   cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                   unbalCont = unbalanceRange,
                   error_var = error_var, with_err_gen = with_err_gen)
+      mod <- lmer(update(fixed, "sim_data ~ . - math_ss + (1|clustID)"),
+                   data = df)
   }
 
-  return(df)
+  return(list(sim_model = mod, sim_data = df))
 
+}
+
+
+#' Generate a final GPA for students
+#'
+#' @param data a dataframe with variables
+#' @param control a sim_control parmeter, default is \code{sim_control}
+#'
+#' @return a numeric vector
+#' @export
+gen_gpa <- function(data, control=sim_control()){
+  data <- as.data.frame(data)
+  if(control$gpa_sim_parameters$ngrps != control$nschls){
+    warning("Changing number of groups in outcome simulation to match schools")
+    control$gpa_sim_parameters$ngrps <- control$nschls
+  }
+  gpa_sim <- do.call(gen_outcome_model, control$gpa_sim_parameters)
+  if(any(all.vars(gpa_sim_parameters$fixed) %in% names(data))){
+    warning("Data may not line up")
+  }
+  idvar <- names(data)[which(names(data) %in%
+                                       c("SCH", "schid"))]
+  data$clustID <- as.numeric(data[, idvar])
+  # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
+  zed <- simulate(gpa_sim$sim_model, nsim = 500, newdata = data)
+  out <- apply(zed, 1, function(x) sample(x, 1))
+  return(out)
 }

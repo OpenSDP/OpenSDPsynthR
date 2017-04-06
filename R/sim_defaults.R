@@ -57,7 +57,6 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' Grand simulation
 #' @rdname simpop
 #' @param nstu integer, number of students to simulate
-#' @param nschl integer, number of schools to simulate
 #' @param seed integer, random seed to use
 #' @param control a list, defined by \code{\link{sim_control}}
 #' @return a list with simulated data
@@ -65,8 +64,8 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' @import dplyr
 #' @export
 #' @examples
-#' out <- simpop(nstu = 20, nschl = 2, seed = 213)
-simpop <- function(nstu, nschl, seed, control = sim_control()){
+#' out <- simpop(nstu = 20, seed = 213)
+simpop <- function(nstu, seed, control = sim_control()){
   ## Generate student-year data
   message("Preparing student identities for ", nstu, " students...")
   suppressMessages({
@@ -117,8 +116,8 @@ simpop <- function(nstu, nschl, seed, control = sim_control()){
   stu_year$age <- round(stu_year$age, 0)
   message("Assiging grades...")
   stu_year <- assign_baseline("grade", stu_year)
-  message("Creating ", nschl, " schools for you...")
-  school <- gen_schools(n = nschl, mean = control$school_means,
+  message("Creating ", control$nschls, " schools for you...")
+  school <- gen_schools(n = control$nschls, mean = control$school_means,
                         sigma = control$school_cov_mat,
                         names = control$school_names)
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
@@ -211,6 +210,7 @@ gen_student_years <- function(data, control=sim_control()){
 
 
 #' Set control parameters for simulated data
+#' @param nschls integer for number of schools to create
 #' @param race_groups vector of labels for race groups
 #' @param race_prob vector of numerics, same length as \code{race_groups}
 #' @param minyear an integer
@@ -223,13 +223,16 @@ gen_student_years <- function(data, control=sim_control()){
 #' @param school_means a named vector of means for school level attributes
 #' @param school_cov_mat a covariance matrix for the school level attributes
 #' @param school_names a vector to draw school names from
+#' @param gpa_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @return a named list
 #' @export
-sim_control <- function(race_groups=NULL, race_prob=NULL,
+sim_control <- function(nschls=20L, race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=1997, maxyear=2017,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
                         ell_list=NULL, school_means=NULL, school_cov_mat=NULL,
-                        school_names=NULL){
+                        school_names=NULL,
+                        gpa_sim_parameters=NULL){
+  nschls <- nschls
 
   # temporarily hardcoding these values here for testing
   tm_gifted_f <- matrix(
@@ -407,9 +410,31 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
       )
     )
 
+    gpa_sim_parameters <- list(
+      fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
+      random_var = 0.02173,
+      cov_param = list(dist_fun = c("rnorm", rep("rbinom", 5)),
+                       var_type = rep("lvl1", 6),
+                       opts = list(
+                         list(mean = 0, sd = 1),
+                         list(size = 1, prob =0.1),
+                         list(size = 1, prob = 0.2),
+                         list(size = 1, prob = 0.45),
+                         list(size = 1, prob = 0.1),
+                         list(size = 1, prob = 0.47))
+      ),
+      cor_vars = c(0.453, -0.276, -0.309, -0.046, -0.033, -0.135, -0.210, -0.030, -0.029,
+                   0.143, -0.003, 0.127, 0.060, 0.007, 0.001),
+      fixed_param = c(0.3799, 0.417892, 0.168458, 0.042588580,
+                      -0.289399599, -0.007401886, -0.374127),
+      ngrps = nschls, unbalanceRange = c(100, 1500), type = "linear"
+    )
+
+
     school_names <- sch_names
 
     structure(namedList(
+                 nschls,
                  race_groups,
                  race_prob,
                  minyear,
@@ -421,7 +446,8 @@ sim_control <- function(race_groups=NULL, race_prob=NULL,
                  n_cohorts,
                  school_means,
                  school_cov_mat,
-                 school_names))
+                 school_names,
+                 gpa_sim_parameters))
 
 }
 

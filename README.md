@@ -43,37 +43,42 @@ library(OpenSDP.data)
 ```
 
 ``` r
-out <- simpop(nstu = 200, nschl = 2, seed = 213)
-#> Preparing student identities for 200 students...
-#> Creating annual enrollment for 200 students...
-#> Assigning 200 students to initial FRPL, IEP, and ELL status
+out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
+#> Preparing student identities for 500 students...
+#> Creating annual enrollment for 500 students...
+#> Assigning 500 students to initial FRPL, IEP, and ELL status
 #> Organizing status variables for you...
-#> Assigning 200 students longitudinal status trajectories...
+#> Assigning 500 students longitudinal status trajectories...
 #> Sorting your records
 #> Cleaning up...
 #> Assiging grades...
-#> Creating 2 schools for you...
+#> Creating 3 schools for you...
+#> Assigning 9445 student-school enrollment spells...
 #> Success! Returning you student and student-year data in a list.
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 #>   sid    Sex  Birthdate                         Race
-#> 1 001 Female 1995-01-25 Hispanic or Latino Ethnicity
-#> 2 002 Female 1992-08-24                        White
-#> 3 003 Female 1992-05-17    Black or African American
-#> 4 004 Female 1997-04-01                        White
-#> 5 005 Female 1992-06-16                        White
-#> 6 006 Female 1995-08-29                        White
+#> 1 001   Male 1997-03-03 Hispanic or Latino Ethnicity
+#> 2 002   Male 1992-12-13                        White
+#> 3 003 Female 1998-10-05                        White
+#> 4 004 Female 1993-12-16                        White
+#> 5 005 Female 1995-03-27                        White
+#> 6 006 Female 1995-01-24                        White
 head(out$stu_year, 10)
-#>    sid year age frpl ell iep gifted grade
-#> 1  001 1999   5    0   0   0      0    KG
-#> 2  001 2000   6    0   0   0      0     1
-#> 3  001 2001   7    0   0   0      0     2
-#> 4  001 2002   8    0   0   0      0     3
-#> 5  001 2003   9    0   0   0      0     3
-#> 6  001 2004  10    0   0   0      0     4
-#> 7  001 2005  11    0   0   1      0     6
-#> 8  001 2006  12    0   0   1      0     6
-#> 9  001 2007  13    0   0   1      0     8
-#> 10 001 2008  14    0   0   0      0     9
+#> Source: local data frame [10 x 9]
+#> Groups: sid [10]
+#> 
+#>       sid  year   age  frpl   ell   iep gifted  grade schid
+#>    <fctr> <int> <dbl> <chr> <chr> <chr>  <chr> <fctr> <chr>
+#> 1     002  1997     5     1     0     0      0     KG     2
+#> 2     010  1997     5     1     0     0      0     KG     3
+#> 3     011  1997     5     1     0     0      0     KG     2
+#> 4     012  1997     4     0     0     0      0     PK     1
+#> 5     013  1997     5     0     0     0      1     KG     2
+#> 6     014  1997     5     0     0     0      1     KG     2
+#> 7     018  1997     6     0     0     0      0      1     2
+#> 8     021  1997     5     1     0     0      0     KG     2
+#> 9     022  1997     6     1     0     0      0      1     2
+#> 10    024  1997     6     1     0     0      0      1     1
 ```
 
 Parameters
@@ -83,9 +88,11 @@ Default parameters can be modified by the user:
 
 ``` r
 names(sim_control())
-#>  [1] "race_groups"    "race_prob"      "minyear"        "maxyear"       
-#>  [5] "gifted_list"    "iep_list"       "ses_list"       "ell_list"      
-#>  [9] "n_cohorts"      "school_means"   "school_cov_mat" "school_names"
+#>  [1] "nschls"             "race_groups"        "race_prob"         
+#>  [4] "minyear"            "maxyear"            "gifted_list"       
+#>  [7] "iep_list"           "ses_list"           "ell_list"          
+#> [10] "n_cohorts"          "school_means"       "school_cov_mat"    
+#> [13] "school_names"       "gpa_sim_parameters"
 sim_control()$ell_list
 #> $ALL
 #> $ALL$f
@@ -136,7 +143,7 @@ get_baseline("ses")
 #> $fun
 #> function (x) 
 #> rbinom(1, 1, x)
-#> <environment: 0x000000001d3aca88>
+#> <environment: 0x000000001245c748>
 ```
 
 ### Diagnostics
@@ -225,7 +232,7 @@ test_res <- stu_year %>% group_by(sid) %>%
 table(test_res$fit_ok)
 #> 
 #> FALSE  TRUE 
-#>    21   179
+#>    57   443
 ```
 
 Let's look at co-occurrence of status over time.
@@ -235,18 +242,18 @@ Let's look at co-occurrence of status over time.
 table(FRL = stu_year$frpl, GIFTED = stu_year$gifted)
 #>    GIFTED
 #> FRL    0    1
-#>   0 1903  188
-#>   1 1537  166
+#>   0 4573  562
+#>   1 3862  448
 table(FRL = stu_year$frpl, IEP = stu_year$iep)
 #>    IEP
 #> FRL    0    1
-#>   0 1078 1013
-#>   1  926  777
+#>   0 3499 1636
+#>   1 3099 1211
 table(GIFTED = stu_year$gifted, IEP = stu_year$iep)
 #>       IEP
 #> GIFTED    0    1
-#>      0 1782 1658
-#>      1  222  132
+#>      0 5908 2527
+#>      1  690  320
 ```
 
 Let's check polychoric correlations:
@@ -254,40 +261,40 @@ Let's check polychoric correlations:
 ``` r
 gamma_GK(stu_year$gifted, stu_year$iep)
 #> $gamma
-#> [1] -0.2202089
+#> [1] 0.04042992
 #> 
 #> $se
-#> [1] 0.07735497
+#> [1] 0.05093801
 #> 
 #> $z
-#> [1] -2.846732
+#> [1] 0.7937083
 #> 
 #> $sig
-#> [1] 0.004417057
+#> [1] 0.4273653
 gamma_GK(stu_year$frpl, stu_year$iep)
 #> $gamma
-#> [1] -0.05656089
+#> [1] -0.08946517
 #> 
 #> $se
-#> [1] 0.04615034
+#> [1] 0.03172818
 #> 
 #> $z
-#> [1] -1.225579
+#> [1] -2.819738
 #> 
 #> $sig
-#> [1] 0.2203572
+#> [1] 0.004806281
 gamma_GK(stu_year$frpl, stu_year$ell)
 #> $gamma
-#> [1] -0.1620324
+#> [1] 0.05761303
 #> 
 #> $se
-#> [1] 0.07966763
+#> [1] 0.0500866
 #> 
 #> $z
-#> [1] -2.033855
+#> [1] 1.150268
 #> 
 #> $sig
-#> [1] 0.04196626
+#> [1] 0.2500334
 ```
 
 Finally, let's see who winds up "ever" in each category
@@ -303,19 +310,19 @@ test_df <- stu_year %>% group_by(sid) %>%
 table(IEP_EVER = test_df$iep_ever)
 #> IEP_EVER
 #>  No Yes 
-#>   8 192
+#> 200 300
 table(ELL_EVER = test_df$ell_ever)
 #> ELL_EVER
 #>  No Yes 
-#> 169  31
+#> 421  79
 table(FRPL_EVER = test_df$frpl_ever)
 #> FRPL_EVER
 #>  No Yes 
-#>  23 177
+#>  48 452
 table(GIFTED_EVER = test_df$gifted_ever)
 #> GIFTED_EVER
 #>  No Yes 
-#> 182  18
+#> 431  69
 ```
 
 Assigning Schools and Outcomes

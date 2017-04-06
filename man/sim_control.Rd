@@ -4,12 +4,15 @@
 \alias{sim_control}
 \title{Set control parameters for simulated data}
 \usage{
-sim_control(race_groups = NULL, race_prob = NULL, ses_list = NULL,
-  minyear = 1997, maxyear = 2017, n_cohorts = NULL, gifted_list = NULL,
-  iep_list = NULL, ell_list = NULL, school_means = NULL,
-  school_cov_mat = NULL, school_names = NULL)
+sim_control(nschls = 20L, race_groups = NULL, race_prob = NULL,
+  ses_list = NULL, minyear = 1997, maxyear = 2017, n_cohorts = NULL,
+  gifted_list = NULL, iep_list = NULL, ell_list = NULL,
+  school_means = NULL, school_cov_mat = NULL, school_names = NULL,
+  gpa_sim_parameters = NULL)
 }
 \arguments{
+\item{nschls}{integer for number of schools to create}
+
 \item{race_groups}{vector of labels for race groups}
 
 \item{race_prob}{vector of numerics, same length as \code{race_groups}}
@@ -33,6 +36,8 @@ sim_control(race_groups = NULL, race_prob = NULL, ses_list = NULL,
 \item{school_cov_mat}{a covariance matrix for the school level attributes}
 
 \item{school_names}{a vector to draw school names from}
+
+\item{gpa_sim_parameters}{a list of parameters to pass to \code{gen_outcome_model}}
 }
 \value{
 a named list

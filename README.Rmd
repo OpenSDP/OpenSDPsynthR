@@ -50,7 +50,7 @@ library(OpenSDP.data)
 
 
 ```{r, message=TRUE}
-out <- simpop(nstu = 200, nschl = 2, seed = 213)
+out <- simpop(nstu = 500, nschl = 3, seed = 213)
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 head(out$stu_year, 10)
 ```
@@ -215,40 +215,98 @@ Students move through grades, schools, and outcomes.
 
 ```{r, include=FALSE, eval=FALSE}
 
-out$schools
+g12_cohort <- out$stu_year[out$stu_year$grade == "12", ]
+g12_cohort <- na.omit(g12_cohort)
+g12_cohort <- left_join(g12_cohort, out$demog_master[, 1:4], by = "sid")
+
+# Outcome assignment, outcomes are assigned in order
+## cum_gpa_final
+## sat_act
+## hs_diploma
+## dropout
+## transfer
+## disappear
+## still_enroll
+## ps_enroll
+
+### GPA model
+# 0.1839742 theta
+
+gpa_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
+                             random_var = 0.02173,
+                             cov_param = list(dist_fun = c("rnorm", rep("rbinom", 5)), 
+                                              var_type = rep("lvl1", 6), 
+                                              opts = list(list(mean = 0, sd = 1), 
+                                                          list(size = 1, prob =0.1), 
+                                                          list(size = 1, prob = 0.2), 
+                                                          list(size = 1, prob = 0.45), 
+                                                          list(size = 1, prob = 0.1), 
+                                                          list(size = 1, prob = 0.47))),
+                             cor_vars = c(0.453, -0.276, -0.309, -0.046, -0.033, 
+                                          -0.135, -0.210, -0.030, -0.029, 
+                                          0.143, -0.003, 0.127, 
+                                          0.060, 0.007, 0.001),
+                             fixed_param = c(0.3799, 0.417892, 0.168458, 0.042588580, 
+                                             -0.289399599, -0.007401886, -0.374127),
+                             ngrps = 30, unbalanceRange = c(100, 1500), type = "linear")
+
+gpa_mod <- lmer(sim_data ~ 1 + gifted + iep + frpl + ell + male + 
+                  (1|clustID), data = gpa_sim)
+
+g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
+g12_cohort$clustID <- as.numeric(g12_cohort$schid)
+
+g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
+#mean 2.6266
+# sd  0.85406
+# zzz <- unscale(zzz, mean = 2.6266, sd = 0.85406)
+# table(round(zzz, 1))
+
+## Graduation model
 
 
-zzz <- assign_schools(student = out$stu_year, schools = out$schools)
-
-# Assignment techniques -- purely ignorant weighting technique
-# Non-ignorant, weighted technique
-# Model based technique
-
-library(lme4)
-# tmp <- head(stu_year$age)
-# school_transitions(nschls = 12L)
-
-# Replace factors with binary values so correlation structure is captured
-# cor_vars should be the upper or lower triangle of the correlation matrix of all 
-# fixed predictors
-# Fills left to right, first row first, second row second, etc.
-
-out_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
-                          random_var = 0.77,
-              cov_param = list(dist_fun = c("rnorm", rep("rbinom", 5)), 
-                                           var_type = rep("lvl1", 6), 
+grad_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gpa + gifted + iep + frpl + ell + male,
+                          random_var = 0.07948,
+              cov_param = list(dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)), 
+                                           var_type = rep("lvl1", 7), 
                                opts = list(list(mean = 0, sd = 1), 
+                                           list(mean = 0, sd = 1), 
                                            list(size = 1, prob =0.1), 
                                            list(size = 1, prob = 0.2), 
                                            list(size = 1, prob = 0.45), 
                                            list(size = 1, prob = 0.1), 
                                            list(size = 1, prob = 0.47))),
-                          cor_vars = c(0.453, -0.276, -0.309, -0.046, -0.033, 
-                                       -0.135, -0.210, -0.030, -0.029, 
-                                        0.143, -0.003, 0.127, 
-                                       0.060, 0.007, 0.001),
-                  fixed_param = c(1.735, 0.47259, 0.12351, 0.01538, -0.56517, -0.23, -0.31298),
+                          cor_vars = c(0.5136, 0.453, -0.276, -0.309, -0.046, -0.033,
+                                       0.2890, -0.1404, -0.2674, -0.0352, -0.1992,
+                                       -0.1354, -0.2096, -0.0305, -0.0290,
+                                       0.1433, -0.0031, 0.1269,
+                                       0.0601, 0.0066, 
+                                       0.0009),
+                  fixed_param = c(1.7816, 0.10764, 1.05872, -0.07352, -0.07959, -0.331647, 
+                                  -0.22318254, 0.0590),
                         ngrps = 30, unbalanceRange = c(100, 1500))
+library(lme4)
+hs_dipl_mod <- glmer(sim_data ~ gpa + gifted + iep + frpl + ell + male + (1|clustID), 
+                     data = out_sim, family = "binomial")
+
+
+
+zzz <- predict(hs_dipl_mod, newdata = g12_cohort, type = "response")
+
+
+
+# Assignment techniques -- purely ignorant weighting technique
+# Non-ignorant, weighted technique
+# Model based technique
+
+
+
+library(lme4)
+# tmp <- head(stu_year$age)
+# school_transitions(nschls = 12L)
+
+
+
 
 # Simulation is solid
 

@@ -224,3 +224,16 @@ tm_convert <- function(matrix){
   return(out)
 }
 
+#' Unscale a scaled variable
+#'
+#' @param x numeric vector that has been scaled
+#' @param mean a numeric, the mean to add to x
+#' @param sd a numeric, the standardized factor to divide x by
+#'
+#' @return x rescaled with mean and sd specified by the user
+#' @export
+unscale <- function(x, mean, sd) {
+  y <- (x / sd) + mean
+  return(y)
+  }
+

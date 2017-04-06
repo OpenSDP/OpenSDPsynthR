@@ -15,16 +15,12 @@
 #' @param error_var integer values to pass to err_gen, optional
 #' @importFrom simglm sim_glm
 #' @importFrom simglm sim_reg
-#' @importFrom lme4 lmer
-#' @importFrom lme4 glmer
+#' @import lme4
 #' @return a list with two elements
 #' @export
 #'
 #' @examples
-#' zed2 <- gen_outcome_model(fixed = ~ 1 + gifted.f + iep.f + frpl.f + ell.f + male.f,
-#' random_var = 0.77, fixed_param = c(1.06, 0.72, -.2, -0.513, -0.4559, -0.356),
-#' fact_vars = list(numlevels = c(2, 2, 2, 2, 2), var_type = c(rep('lvl1', 5))),
-#' ngrps = 20, unbalanceRange = c(75, 900))
+#' zed2 <- gen_outcome_model(sim_control()$gpa_sim_parameters)
 gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars, cov_param = NULL,
                               cor_vars = NULL,
                               ngrps, unbalanceRange,

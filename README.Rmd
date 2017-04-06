@@ -234,36 +234,8 @@ g12_cohort$gpa <- gen_gpa(data = g12_cohort, control = sim_control(nschls = 3))
 
 ### GPA model
 # 0.1839742 theta
-
-
-
 #TODO, add code to validate the gpa_sim_parameters list prior to execution
 
-gpa_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
-                             random_var = 0.02173,
-                             cov_param = list(dist_fun = c("rnorm", rep("rbinom", 5)), 
-                                              var_type = rep("lvl1", 6), 
-                                              opts = list(list(mean = 0, sd = 1), 
-                                                          list(size = 1, prob =0.1), 
-                                                          list(size = 1, prob = 0.2), 
-                                                          list(size = 1, prob = 0.45), 
-                                                          list(size = 1, prob = 0.1), 
-                                                          list(size = 1, prob = 0.47))),
-                             cor_vars = c(0.453, -0.276, -0.309, -0.046, -0.033, 
-                                          -0.135, -0.210, -0.030, -0.029, 
-                                          0.143, -0.003, 0.127, 
-                                          0.060, 0.007, 0.001),
-                             fixed_param = c(0.3799, 0.417892, 0.168458, 0.042588580, 
-                                             -0.289399599, -0.007401886, -0.374127),
-                             ngrps = 30, unbalanceRange = c(100, 1500), type = "linear")
-
-gpa_mod <- lmer(sim_data ~ 1 + gifted + iep + frpl + ell + male + 
-                  (1|clustID), data = gpa_sim)
-
-
-# g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
-zed <- simulate(gpa_mod, nsim = 500, newdata = g12_cohort)
-g12_cohort$gpa <- apply(zed, 1, function(x) sample(x, 1))
 
 #mean 2.6266
 # sd  0.85406
@@ -272,8 +244,8 @@ g12_cohort$gpa <- apply(zed, 1, function(x) sample(x, 1))
 
 ## Graduation model
 
-
-grad_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gpa + gifted + iep + frpl + ell + male,
+grad_sim_parameters <- list(
+  fixed = ~ 1 + math_ss + gpa + gifted + iep + frpl + ell + male,
                           random_var = 0.07948,
               cov_param = list(dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)), 
                                            var_type = rep("lvl1", 7), 
@@ -292,7 +264,11 @@ grad_sim <- gen_outcome_model(fixed = ~ 1 + math_ss + gpa + gifted + iep + frpl 
                                        0.0009),
                   fixed_param = c(1.7816, 0.10764, 1.05872, -0.07352, -0.07959, -0.331647, 
                                   -0.22318254, 0.0590),
-                        ngrps = 30, unbalanceRange = c(100, 1500))
+                        ngrps = 30, unbalanceRange = c(100, 1500)
+)
+grad_sim <- do.call(gen_outcome_model, grad_sim_parameters)
+
+
 library(lme4)
 hs_dipl_mod <- glmer(sim_data ~ gpa + gifted + iep + frpl + ell + male + (1|clustID), 
                      data = grad_sim, family = "binomial")

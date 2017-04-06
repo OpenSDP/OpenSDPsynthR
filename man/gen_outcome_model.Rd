@@ -39,8 +39,5 @@ a list with two elements
 Generate data for a multilevel outcome
 }
 \examples{
-zed2 <- gen_outcome_model(fixed = ~ 1 + gifted.f + iep.f + frpl.f + ell.f + male.f,
-random_var = 0.77, fixed_param = c(1.06, 0.72, -.2, -0.513, -0.4559, -0.356),
-fact_vars = list(numlevels = c(2, 2, 2, 2, 2), var_type = c(rep('lvl1', 5))),
-ngrps = 20, unbalanceRange = c(75, 900))
+zed2 <- gen_outcome_model(sim_control()$gpa_sim_parameters)
 }

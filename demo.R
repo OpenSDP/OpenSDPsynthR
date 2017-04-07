@@ -1,5 +1,82 @@
 library(simglm)
 
+## Alternative school assignment code
+# Create schools
+out_schls <- out_sim %>% group_by(clustID) %>%
+  summarize(count = n(),
+            gifted = mean(gifted),
+            ell = mean(ell),
+            frpl = mean(frpl),
+            iep = mean(iep),
+            male = mean(male),
+            dv = randEff[1]) %>% as.data.frame()
+
+plotdf <- out_schls %>%
+  gather(key = "iv", value = "per", 3:7)
+
+library(ggplot2)
+
+ggplot(plotdf, aes(y = dv, x = per)) +
+  geom_point() + facet_wrap(~iv, scale = "free") +
+  geom_smooth(method = "lm")
+
+## Create a data frame of schools with different quality parameters that can
+## be attached
+## to any simulation model
+
+# Model relationship between percentages and random effect
+school_assign <- lm(dv ~ ell + frpl + iep + male, data = out_schls)
+
+stu_df <- left_join(stu_year, demog_master[, c("sid", "Sex")])
+stu_df$male <- ifelse(stu_df$Sex == "Male", 1, 0)
+
+eligible_assign <- stu_df[stu_df$grade %in% c("9", "10", "11", "12"),
+                          c("sid","ell", "frpl", "iep", "male")]
+eligible_assign[, -1] <- apply(eligible_assign[, -1], 2,
+                               function(x) as.numeric(as.character(x)))
+
+rescale_school <- function(data, target, vars){
+  for(var in vars){
+    data[, var] <- sapply(data[, var], function(x) {
+      ifelse(x == 1, runif(1, min(target[, var]), quantile(target[, var], 0.1)[[1]]),
+             runif(1, quantile(target[, var], 0.8)[[1]], max(target[, var])))
+    })
+  }
+  return(data)
+}
+
+eligible_assign <- rescale_school(eligible_assign, out_schls,
+                                  vars = c("ell", "frpl", "iep", "male"))
+
+assign_probs <- better_sim.lm(school_assign, nsim = 100, newdata = eligible_assign[, -1])
+eligible_assign$y <- apply(assign_probs, 1, function(x) sample(x, 1))
+
+match_schools <- function(prob, schlList){
+  zzz <- sapply(prob, function(x) {
+    schlList$clustID[which(abs(schlList$dv - x) == min(abs(schlList$dv - x)))]
+  }
+  )
+  return(zzz)
+}
+
+eligible_assign$schid <- match_schools(eligible_assign$y,
+                                       schlList = out_schls)
+
+
+outcome_mod <- lmer(math_ss ~ iep + frpl + ell + male + (1|clustID),
+                    data = out_sim)
+
+eligible_assign$clustID <- eligible_assign$schid
+
+y <- predict(outcome_mod, newdata = eligible_assign)
+
+ctrl <- sim_control()
+schools <- gen_schools(n = 30, mean = ctrl$school_means,
+                       sigma = ctrl$school_cov_mat, names =
+                         ctrl$school_names)
+
+###
+
 
 
 grades_tm <- grade_transitions(ngrades = 12)

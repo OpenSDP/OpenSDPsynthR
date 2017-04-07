@@ -5,7 +5,7 @@
 \title{Set control parameters for simulated data}
 \usage{
 sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
-  ses_list = NULL, minyear = 1997, maxyear = 2017, n_cohorts = NULL,
+  ses_list = NULL, minyear = 2002, maxyear = 2017, n_cohorts = NULL,
   gifted_list = NULL, iep_list = NULL, ell_list = NULL,
   grade_levels = NULL, school_means = NULL, school_cov_mat = NULL,
   school_names = NULL, gpa_sim_parameters = NULL,

@@ -226,7 +226,7 @@ gen_student_years <- function(data, control=sim_control()){
 #' @return a named list
 #' @export
 sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
-                        ses_list=NULL, minyear=1997, maxyear=2017,
+                        ses_list=NULL, minyear=2002, maxyear=2017,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
                         ell_list=NULL, grade_levels=NULL, school_means=NULL, school_cov_mat=NULL,
                         school_names=NULL, gpa_sim_parameters=NULL,
@@ -580,6 +580,10 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
 assign_schools <- function(student, schools, method = NULL){
   # TODO thoroughly test inputs to make sure year exists
   # TODO test that school ids match from schools
+  # Assignment techniques -- purely ignorant weighting technique
+  # Non-ignorant, weighted technique
+  # Model based technique
+
   school_t_list <- list(
     "ALL" = list(f = make_markov_series,
                  pars = list(tm = school_transitions(nschls = nrow(schools),

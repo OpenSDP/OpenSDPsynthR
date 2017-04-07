@@ -218,6 +218,36 @@ Students move through grades, schools, and outcomes.
 ## sat_act
 ## ps_enroll
 
+# TODO: Consider including diploma attainment...
+
+out <- simpop(nstu = 300, seed = 1241)
+
+g12_cohort <- out$stu_year[out$stu_year$grade == "12", ]
+g12_cohort <- na.omit(g12_cohort)
+g12_cohort <- left_join(g12_cohort, out$demog_master[, 1:4], by = "sid")
+g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
+hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, 
+                                                 control = sim_control())
+
+zzz <- out$hs_outcomes
+
+dddff <- do.call(gen_outcome_model, ps_sim_parameters)
+
+
+
+
+df <- sim_glm(fixed = fixed, random = random,
+                  fixed_param = fixed_param, random_param = random_param,
+                  random3 = NULL,
+                  random_param3 = NULL,
+                  cov_param = cov_param,
+                  fact_vars = fact_vars, k = NULL,
+                  n = ngrps, p = NULL,
+                  cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
+                  unbalCont = unbalanceRange)
+    mod <- glmer(update(fixed, "sim_data ~ . - math_ss + (1|clustID)"),
+                 data = df, family = "binomial")
+
 # out <- simpop(nstu = 400, seed = 32231, 
 #           control = sim_control(nschls = 3L))
 

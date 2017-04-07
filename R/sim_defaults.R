@@ -223,6 +223,7 @@ gen_student_years <- function(data, control=sim_control()){
 #' @param school_names a vector to draw school names from
 #' @param gpa_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @param grad_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
+#' @param ps_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @return a named list
 #' @export
 sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
@@ -230,7 +231,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
                         ell_list=NULL, grade_levels=NULL, school_means=NULL, school_cov_mat=NULL,
                         school_names=NULL, gpa_sim_parameters=NULL,
-                        grad_sim_parameters=NULL){
+                        grad_sim_parameters=NULL,
+                        ps_sim_parameters = NULL){
   nschls <- nschls
 
   # temporarily hardcoding these values here for testing
@@ -469,6 +471,39 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       unbalanceRange = c(100, 1500)
     )
 
+    ps_sim_parameters <- list(
+      fixed = ~ 1 +  math_ss + scale_gpa + gifted + iep + frpl + ell + male,
+      random_var = 0.03713,
+      cov_param = list(
+        dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
+        var_type = rep("lvl1", 7),
+        opts = list(
+          list(mean = 0, sd = 1),
+          list(mean = 0, sd = 1),
+          list(size = 1, prob = 0.1),
+          list(size = 1, prob = 0.2),
+          list(size = 1, prob = 0.45),
+          list(size = 1, prob = 0.1),
+          list(size = 1, prob = 0.47)
+        )
+      ),
+      cor_vars = c(
+        0.5054, 0.453, -0.2677, -0.3001, -0.0423, -0.0160,
+        0.2952, -0.1556, -0.2648, -0.0262,-0.1992,
+        -0.1354, -0.2127, -0.0269, -0.0203,
+        0.1433, -0.0012, 0.1234,
+        0.0601, 0.0016,
+        -0.0029
+      ),
+      fixed_param = c(
+        0.0921, 0.20401, 1.125067, 0.11834, -0.561429,
+        -0.31560,-0.126704, -0.03387
+      ),
+      ngrps = 30,
+      unbalanceRange = c(100, 1500)
+    )
+
+
     school_names <- sch_names
 
     structure(namedList(
@@ -487,7 +522,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                  school_cov_mat,
                  school_names,
                  gpa_sim_parameters,
-                 grad_sim_parameters))
+                 grad_sim_parameters,
+                 ps_sim_parameters))
 
 }
 
@@ -624,8 +660,14 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
                prob = c(0.62, 0.31, 0.04, 0.03)
              )
            })
+  # TODO: Consider filtering this so only HS DIPLOMA eligible
+    zzz <- gen_ps(g12_cohort, control = control)
+    g12_cohort <- bind_cols(g12_cohort, zzz)
+  # ps_eligible <- gen_ps(data = g12_cohort[g12_cohort$grad == 1, ],
+  #                       control = control)
   outcomes <- g12_cohort[, c("sid", "scale_gpa", "gpa",
-                             "grad_prob", "grad", "hs_status")]
+                             "grad_prob", "grad", "hs_status",
+                             "ps_prob", "ps")]
   return(outcomes)
 }
 

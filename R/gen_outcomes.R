@@ -154,3 +154,33 @@ rescale_gpa <- function(x){
   return(x)
 }
 
+#' Generate postsecondary enrollment outcome
+#'
+#' @param data cohort data
+#' @param control output from \code{sim_control}
+#'
+#' @return a two-column dataframe with probabilities and binary outcome
+#' @export
+gen_ps <- function(data, control = sim_control()){
+  data <- as.data.frame(data)
+  if(control$grad_sim_parameters$ngrps != control$nschls){
+    warning("Changing number of groups in outcome simulation to match schools")
+    control$grad_sim_parameters$ngrps <- control$nschls
+  }
+  ps_sim <- do.call(gen_outcome_model, control$ps_sim_parameters)
+  if(any(all.vars(control$grad_sim_parameters$fixed) %in% names(data))){
+    warning("Data may not line up")
+  }
+  idvar <- names(data)[which(names(data) %in%
+                               c("SCH", "schid"))]
+  data$clustID <- as.numeric(data[, idvar])
+  # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
+  zed <- simulate(ps_sim$sim_model, nsim = 500, newdata = data,
+                  family = "binomial")
+  out_prob <- apply(zed, 1, mean)
+  out_binom <- sapply(out_prob, function(x) rbinom(1, 1, x))
+  # Export
+  out <- data.frame(ps_prob = out_prob, ps = out_binom)
+  return(out)
+}
+

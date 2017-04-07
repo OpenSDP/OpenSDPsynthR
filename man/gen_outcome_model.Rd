@@ -39,5 +39,5 @@ a list with two elements
 Generate data for a multilevel outcome
 }
 \examples{
-zed2 <- gen_outcome_model(sim_control()$gpa_sim_parameters)
+zed2 <- do.call(gen_outcome_model, sim_control()$gpa_sim_parameters)
 }

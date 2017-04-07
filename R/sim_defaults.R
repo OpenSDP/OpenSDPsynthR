@@ -122,9 +122,15 @@ simpop <- function(nstu, seed, control = sim_control()){
                         names = control$school_names)
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
   stu_year <- assign_schools(student = stu_year, schools = school)
+  message("Simulating high school outcomes... be patient...")
+  g12_cohort <- stu_year[stu_year$grade == "12", ]
+  g12_cohort <- na.omit(g12_cohort)
+  g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
+  g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
+  hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year,
-              schools = school))
+              schools = school, hs_outcomes = hs_outcomes))
 }
 
 #' Generate initial student status indicators
@@ -210,7 +216,7 @@ gen_student_years <- function(data, control=sim_control()){
 
 
 #' Set control parameters for simulated data
-#' @param nschls integer for number of schools to create
+#' @param nschls integer for number of schools to create, default is 2
 #' @param race_groups vector of labels for race groups
 #' @param race_prob vector of numerics, same length as \code{race_groups}
 #' @param minyear an integer
@@ -224,14 +230,15 @@ gen_student_years <- function(data, control=sim_control()){
 #' @param school_cov_mat a covariance matrix for the school level attributes
 #' @param school_names a vector to draw school names from
 #' @param gpa_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
+#' @param grad_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @return a named list
 #' @export
-sim_control <- function(nschls=20L, race_groups=NULL, race_prob=NULL,
+sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=1997, maxyear=2017,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
                         ell_list=NULL, school_means=NULL, school_cov_mat=NULL,
-                        school_names=NULL,
-                        gpa_sim_parameters=NULL){
+                        school_names=NULL, gpa_sim_parameters=NULL,
+                        grad_sim_parameters=NULL){
   nschls <- nschls
 
   # temporarily hardcoding these values here for testing
@@ -430,6 +437,37 @@ sim_control <- function(nschls=20L, race_groups=NULL, race_prob=NULL,
       ngrps = nschls, unbalanceRange = c(100, 1500), type = "linear"
     )
 
+    grad_sim_parameters <- list(
+      fixed = ~ 1 + math_ss + scale_gpa + gifted + iep + frpl + ell + male,
+      random_var = 0.09948,
+      cov_param = list(
+        dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
+        var_type = rep("lvl1", 7),
+        opts = list(
+          list(mean = 0, sd = 1),
+          list(mean = 0, sd = 1),
+          list(size = 1, prob = 0.1),
+          list(size = 1, prob = 0.2),
+          list(size = 1, prob = 0.45),
+          list(size = 1, prob = 0.1),
+          list(size = 1, prob = 0.47)
+        )
+      ),
+      cor_vars = c(
+        0.5136, 0.453, -0.276, -0.309, -0.046, -0.033,
+        0.2890, -0.1404, -0.2674, -0.0352,-0.1992,
+        -0.1354, -0.2096, -0.0305, -0.0290,
+        0.1433, -0.0031, 0.1269,
+        0.0601, 0.0066,
+        0.0009
+      ),
+      fixed_param = c(
+        1.7816, 0.10764, 1.05872, -0.07352, -0.07959,
+        -0.331647,-0.22318254, 0.0590
+        ),
+      ngrps = 30,
+      unbalanceRange = c(100, 1500)
+    )
 
     school_names <- sch_names
 
@@ -447,7 +485,8 @@ sim_control <- function(nschls=20L, race_groups=NULL, race_prob=NULL,
                  school_means,
                  school_cov_mat,
                  school_names,
-                 gpa_sim_parameters))
+                 gpa_sim_parameters,
+                 grad_sim_parameters))
 
 }
 
@@ -554,3 +593,34 @@ assign_schools <- function(student, schools, method = NULL){
                                     include.t0 = TRUE))
   return(student)
 }
+
+#' Assign high school outcomes
+#'
+#' @param g12_cohort a dataframe with certain high school attributes
+#' @param control control parameters from the \code{sim_control()} function
+#'
+#' @return an outcome dataframe
+assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
+  g12_cohort$scale_gpa <- gen_gpa(data = g12_cohort,
+                                  control = control)
+  # rescale GPA
+  g12_cohort$gpa <- rescale_gpa(g12_cohort$scale_gpa)
+  zzz <- gen_grad(data = g12_cohort,
+                  control = control)
+  g12_cohort <- bind_cols(g12_cohort, zzz)
+  g12_cohort$hs_status <- "hs_grad"
+  g12_cohort$hs_status[g12_cohort$grad == 0] <-
+    sapply(g12_cohort$hs_status[g12_cohort$grad == 0],
+           function(x) {
+             sample(
+               c("dropout", "transferout", "still_enroll", "disappear"),
+               1,
+               replace = FALSE,
+               prob = c(0.62, 0.31, 0.04, 0.03)
+             )
+           })
+  outcomes <- g12_cohort[, c("sid", "scale_gpa", "gpa",
+                             "grad_prob", "grad", "hs_status")]
+  return(outcomes)
+}
+

@@ -1,4 +1,5 @@
 #' @importFrom stats rbinom runif pnorm setNames coef rnbinom vcov simulate update
+#' @importFrom stats na.omit
 #' @importFrom utils data head tail
 #' @importFrom methods new
 

@@ -215,12 +215,20 @@ Students move through grades, schools, and outcomes.
 
 ```{r, include=FALSE, eval=FALSE}
 library(lme4)
-g12_cohort <- out$stu_year[out$stu_year$grade == "12", ]
-g12_cohort <- na.omit(g12_cohort)
-g12_cohort <- left_join(g12_cohort, out$demog_master[, 1:4], by = "sid")
-g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
-g12_cohort$gpa <- gen_gpa(data = g12_cohort, control = sim_control(nschls = 3))
 
+
+table(diplom = fake_data$hs_diploma, dropout = fake_data$dropout)
+table(diplom = fake_data$hs_diploma, transferout = fake_data$transferout)
+table(diplom = fake_data$hs_diploma, still_enroll = fake_data$still_enrolled)
+
+table(fake_data$enroll_yr2_any)
+table(yr1 = fake_data$enroll_yr1_any, yr2 =fake_data$enroll_yr2_any)
+
+table(diplom = fake_data$hs_diploma, 
+      yr1 = fake_data$enroll_yr1_any)
+
+table(diplom = fake_data$hs_diploma, 
+      yr2 =fake_data$enroll_yr2_any)
 
 # Outcome assignment, outcomes are assigned in order
 ## cum_gpa_final
@@ -232,40 +240,9 @@ g12_cohort$gpa <- gen_gpa(data = g12_cohort, control = sim_control(nschls = 3))
 ## still_enroll
 ## ps_enroll
 
-### GPA model
-# 0.1839742 theta
-#TODO, add code to validate the gpa_sim_parameters list prior to execution
-
-
-#mean 2.6266
-# sd  0.85406
-# zzz <- unscale(zzz, mean = 2.6266, sd = 0.85406)
-# table(round(zzz, 1))
-
 ## Graduation model
 
-grad_sim_parameters <- list(
-  fixed = ~ 1 + math_ss + gpa + gifted + iep + frpl + ell + male,
-                          random_var = 0.07948,
-              cov_param = list(dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)), 
-                                           var_type = rep("lvl1", 7), 
-                               opts = list(list(mean = 0, sd = 1), 
-                                           list(mean = 0, sd = 1), 
-                                           list(size = 1, prob =0.1), 
-                                           list(size = 1, prob = 0.2), 
-                                           list(size = 1, prob = 0.45), 
-                                           list(size = 1, prob = 0.1), 
-                                           list(size = 1, prob = 0.47))),
-                          cor_vars = c(0.5136, 0.453, -0.276, -0.309, -0.046, -0.033,
-                                       0.2890, -0.1404, -0.2674, -0.0352, -0.1992,
-                                       -0.1354, -0.2096, -0.0305, -0.0290,
-                                       0.1433, -0.0031, 0.1269,
-                                       0.0601, 0.0066, 
-                                       0.0009),
-                  fixed_param = c(1.7816, 0.10764, 1.05872, -0.07352, -0.07959, -0.331647, 
-                                  -0.22318254, 0.0590),
-                        ngrps = 30, unbalanceRange = c(100, 1500)
-)
+
 grad_sim <- do.call(gen_outcome_model, grad_sim_parameters)
 
 

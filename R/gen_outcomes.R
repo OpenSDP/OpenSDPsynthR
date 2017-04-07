@@ -20,8 +20,9 @@
 #' @export
 #'
 #' @examples
-#' zed2 <- gen_outcome_model(sim_control()$gpa_sim_parameters)
-gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars, cov_param = NULL,
+#' zed2 <- do.call(gen_outcome_model, sim_control()$gpa_sim_parameters)
+gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
+                              cov_param = NULL,
                               cor_vars = NULL,
                               ngrps, unbalanceRange,
                               type = "binary", with_err_gen = NULL, error_var = NULL){
@@ -53,11 +54,11 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars, cov_par
                   n = ngrps, p = NULL,
                   cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                   unbalCont = unbalanceRange)
-    mod <- glmer(update(fixed, "sim_data ~ . + -math_ss + (1|clustID)"),
+    mod <- glmer(update(fixed, "sim_data ~ . - math_ss + (1|clustID)"),
                  data = df, family = "binomial")
   } else if(type == "linear"){
     if(missing(error_var)){
-      error_var <- 1.75
+      error_var <- 2.5
     }
     if(missing(with_err_gen)){
       with_err_gen <- "rnorm"
@@ -95,7 +96,7 @@ gen_gpa <- function(data, control=sim_control()){
     control$gpa_sim_parameters$ngrps <- control$nschls
   }
   gpa_sim <- do.call(gen_outcome_model, control$gpa_sim_parameters)
-  if(any(all.vars(gpa_sim_parameters$fixed) %in% names(data))){
+  if(any(all.vars(control$gpa_sim_parameters$fixed) %in% names(data))){
     warning("Data may not line up")
   }
   idvar <- names(data)[which(names(data) %in%
@@ -104,5 +105,52 @@ gen_gpa <- function(data, control=sim_control()){
   # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
   zed <- simulate(gpa_sim$sim_model, nsim = 500, newdata = data)
   out <- apply(zed, 1, function(x) sample(x, 1))
+  # Export
   return(out)
 }
+
+#' Generate a high school graduation for students
+#'
+#' @param data a dataframe with variables
+#' @param control a sim_control parmeter, default is \code{sim_control}
+#'
+#' @return a data.frame with two values, a probability and a binary outcome
+#' @export
+gen_grad <- function(data, control = sim_control()){
+  data <- as.data.frame(data)
+  if(control$grad_sim_parameters$ngrps != control$nschls){
+    warning("Changing number of groups in outcome simulation to match schools")
+    control$grad_sim_parameters$ngrps <- control$nschls
+  }
+  grad_sim <- do.call(gen_outcome_model, control$grad_sim_parameters)
+  if(any(all.vars(control$grad_sim_parameters$fixed) %in% names(data))){
+    warning("Data may not line up")
+  }
+  idvar <- names(data)[which(names(data) %in%
+                               c("SCH", "schid"))]
+  data$clustID <- as.numeric(data[, idvar])
+  # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
+  zed <- simulate(grad_sim$sim_model, nsim = 500, newdata = data,
+                  family = "binomial")
+  out_prob <- apply(zed, 1, mean)
+  out_binom <- sapply(out_prob, function(x) rbinom(1, 1, x))
+  # Export
+  out <- data.frame(grad_prob = out_prob, grad = out_binom)
+  return(out)
+}
+
+#' Rescale scaled GPA to be on 0-4 scale
+#'
+#' @param x a scaled normal variable
+#'
+#' @return a GPA rounded to tenths, from 0 to 1
+#' @export
+rescale_gpa <- function(x){
+  # Rescale to be on GPA scale
+  x <- unscale(x, mean = 2.4266, sd = 0.85406)
+  x <- ifelse(x < 0, 0.25, x)
+  x <- ifelse(x > 4, 4, x)
+  x <- round(x, 1)
+  return(x)
+}
+

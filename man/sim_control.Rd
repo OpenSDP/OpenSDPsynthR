@@ -7,8 +7,9 @@
 sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
   ses_list = NULL, minyear = 1997, maxyear = 2017, n_cohorts = NULL,
   gifted_list = NULL, iep_list = NULL, ell_list = NULL,
-  school_means = NULL, school_cov_mat = NULL, school_names = NULL,
-  gpa_sim_parameters = NULL, grad_sim_parameters = NULL)
+  grade_levels = NULL, school_means = NULL, school_cov_mat = NULL,
+  school_names = NULL, gpa_sim_parameters = NULL,
+  grad_sim_parameters = NULL)
 }
 \arguments{
 \item{nschls}{integer for number of schools to create, default is 2}
@@ -30,6 +31,8 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
 \item{iep_list}{a probability list}
 
 \item{ell_list}{a probability list}
+
+\item{grade_levels}{a probability list}
 
 \item{school_means}{a named vector of means for school level attributes}
 

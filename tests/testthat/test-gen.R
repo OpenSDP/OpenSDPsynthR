@@ -9,7 +9,9 @@ test_that("gen_students produces students", {
   expect_is(out, "data.frame")
   expect_identical(names(out),
                    c("sid", "Sex", "Birthdate", "Race", "White",
-                     "Black.or.African.American"))
+                     "Black.or.African.American",
+                     "Hispanic.or.Latino.Ethnicity",
+                     "Demographic.Race.Two.or.More.Races"))
   expect_is(out[, "sid"], "factor")
   expect_is(out[, "Sex"], "factor")
   expect_is(out[, "Birthdate"], "Date")

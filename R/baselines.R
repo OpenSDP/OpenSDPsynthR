@@ -53,8 +53,10 @@ assign_baseline <- function(baseline = NULL, data){
   if(baseline == "grade"){
     data <- as.data.frame(data)
     out <- sapply(data[, bl_data$keys], bl_data$fun)
+    out <- as.character(out)
     data <- cbind(data, out)
     names(data)[ncol(data)] <- baseline
+    data[,ncol(data)] <- as.character(data[,ncol(data)])
     return(data)
   }
   if(is.null(bl_data$keys)){
@@ -184,4 +186,66 @@ school_transitions <- function(nschls = 15L, diag_limit = 0.9){
   dimnames(school_tm) <- list(1:nschls, 1:nschls)
   return(school_tm)
 }
+
+#' Generate a grade advancement transition matrix
+#'
+#' @param ngrades integer, the number of grade levels to simulate
+#' @param diag_limit the minimum probability of a student advancing to the next grade
+#'
+#' @return a matrix, ngrades x ngrades of grade transition probabilities
+#' @export
+grade_transitions <- function(ngrades=15L, diag_limit = 0.975){
+  stopifnot(class(ngrades) %in% c("numeric", "integer"))
+  stopifnot(diag_limit > 0 & diag_limit < 1)
+  empty <- matrix(rep(0, ngrades^2), nrow = ngrades, ncol = ngrades)
+  diag(empty) <- 1
+  for(i in 1:ngrades){
+    diag(empty)[i] <- runif(1, diag_limit, 1)
+  }
+  empty <- diag_offset(empty, 1L)
+  for(g in 1:ngrades){
+    i <- g + 1
+    elem <- (i-2):(i+2)
+    if(any(elem < 1) | any(elem > ngrades)){
+      elem <- elem[elem >= 1]
+      elem <- elem[elem <= ngrades]
+    }
+    elem <- elem[-which(elem == i)]
+    if(i > ngrades){
+      fill <- round(rand_vect_cont(N = length(elem), runif(1, diag_limit, 1),
+                                   sd = 4), 4)
+    } else{
+      fill <- round(rand_vect_cont(N = length(elem), 1-empty[g, i], sd = 4), 4)
+    }
+    fill <- sort(fill, decreasing = TRUE)
+    fill <- na.omit(fill[c(2, 1, 4, 3)])
+    attributes(fill) <- NULL # strip NA info
+    empty[g, ][elem] <- fill
+  }
+  empty[ngrades, ngrades] <- 1
+  grades_tm <- empty
+  dimms <- convert_grade(paste0("g", -1:(ngrades-2)))
+  dimnames(grades_tm) <- list(dimms, dimms)
+  grades_tm <- tm_convert(grades_tm)
+  return(grades_tm)
+}
+
+
+
+#' Offset the diagonal values of a matrix
+#'
+#' @param matrix a square matrix
+#' @param offset an integer value to offset the diagonal by
+#'
+#' @return a square matrix
+#' @export
+diag_offset <- function(matrix, offset = 1L){
+  for(i in 1:nrow(matrix)){
+    matrix[i, ] <- c(rep(0, offset), matrix[i, ][1:(length(matrix[i, ])-offset)])
+  }
+  return(matrix)
+}
+
+
+
 

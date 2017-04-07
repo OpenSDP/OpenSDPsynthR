@@ -2,6 +2,10 @@ library(simglm)
 
 
 
+grades_tm <- grade_transitions(ngrades = 12)
+grades_tm <- tm_convert(grades_tm)
+
+make_markov_series(10, tm = grades_tm, t0 = -2)
 
 
 

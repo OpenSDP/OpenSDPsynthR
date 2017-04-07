@@ -82,7 +82,7 @@ test_that("Baseline returns the proper object type for grade", {
 
 test_that("Baseline assignment works for program example", {
   zzz <- assign_baseline("grade", ex_data)
-  expect_is(zzz$grade, "factor")
+  expect_is(zzz$grade, "character")
   expect_true(all(unique(zzz$grade) %in%
                     c("1", "10", "11", "12", "2", "3", "4", "5", "6",
                       "7", "8", "9", "KG", "PK")))

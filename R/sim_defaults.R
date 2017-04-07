@@ -85,37 +85,26 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_first <- inner_join(stu_first, demog_master[, c(idvar, "Race")],
                           by = idvar)
   stu_first$age <- round(stu_first$age, 0)
-  #stu_year <- left_join(stu_year, stu_first[, c(1, 6)])
-  # Needs to become flexible to multipe inputs and outputs
-  # Needs to avoid hardcoding Race transformations, CEDS Xwalk should take
-  # place outside of this function
-  # This should also be controlled somehow by control eventually
-  # message("Assigning ", n, " students to initial ELL status...")
-  # stu_first$ell <- gen_initial_status(stu_first, baseline = "ell")
-  # message("Assigning ", n, " students to initial SES status...")
-  # stu_first$ses <- gen_initial_status(stu_first, baseline = "ses")
   message("Assigning ", nstu, " students to initial FRPL, IEP, and ELL status")
   stu_first <- assign_baseline(baseline = "program", stu_first)
+  message("Assigning initial grade levels...")
+  stu_first <- assign_baseline("grade", stu_first)
   message("Organizing status variables for you...")
-  stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell", "iep", "frpl")],
+  stu_year <- left_join(stu_year, stu_first[, c(idvar, "ell", "iep", "frpl", "grade")],
                         by = idvar)
-  # demog_master <- left_join(demog_master, stu_first[, c(idvar, "ses")],
-  #                           by = idvar)
   rm(stu_first)
   message("Assigning ", nstu, " students longitudinal status trajectories...")
-  cond_vars <- get_sim_groupvars(control)
+  cond_vars <- OpenSDP.data:::get_sim_groupvars(control)
   stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)],
                         by = idvar)
   stu_year <- gen_annual_status(stu_year, control = control)
   # Create longitudinal ell and ses here
   stu_year <- stu_year %>%
-    select_(idvar, "year", "age", "frpl", "ell", "iep", "gifted")
+    select_(idvar, "year", "age", "grade", "frpl", "ell", "iep", "gifted")
   message("Sorting your records")
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
   stu_year$age <- round(stu_year$age, 0)
-  message("Assigning grade levels...")
-  stu_year <- assign_baseline("grade", stu_year)
   message("Creating ", control$nschls, " schools for you...")
   school <- gen_schools(n = control$nschls, mean = control$school_means,
                         sigma = control$school_cov_mat,
@@ -161,7 +150,7 @@ gen_initial_status <- function(data, baseline){
 #' @export
 gen_annual_status <- function(data, control = sim_control()){
   reqdVars <- get_sim_groupvars(control)
-  reqdVars <- c(reqdVars, c("iep", "ell", "frpl"))
+  reqdVars <- c(reqdVars, c("iep", "ell", "frpl", "grade"))
   stopifnot(all(reqdVars %in% names(data)))
   idvar <- names(data)[which(names(data) %in% c("ID", "id", "sid"))]
   data <- data %>% group_by_(idvar) %>% arrange(year) %>%
@@ -171,7 +160,9 @@ gen_annual_status <- function(data, control = sim_control()){
            ell = markov_cond_list("ALL", n = n() - 1, control$ell_list,
                                   t0 = ell[1], include.t0 = TRUE),
            frpl = markov_cond_list(Race[1], n = n()-1, control$ses_list,
-                                  t0 = frpl[1], include.t0 = TRUE))
+                                  t0 = frpl[1], include.t0 = TRUE),
+           grade = markov_cond_list("ALL", n = n() - 1, control$grade_levels,
+                                  t0 = grade[1], include.t0 = TRUE))
   return(data)
 }
 
@@ -224,6 +215,7 @@ gen_student_years <- function(data, control=sim_control()){
 #' @param ses_list a probability list
 #' @param iep_list a probability list
 #' @param ell_list a probability list
+#' @param grade_levels a probability list
 #' @param gifted_list a probability list
 #' @param n_cohorts number of cohorts to produce
 #' @param school_means a named vector of means for school level attributes
@@ -236,7 +228,7 @@ gen_student_years <- function(data, control=sim_control()){
 sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=1997, maxyear=2017,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
-                        ell_list=NULL, school_means=NULL, school_cov_mat=NULL,
+                        ell_list=NULL, grade_levels=NULL, school_means=NULL, school_cov_mat=NULL,
                         school_names=NULL, gpa_sim_parameters=NULL,
                         grad_sim_parameters=NULL){
   nschls <- nschls
@@ -300,6 +292,14 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                  pars = list(tm = tm)),
     "GROUPVARS" = c("ell")
   )
+
+  tm <- grade_transitions(ngrades = 15L, diag_limit = 0.95)
+  grade_levels <- list(
+    "ALL" = list(f = make_markov_series,
+                 pars = list(tm = tm)),
+    "GROUPVARS" = c("grade")
+  )
+
   ses_dim <- list(c("0", "1"), c("0", "1"))
     race_ses_tm <- structure(
       list(
@@ -481,6 +481,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                  iep_list,
                  ses_list,
                  ell_list,
+                 grade_levels,
                  n_cohorts,
                  school_means,
                  school_cov_mat,

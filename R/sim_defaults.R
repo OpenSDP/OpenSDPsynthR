@@ -114,7 +114,7 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
   stu_year$age <- round(stu_year$age, 0)
-  message("Assiging grades...")
+  message("Assigning grade levels...")
   stu_year <- assign_baseline("grade", stu_year)
   message("Creating ", control$nschls, " schools for you...")
   school <- gen_schools(n = control$nschls, mean = control$school_means,

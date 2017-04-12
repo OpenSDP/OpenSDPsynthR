@@ -10,14 +10,14 @@ sdp_cleaner <- function(simouts){
     filter(grade %in% c("9", "10", "11", "12")) %>%
     group_by(sid) %>% arrange(sid, year) %>%
     summarize(
-      first_hs = first(schid),
-      last_hs = last(schid),
+      first_hs_code = first(schid),
+      last_hs_code = last(schid),
+      frpl_ever_hs = ifelse(any(frpl == "1"), "1", "0"),
+      iep_ever_hs = ifelse(any(iep == "1"), "1", "0"),
+      ell_ever_hs = ifelse(any(ell == "1"), "1", "0"),
+      gifted_ever_hs = ifelse(any(gifted == "1"), "1", "0"),
       chrt_ninth = min(year[grade == "9"]),
       chrt_hs = min(year[grade == "12"]),
-      frpl_ever = ifelse(any(frpl == "1"), "1", "0"),
-      iep_ever = ifelse(any(iep == "1"), "1", "0"),
-      ell_ever = ifelse(any(ell == "1"), "1", "0"),
-      gifted_ever = ifelse(any(gifted == "1"), "1", "0"),
       nyears = n()
     )
   outcomes_clean <- bind_rows(
@@ -33,6 +33,13 @@ sdp_cleaner <- function(simouts){
       ungroup %>% arrange(sid) %>%
       filter(nrow == 1) %>% select(-nrow)
   )
-  final_data <- left_join(hs_summary, outcomes_clean)
+  demog_clean <- simouts$demog_master %>%
+    summarize(
+      sid = sid,
+      male = if_else(Sex == "Male", 1, 0),
+      race_ethnicity = Race
+    )
+  final_data <- left_join(demog_clean, hs_summary)
+  final_data <- left_join(final_data, outcomes_clean)
   return(final_data)
 }

@@ -184,3 +184,40 @@ gen_ps <- function(data, control = sim_control()){
   return(out)
 }
 
+
+#' Generate an assessment table
+#'
+#' @param data student-year data
+#' @param control output from \code{sim_control}
+#'
+#' @return a two-column dataframe with math and reading scores
+#' @export
+gen_assess <- function(data, control = sim_control()){
+  data <- as.data.frame(data)
+  df <- do.call(sim_reg, control$assess_sim_par, quote = TRUE)
+  mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1|clustID) + (1|clust3ID)"),
+              data = df)
+  mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1+time|clustID) +
+                     (1+time|clust3ID)"),
+              data = df)
+
+  sch_id_var <- names(data)[which(names(data) %in%
+                               c("SCH", "schid"))]
+  stu_id_var <- names(data)[which(names(data) %in%
+                                    c("sid", "stuid", "stu"))]
+  data$clust3ID <- as.numeric(data[, sch_id_var])
+  data$clustID <- as.numeric(data[, stu_id_var])
+  #TODO: Decide what to do, peg time to age or to grade
+  data$time <- data$age - min(data$age)
+  # Need to normalize time
+  zed <- simulate(mod, nsim = 500, newdata = data)
+  # math <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
+  math <- apply(zed, 1, function(x) sample(sort(x)[100:400], 1))
+  zed <- simulate(mod, nsim = 500, newdata = data)
+  # rdg <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
+  rdg <- apply(zed, 1, function(x) sample(sort(x)[100:400], 1))
+  out <- data.frame(math_ss = math, rdg_ss = rdg)
+  return(out)
+}
+
+

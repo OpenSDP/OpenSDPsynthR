@@ -123,7 +123,7 @@ grad_df <- sim_glm(fixed = fixed, random = random,
 ## TODO - add factor variables
 ## TODO - tune parameters to get output desired
 fixed <- ~1 + time + gifted.f + iep.f + frpl.f + ell.f
-random <- ~1 + time
+random <- ~ 1 + time
 random3 <- ~ 1
 cor_vars <- NULL # needs to be the length of all correlations between predictors
 fixed_param <- c(100, 25, 3, -4, -3, -1)
@@ -187,7 +187,8 @@ testdf$yhat <- predict(proof, newdata = testdf, re.form = ~(1|schid))
 testdf$yhat <- predict(proof, newdata = testdf)
 zed <- simulate(proof, nsim = 100, newdata = testdf,
                 re.form = ~(1|schid))
-testdf$yhat <- apply(zed, 1, function(x) sample(x, 1))
+testdf$yhat <- apply(zed, 1, function(x) (sample(x, 1) + mean(x) /2 ))
+testdf$yhat <- apply(zed, 1, mean)
 
 ggplot(testdf, aes(x = age, y = yhat, group = sid)) +
   geom_line(alpha = I(0.2)) + facet_wrap(~schid)

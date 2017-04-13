@@ -8,7 +8,7 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
   ses_list = NULL, minyear = 2002, maxyear = 2017, n_cohorts = NULL,
   gifted_list = NULL, iep_list = NULL, ell_list = NULL,
   grade_levels = NULL, school_means = NULL, school_cov_mat = NULL,
-  school_names = NULL, gpa_sim_parameters = NULL,
+  school_names = NULL, postsec_names, gpa_sim_parameters = NULL,
   grad_sim_parameters = NULL, ps_sim_parameters = NULL,
   assess_sim_par = NULL)
 }
@@ -40,6 +40,8 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
 \item{school_cov_mat}{a covariance matrix for the school level attributes}
 
 \item{school_names}{a vector to draw school names from}
+
+\item{postsec_names}{a vector to draw NSC names from}
 
 \item{gpa_sim_parameters}{a list of parameters to pass to \code{gen_outcome_model}}
 

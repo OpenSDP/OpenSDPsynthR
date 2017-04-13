@@ -35,11 +35,14 @@ sdp_cleaner <- function(simouts){
       qrt_8_composite = ntile(test_composite_8, 4)
     )
 
+  # TODO: make this consistently long or consistently wide, but not both
   gpa_ontrack <- left_join(simouts$stu_year[
     simouts$stu_year$grade %in% c("9", "10", "11", "12")
     , c("sid", "year", "grade", "schid")], simouts$hs_outcomes)
   zzz <- gen_credits(gpa_ontrack = gpa_ontrack)
   gpa_ontrack <- gen_annual_gpa(gpa_ontrack = zzz)
+  gpa_ontrack <- gen_ontrack(gpa_ontrack = gpa_ontrack)
+
 
 
   outcomes_clean <- bind_rows(

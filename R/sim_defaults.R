@@ -345,3 +345,30 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
   return(outcomes)
 }
 
+#' Generate postsecondary institutions
+#'
+#' @param n number of institutions to generate
+#' @param names names to use for schools
+#'
+#' @return a data.frame of names, IDs, and enrollment weights
+#' @export
+gen_nsc <- function(n, names = NULL){
+  ids <- wakefield::id(n)
+  enroll <- rnbinom(n, size = 1.4087, mu = 74.62) # starting values from existing district
+  if(missing(names)){
+    names <- c(LETTERS, letters)
+  }
+  if(length(n) > length(names)){
+    stop("Please add more names or select a smaller n to generate unique names")
+  }
+  names <- sample(names, size = n, replace = FALSE)
+  # attribs <- mvtnorm::rmvnorm(n, mean = mean_vec, sigma = cov_mat)
+  # attribs[attribs < 0] <- 0
+  # attribs[attribs >=1] <- 0.99
+  K <- length(enroll[enroll == 0])
+  enroll[enroll == 0] <- sample(1:25, K, replace = FALSE)
+  out <- data.frame(opeid = ids, name = names, enroll = enroll,
+                    stringsAsFactors = FALSE)
+  # out <- cbind(out, attribs)
+  return(out)
+}

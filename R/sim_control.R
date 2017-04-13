@@ -13,6 +13,7 @@
 #' @param school_means a named vector of means for school level attributes
 #' @param school_cov_mat a covariance matrix for the school level attributes
 #' @param school_names a vector to draw school names from
+#' @param postsec_names a vector to draw NSC names from
 #' @param gpa_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @param grad_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @param ps_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
@@ -23,7 +24,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=2002, maxyear=2017,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
                         ell_list=NULL, grade_levels=NULL, school_means=NULL, school_cov_mat=NULL,
-                        school_names=NULL, gpa_sim_parameters=NULL,
+                        school_names=NULL, postsec_names, gpa_sim_parameters=NULL,
                         grad_sim_parameters=NULL,
                         ps_sim_parameters = NULL,
                         assess_sim_par = NULL){
@@ -333,6 +334,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
 
 
   school_names <- sch_names
+  postsec_names <- ps_names
 
   structure(namedList(
     nschls,
@@ -349,6 +351,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     school_means,
     school_cov_mat,
     school_names,
+    postsec_names,
     gpa_sim_parameters,
     grad_sim_parameters,
     ps_sim_parameters,

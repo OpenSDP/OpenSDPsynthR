@@ -187,11 +187,13 @@ convert_grade <- function(x){
 #' @param nsim number of simulations per observation to generate
 #' @param newdata dataframe containing the observations to generate predictions
 #' for
+#' @param resid_error should the model residual error be added to predictions,
+#' default is FALSE
 #' @importFrom mvtnorm rmvnorm
 #'
 #' @return a matrix of predictions nrow(newdata) x nsim columns
 #' @export
-better_sim.lm <- function(object, nsim, newdata){
+better_sim.lm <- function(object, nsim, newdata, resid_error = FALSE){
   newdata <- as.matrix(newdata)
   se <- vcov(object)
   eff <- coef(object)
@@ -203,6 +205,10 @@ better_sim.lm <- function(object, nsim, newdata){
     stop("Wrong dimensions in newdata")
   }
   preds <- as.matrix(newdata) %*% t(coefs)
+  error <- rnorm(length(preds), mean = 0, sd = sigma(object))
+  if(resid_error){
+    preds <- preds + error
+  }
   return(preds)
 }
 
@@ -235,5 +241,18 @@ tm_convert <- function(matrix){
 unscale <- function(x, mean, sd) {
   y <- (x / sd) + mean
   return(y)
-  }
+}
+
+#' Reliabily rescale numerics with missingness
+#'
+#' @param x a numeric vector
+#'
+#' @return x mean centered and divided by it's standard deviation
+#' @export
+rescale <- function(x){
+  y <- (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
+  return(y)
+}
+
+
 

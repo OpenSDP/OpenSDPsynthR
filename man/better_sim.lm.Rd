@@ -5,7 +5,7 @@
 \title{Generate simulated predictions from a linear model that account for
 model and parameter error}
 \usage{
-better_sim.lm(object, nsim, newdata)
+better_sim.lm(object, nsim, newdata, resid_error = FALSE)
 }
 \arguments{
 \item{object}{an object of class lm or glm}
@@ -14,6 +14,9 @@ better_sim.lm(object, nsim, newdata)
 
 \item{newdata}{dataframe containing the observations to generate predictions
 for}
+
+\item{resid_error}{should the model residual error be added to predictions,
+default is FALSE}
 }
 \value{
 a matrix of predictions nrow(newdata) x nsim columns

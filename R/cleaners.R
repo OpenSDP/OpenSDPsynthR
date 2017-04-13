@@ -20,6 +20,28 @@ sdp_cleaner <- function(simouts){
       chrt_hs = min(year[grade == "12"]),
       nyears = n()
     )
+
+  scores <- simouts$assessment %>% ungroup %>%
+    filter(grade %in% c("8")) %>%
+    mutate(
+      test_math_8_raw = math_ss,
+      test_math_8_std =  rescale(math_ss),
+      qrt_8_math = ntile(math_ss, 4),
+      test_ela_8_raw = rdg_ss,
+      test_ela_8_std = rescale(rdg_ss),
+      qrt_8_ela = ntile(rdg_ss, 4),
+      test_composite_8 = math_ss + rdg_ss,
+      test_composite_8_std = test_math_8_std + test_ela_8_std,
+      qrt_8_composite = ntile(test_composite_8, 4)
+    )
+
+  gpa_ontrack <- left_join(simouts$stu_year[
+    simouts$stu_year$grade %in% c("9", "10", "11", "12")
+    , c("sid", "year", "grade", "schid")], simouts$hs_outcomes)
+  zzz <- gen_credits(gpa_ontrack = gpa_ontrack)
+  gpa_ontrack <- gen_annual_gpa(gpa_ontrack = zzz)
+
+
   outcomes_clean <- bind_rows(
     simouts$hs_outcomes %>% group_by(sid) %>%
       mutate(nrow = n()) %>%

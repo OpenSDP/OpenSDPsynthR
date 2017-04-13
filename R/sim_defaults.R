@@ -115,7 +115,9 @@ simpop <- function(nstu, seed, control = sim_control()){
   assess <- left_join(stu_year, demog_master[, 1:4])
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
   zz <- gen_assess(data = assess, control = control)
-  assess <- bind_cols(assess[, c("sid", "schid", "year", "age")], zz)
+  assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
+  assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
+  assess <- assess[, c(idvar, "schid", "year", "grade", "math_ss", "rdg_ss")]
   rm(zz)
   message("Simulating high school outcomes... be patient...")
   g12_cohort <- stu_year[stu_year$grade == "12", ]

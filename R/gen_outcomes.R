@@ -220,4 +220,151 @@ gen_assess <- function(data, control = sim_control()){
   return(out)
 }
 
+# TODO generalize these two functions to some generic fuzzmatch/generate rmvnorm data
+
+#' Generate credit sequence for students based on their final GPA
+#'
+#' @param gpa_ontrack a data.frame containing final GPA for a student
+#'
+#' @return \code{gpa_ontrack} but appended with credits by year
+#' @export
+gen_credits <- function(gpa_ontrack){
+  cov_matrix <- structure(
+    c(
+      2.75566945787353, 5.10706978525027, 7.61205992792623, 9.89030594066736,
+      0.109029620175826, 0.271951381564673, 0.447968849522654,0.622051838798187,
+      0.8021634008576,  0.96205753999336,1.16768443306172,1.233791237022,
+      5.10706978525027,  12.1674704877153,19.396615672585, 25.7102906703755,
+      0.273879350479468, 0.570042916210459, 1.22749859106289, 1.58296312520297,
+      2.21963790263873, 2.50969237429761, 3.22379291455248, 3.19369557755706,
+      7.61205992792623, 19.396615672585,  34.0791667678909, 46.2874453943062,
+      0.428404096252971,  0.919578332592651, 2.02696519413977, 2.640840313183,
+      3.95462602065478, 4.48234313004498, 5.88219242499701, 5.76954297914403,
+      9.89030594066736, 25.7102906703755, 46.2874453943062, 66.435397990789,
+      0.340522852495716, 1.04313270168342, 2.5177795760211, 3.40109621651257,
+      5.2534423057967, 6.06180919017583,  8.23891225133386, 8.26936423977293,
+      0.109029620175826, 0.273879350479468, 0.428404096252971, 0.340522852495716,
+      0.252057941748993, 0.173152528812616, 0.2926411422342,  0.206823638805838,
+      0.324115100929672, 0.220317121847772, 0.361325212075315, 0.162383915833626,
+      0.271951381564673,0.570042916210459,       0.919578332592651,   1.04313270168342,
+      0.173152528812616, 0.328960279108121, 0.229113790075386, 0.396844816842713,
+      0.284275091646359, 0.433223348801798, 0.346406486960778,  0.393770727414352,
+      0.447968849522654, 1.22749859106289,  2.02696519413977, 2.5177795760211,
+      0.2926411422342,  0.229113790075386, 0.505972511118613, 0.364229637411876,
+      0.655560130427122, 0.4697059977753, 0.804111981127887,  0.477170319012822,
+      0.622051838798187, 1.58296312520297, 2.640840313183, 3.40109621651257,
+      0.206823638805838,  0.396844816842713, 0.364229637411876, 0.649251057339849,
+      0.528943932261278,  0.783566748644363,  0.70164285854404, 0.805150232348093,
+      0.8021634008576,  2.21963790263873, 3.95462602065478, 5.2534423057967,
+      0.324115100929672, 0.284275091646359, 0.655560130427122, 0.528943932261278,
+      1.0205017365896, 0.75566986364323, 1.31532906125032,  0.855469148134248,
+      0.96205753999336, 2.50969237429761, 4.48234313004498, 6.06180919017583,
+      0.220317121847772,  0.433223348801798, 0.4697059977753, 0.783566748644363,
+      0.75566986364323, 1.12051953460851, 1.05641521284183, 1.22723625877056,
+      1.16768443306172, 3.22379291455248, 5.88219242499701, 8.23891225133386,
+      0.361325212075315, 0.346406486960778, 0.804111981127887, 0.70164285854404,
+      1.31532906125032, 1.05641521284183, 1.86524285307793, 1.27006709615775,
+      1.233791237022,  3.19369557755706, 5.76954297914403,  8.26936423977293,
+      0.162383915833626,  0.393770727414352,  0.477170319012822, 0.805150232348093,
+      0.855469148134248,  1.22723625877056, 1.27006709615775, 1.61157654495461
+    ),
+    .Dim = c(12L, 12L),
+    .Dimnames = list(
+      c(
+        "cum_credits_yr1", "cum_credits_yr2",
+        "cum_credits_yr3", "cum_credits_yr4",
+        "cum_credits_yr1_ela", "cum_credits_yr1_math",
+        "cum_credits_yr2_ela", "cum_credits_yr2_math",
+        "cum_credits_yr3_ela", "cum_credits_yr3_math",
+        "cum_credits_yr4_ela", "cum_credits_yr4_math"
+      ),
+      c(
+        "cum_credits_yr1", "cum_credits_yr2",
+        "cum_credits_yr3", "cum_credits_yr4",
+        "cum_credits_yr1_ela", "cum_credits_yr1_math",
+        "cum_credits_yr2_ela", "cum_credits_yr2_math",
+        "cum_credits_yr3_ela", "cum_credits_yr3_math",
+        "cum_credits_yr4_ela", "cum_credits_yr4_math"
+      )
+    )
+  )
+  mean_struc <- structure(
+    c(
+      6.14267700354941, 11.8073977209042, 17.6704651597235, 22.9235942462171,
+      0.490472632168877, 0.585045768727816, 1.30814496543994, 1.3685316644872,
+      2.11105921912946, 2.1423967868485,  2.90808892209976, 2.69517093218756
+    ),
+    .Names = c(
+      "cum_credits_yr1",
+      "cum_credits_yr2",
+      "cum_credits_yr3",
+      "cum_credits_yr4",
+      "cum_credits_yr1_ela",
+      "cum_credits_yr1_math",
+      "cum_credits_yr2_ela",
+      "cum_credits_yr2_math",
+      "cum_credits_yr3_ela",
+      "cum_credits_yr3_math",
+      "cum_credits_yr4_ela",
+      "cum_credits_yr4_math"
+    )
+  )
+
+  sim_credits <- mvtnorm::rmvnorm(5000, mean = mean_struc, sigma = cov_matrix)
+  sim_credits <- as.data.frame(sim_credits)
+
+  credit_pattern <- vector(length(gpa_ontrack$gpa), mode = "list")
+  TOL <- 2.9162 # sigma from model of gpa on yr4 credits
+  for(i in 1:length(gpa_ontrack$gpa)){
+    G <- (gpa_ontrack$gpa[[i]] * 2.9464) + 17.7185 # beta from model
+
+    candidate <- sim_credits[sim_credits[, 4] > G - TOL & sim_credits[, 4] < G + TOL, ]
+    credit_pattern[[i]] <- candidate[sample(row.names(candidate), 1),]
+  }
+
+  credit_pattern <- bind_rows(credit_pattern)
+  out <- bind_cols(gpa_ontrack, credit_pattern)
+  return(out)
+}
+
+
+#' Generate annual GPA sequence for students based on final GPA
+#'
+#' @param gpa_ontrack a data.frame containing final GPA for a student
+#'
+#' @return \code{gpa_ontrack} appended with gpa by year
+#' @export
+gen_annual_gpa <- function(gpa_ontrack){
+  cov_matrix <- structure(c(0.90626522250176, 0.695031046675378, 0.530087063133161,
+                            0.418621356347014, 0.786058078858986, 0.695031046675378, 0.720702463579063,
+                            0.556340603198344, 0.435527907883059, 0.674646530351198, 0.530087063133161,
+                            0.556340603198344, 0.561388159783519, 0.437381171701534, 0.544569213486813,
+                            0.418621356347014, 0.435527907883059, 0.437381171701534, 0.438273839283868,
+                            0.433828410757409, 0.786058078858986, 0.674646530351198, 0.544569213486813,
+                            0.433828410757409, 0.824677869865807),
+                          .Dim = c(5L, 5L),
+                          .Dimnames = list(
+                              c("cum_gpa_yr1", "cum_gpa_yr2", "cum_gpa_yr3", "cum_gpa_yr4",
+                                "cum_gpa_final"), c("cum_gpa_yr1", "cum_gpa_yr2", "cum_gpa_yr3",
+                                                    "cum_gpa_yr4", "cum_gpa_final")))
+
+  mean_struc <-structure(c(2.77892494371257, 2.73927274525083, 2.8066337250337,
+                           2.90250269589631, 2.66095257000418),
+                         .Names = c("cum_gpa_yr1", "cum_gpa_yr2", "cum_gpa_yr3",
+                                    "cum_gpa_yr4", "cum_gpa_final"))
+  sim_gpa <- mvtnorm::rmvnorm(5000, mean = mean_struc, sigma = cov_matrix)
+  sim_gpa <- as.data.frame(sim_gpa)
+
+  gpa_pattern <- vector(length(gpa_ontrack$gpa), mode = "list")
+  TOL <- 0.9 # final GPA SD
+  for(i in 1:length(gpa_ontrack$gpa)){
+    G <- (gpa_ontrack$gpa[[i]])  # beta from model
+    candidate <- sim_gpa[sim_gpa[, 5] > G - TOL & sim_gpa[, 5] < G + TOL, ]
+    gpa_pattern[[i]] <- candidate[sample(row.names(candidate), 1),]
+  }
+  gpa_pattern <- bind_rows(gpa_pattern)
+  out <- bind_cols(gpa_ontrack, gpa_pattern)
+  return(out)
+}
+
 

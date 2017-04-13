@@ -221,6 +221,7 @@ gen_assess <- function(data, control = sim_control()){
 }
 
 # TODO generalize these two functions to some generic fuzzmatch/generate rmvnorm data
+# Sanitize GPA and credits by rounding to tenths and setting ceiling and floor
 
 #' Generate credit sequence for students based on their final GPA
 #'
@@ -368,3 +369,35 @@ gen_annual_gpa <- function(gpa_ontrack){
 }
 
 
+# TODO: Consider logging the first year
+#' Calculate on_track based on credits
+#'
+#' @param gpa_ontrack a data.frame with cumulative credits
+#'
+#' @return \code{gpa_ontrack} with ontrack indicators appended
+#' @export
+gen_ontrack <- function(gpa_ontrack){
+  # DEFINITION: - on track by end of 9th: 5 total credits, 1 math, 1 English
+  # on track by end of 10th: 10 total credits, 1 math, 2  English
+  # on track by end of 11th: 15 total credits, 2 math, 3 English
+  #on track by end of 12th: 20 total credits, 3 math, 4 English
+  gpa_ontrack$cum_credits_yr1_ela <- exp(gpa_ontrack$cum_credits_yr1_ela)
+  gpa_ontrack$cum_credits_yr1_math <- exp(gpa_ontrack$cum_credits_yr1_math)
+  gpa_ontrack$ontrack_yr1 <- ifelse(
+    gpa_ontrack$cum_credits_yr1 >= 5 &
+      gpa_ontrack$cum_credits_yr1_math >= 1 &
+      gpa_ontrack$cum_credits_yr1_ela >= 1, 1, 0)
+  gpa_ontrack$ontrack_yr2 <- ifelse(
+    gpa_ontrack$cum_credits_yr2 >= 10 &
+      gpa_ontrack$cum_credits_yr2_math >= 1 &
+      gpa_ontrack$cum_credits_yr2_ela >= 2, 1, 0)
+  gpa_ontrack$ontrack_yr3 <- ifelse(
+    gpa_ontrack$cum_credits_yr3 >= 15 &
+      gpa_ontrack$cum_credits_yr3_math >= 2 &
+      gpa_ontrack$cum_credits_yr3_ela >= 3, 1, 0)
+  gpa_ontrack$ontrack_yr4 <- ifelse(
+    gpa_ontrack$cum_credits_yr4 >= 20 &
+      gpa_ontrack$cum_credits_yr4_math >= 3 &
+      gpa_ontrack$cum_credits_yr4_ela >= 4, 1, 0)
+  return(gpa_ontrack)
+}

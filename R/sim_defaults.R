@@ -125,9 +125,14 @@ simpop <- function(nstu, seed, control = sim_control()){
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
+  message("Simulating annual high school outcomes... be patient...")
+  hs_annual <- gen_hs_annual(hs_outcomes)
+  # TODO: Fix hardcoding of postsec
+  nsc_postsec <- gen_nsc(n = 35, names = sim_control()$postsec_names)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year,
-              schools = school, assessment = assess, hs_outcomes = hs_outcomes))
+              schools = school, assessment = assess, hs_outcomes = hs_outcomes,
+              hs_annual = hs_annual, nsc = nsc_postsec))
 }
 
 #' Generate initial student status indicators

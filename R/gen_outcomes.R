@@ -401,3 +401,64 @@ gen_ontrack <- function(gpa_ontrack){
       gpa_ontrack$cum_credits_yr4_ela >= 4, 1, 0)
   return(gpa_ontrack)
 }
+
+
+#' Generate annual HS outcomes
+#'
+#' @param hs_outcomes a table of final gpa, hs_status, and sid
+#'
+#' @return an expanded table with credits and gpa information
+#' @export
+gen_hs_annual <- function(hs_outcomes){
+  gpa_temp <- hs_outcomes[, c("sid", "gpa", "hs_status")]
+  gpa_temp <- distinct(gpa_temp, .keep_all=TRUE)
+
+  zzz <- gen_credits(gpa_ontrack = gpa_temp)
+  gpa_ontrack <- gen_annual_gpa(gpa_ontrack = zzz)
+  gpa_ontrack <- gen_ontrack(gpa_ontrack = gpa_ontrack)
+
+  ot <- gpa_ontrack %>% select(sid, ontrack_yr1:ontrack_yr4) %>%
+    gather(key = "yr", value = "ontrack", ontrack_yr1:ontrack_yr4)
+  ot$yr <- gsub("ontrack_yr", "", ot$yr)
+  ot$yr <- as.numeric(ot$yr)
+
+  cred <- gpa_ontrack %>% select(sid, cum_credits_yr1:cum_credits_yr4) %>%
+    gather(key = "yr", value = "cum_credits", cum_credits_yr1:cum_credits_yr4)
+  cred$yr <- gsub("cum_credits_yr", "", cred$yr)
+  cred$yr <- as.numeric(cred$yr)
+
+  credela <- gpa_ontrack %>% select(sid, cum_credits_yr1_ela:cum_credits_yr4_ela) %>%
+    gather(key = "yr", value = "cum_credits_ela", cum_credits_yr1_ela:cum_credits_yr4_ela)
+  credela$yr <- gsub("cum_credits_yr", "", credela$yr)
+  credela$yr <- gsub("_ela", "", credela$yr)
+  credela$yr <- as.numeric(credela$yr)
+
+
+  credmath <- gpa_ontrack %>% select(sid, cum_credits_yr1_math:cum_credits_yr4_math) %>%
+    gather(key = "yr", value = "cum_credits_math", cum_credits_yr1_math:cum_credits_yr4_math)
+  credmath$yr <- gsub("cum_credits_yr", "", credmath$yr)
+  credmath$yr <- gsub("_math", "", credmath$yr)
+  credmath$yr <- as.numeric(credmath$yr)
+
+  gpa <- gpa_ontrack %>% select(sid, cum_gpa_yr1:cum_gpa_yr4) %>%
+    gather(key = "yr", value = "cum_gpa", cum_gpa_yr1:cum_gpa_yr4)
+  gpa$yr <- gsub("cum_gpa_yr", "", gpa$yr)
+  gpa$yr <- as.numeric(gpa$yr)
+
+  out <- left_join(ot, cred)
+  out <- left_join(out, credela)
+  out <- left_join(out, credmath)
+  out <- left_join(out, gpa)
+  rm(ot, cred, credela, credmath, gpa, zzz, gpa_temp)
+  out$yr_seq <- out$yr; out$yr <- NULL
+
+  gpa_ontrack <- left_join(simouts$stu_year[
+    simouts$stu_year$grade %in% c("9", "10", "11", "12")
+    , c("sid", "year", "grade", "schid")], simouts$hs_outcomes)
+
+  gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(sid, year) %>%
+    mutate(yr_seq = (year - min(year))+1)
+  gpa_ontrack <- left_join(gpa_ontrack, out)
+  return(gpa_ontrack)
+}
+

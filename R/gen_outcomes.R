@@ -409,7 +409,7 @@ gen_ontrack <- function(gpa_ontrack){
 #'
 #' @return an expanded table with credits and gpa information
 #' @export
-gen_hs_annual <- function(hs_outcomes){
+gen_hs_annual <- function(hs_outcomes, stu_year){
   gpa_temp <- hs_outcomes[, c("sid", "gpa", "hs_status")]
   gpa_temp <- distinct(gpa_temp, .keep_all=TRUE)
 
@@ -452,9 +452,9 @@ gen_hs_annual <- function(hs_outcomes){
   rm(ot, cred, credela, credmath, gpa, zzz, gpa_temp)
   out$yr_seq <- out$yr; out$yr <- NULL
 
-  gpa_ontrack <- left_join(simouts$stu_year[
-    simouts$stu_year$grade %in% c("9", "10", "11", "12")
-    , c("sid", "year", "grade", "schid")], simouts$hs_outcomes)
+  gpa_ontrack <- left_join(stu_year[
+    stu_year$grade %in% c("9", "10", "11", "12")
+    , c("sid", "year", "grade", "schid")], hs_outcomes)
 
   gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(sid, year) %>%
     mutate(yr_seq = (year - min(year))+1)

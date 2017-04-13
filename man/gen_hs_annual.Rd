@@ -4,7 +4,7 @@
 \alias{gen_hs_annual}
 \title{Generate annual HS outcomes}
 \usage{
-gen_hs_annual(hs_outcomes)
+gen_hs_annual(hs_outcomes, stu_year)
 }
 \arguments{
 \item{hs_outcomes}{a table of final gpa, hs_status, and sid}

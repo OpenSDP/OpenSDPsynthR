@@ -126,7 +126,7 @@ simpop <- function(nstu, seed, control = sim_control()){
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
-  hs_annual <- gen_hs_annual(hs_outcomes)
+  hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   # TODO: Fix hardcoding of postsec
   nsc_postsec <- gen_nsc(n = 35, names = sim_control()$postsec_names)
   message("Success! Returning you student and student-year data in a list.")

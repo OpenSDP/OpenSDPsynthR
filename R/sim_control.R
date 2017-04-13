@@ -83,7 +83,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     byrow = TRUE,
     dimnames = list(c("1", "0"), c("1", "0"))
   )
-  tm <- tm / rowSums(tm)
+  tm <- tm_convert(tm)
   ell_list <- list(
     "ALL" = list(f = make_markov_series,
                  pars = list(tm = tm)),

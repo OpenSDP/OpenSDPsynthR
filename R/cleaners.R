@@ -35,54 +35,11 @@ sdp_cleaner <- function(simouts){
       qrt_8_composite = ntile(test_composite_8, 4)
     )
 
-  head(simouts$hs_outcomes)
-
-  ps_pool <- simouts$hs_outcomes[simouts$hs_outcomes$ps == 1,
-                                 c("sid", "ps_prob", "grad", "gpa", "ps")]
-
   # Generate attend/dropout for years 1 - 4
   # Generate stay/transfer for years 1-4
   # Generate OPEID for years 1-4 where still enrolled
 
-  big <- crossing(sid = as.character(unique(ps_pool$sid)), year = 1:4)
-  ps_pool <- left_join(big, ps_pool, by = "sid")
-
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year)
-  ps_pool$ps[ps_pool$year > 1] <- sapply(ps_pool$ps_prob[ps_pool$year > 1],
-                                             function(x) rbinom(1, 1, prob = x))
-
-  tm <- matrix(
-    c(100, 700, 90, 900),
-    nrow = 2,
-    byrow = TRUE,
-    dimnames = list(c("1", "0"), c("1", "0"))
-  )
-  ps_transfer_list <- list("ALL" =
-                             list(f = make_markov_series,
-                                  pars = list(tm = tm_convert(tm))))
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year) %>%
-    mutate(ps_transfer = markov_cond_list("ALL", n = n()-1, ps_transfer_list,
-                                          t0 = sample(c("0", "1"), 1, prob = c(0.8, 0.2)),
-                                          include.t0 = TRUE)
-             )
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year) %>%
-    mutate(opeid = sample(simouts$nsc$opeid, 1, prob = simouts$nsc$enroll))
-
-  opeid_changer <- function(opeid){
-    sample(simouts$nsc$opeid[simouts$nsc$opeid != opeid],
-           1,
-           prob =simouts$nsc$enroll[simouts$nsc$opeid != opeid])
-  }
-
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year) %>%
-    mutate(ps_change_ind = cumsum(ifelse(ps_transfer == "1", 1, 0)))
-
-  # Need to figure out a way to assign students to a new opeid and stick with
-  # it until the next transfer
-  ps_pool <- ps_pool %>% rowwise() %>%
-    mutate(opeid = ifelse(ps_transfer == "1",
-                           opeid_changer(opeid),opeid)
-             )
+  head(simouts$hs_outcomes)
 
 
 

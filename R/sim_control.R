@@ -7,6 +7,7 @@
 #' @param ses_list a probability list
 #' @param iep_list a probability list
 #' @param ell_list a probability list
+#' @param ps_transfer_list a probability list
 #' @param grade_levels a probability list
 #' @param gifted_list a probability list
 #' @param n_cohorts number of cohorts to produce
@@ -23,7 +24,8 @@
 sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=2002, maxyear=2017,
                         n_cohorts = NULL, gifted_list=NULL, iep_list=NULL,
-                        ell_list=NULL, grade_levels=NULL, school_means=NULL, school_cov_mat=NULL,
+                        ell_list=NULL, ps_transfer_list=NULL,
+                        grade_levels=NULL, school_means=NULL, school_cov_mat=NULL,
                         school_names=NULL, postsec_names, gpa_sim_parameters=NULL,
                         grad_sim_parameters=NULL,
                         ps_sim_parameters = NULL,
@@ -332,6 +334,16 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     data_str = "long"
   )
 
+  tm <- matrix(
+    c(100, 700, 90, 900),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(c("1", "0"), c("1", "0"))
+  )
+  ps_transfer_list <- list("ALL" =
+                             list(f = make_markov_series,
+                                  pars = list(tm = tm_convert(tm))))
+
 
   school_names <- sch_names
   postsec_names <- ps_names
@@ -346,6 +358,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     iep_list,
     ses_list,
     ell_list,
+    ps_transfer_list,
     grade_levels,
     n_cohorts,
     school_means,

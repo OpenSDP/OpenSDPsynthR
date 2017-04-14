@@ -406,7 +406,7 @@ gen_ontrack <- function(gpa_ontrack){
 #' Generate annual HS outcomes
 #'
 #' @param hs_outcomes a table of final gpa, hs_status, and sid
-#'
+#' @importFrom tidyr gather
 #' @return an expanded table with credits and gpa information
 #' @export
 gen_hs_annual <- function(hs_outcomes, stu_year){
@@ -418,30 +418,30 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   gpa_ontrack <- gen_ontrack(gpa_ontrack = gpa_ontrack)
 
   ot <- gpa_ontrack %>% select(sid, ontrack_yr1:ontrack_yr4) %>%
-    gather(key = "yr", value = "ontrack", ontrack_yr1:ontrack_yr4)
+    tidyr::gather(key = "yr", value = "ontrack", ontrack_yr1:ontrack_yr4)
   ot$yr <- gsub("ontrack_yr", "", ot$yr)
   ot$yr <- as.numeric(ot$yr)
 
   cred <- gpa_ontrack %>% select(sid, cum_credits_yr1:cum_credits_yr4) %>%
-    gather(key = "yr", value = "cum_credits", cum_credits_yr1:cum_credits_yr4)
+    tidyr::gather(key = "yr", value = "cum_credits", cum_credits_yr1:cum_credits_yr4)
   cred$yr <- gsub("cum_credits_yr", "", cred$yr)
   cred$yr <- as.numeric(cred$yr)
 
   credela <- gpa_ontrack %>% select(sid, cum_credits_yr1_ela:cum_credits_yr4_ela) %>%
-    gather(key = "yr", value = "cum_credits_ela", cum_credits_yr1_ela:cum_credits_yr4_ela)
+    tidyr::gather(key = "yr", value = "cum_credits_ela", cum_credits_yr1_ela:cum_credits_yr4_ela)
   credela$yr <- gsub("cum_credits_yr", "", credela$yr)
   credela$yr <- gsub("_ela", "", credela$yr)
   credela$yr <- as.numeric(credela$yr)
 
 
   credmath <- gpa_ontrack %>% select(sid, cum_credits_yr1_math:cum_credits_yr4_math) %>%
-    gather(key = "yr", value = "cum_credits_math", cum_credits_yr1_math:cum_credits_yr4_math)
+    tidyr::gather(key = "yr", value = "cum_credits_math", cum_credits_yr1_math:cum_credits_yr4_math)
   credmath$yr <- gsub("cum_credits_yr", "", credmath$yr)
   credmath$yr <- gsub("_math", "", credmath$yr)
   credmath$yr <- as.numeric(credmath$yr)
 
   gpa <- gpa_ontrack %>% select(sid, cum_gpa_yr1:cum_gpa_yr4) %>%
-    gather(key = "yr", value = "cum_gpa", cum_gpa_yr1:cum_gpa_yr4)
+    tidyr::gather(key = "yr", value = "cum_gpa", cum_gpa_yr1:cum_gpa_yr4)
   gpa$yr <- gsub("cum_gpa_yr", "", gpa$yr)
   gpa$yr <- as.numeric(gpa$yr)
 
@@ -453,12 +453,62 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   out$yr_seq <- out$yr; out$yr <- NULL
 
   gpa_ontrack <- left_join(stu_year[
-    stu_year$grade %in% c("9", "10", "11", "12")
-    , c("sid", "year", "grade", "schid")], hs_outcomes)
+    stu_year$grade %in% c("9", "10", "11", "12"),
+    c("sid", "year", "grade", "schid")], hs_outcomes)
 
   gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(sid, year) %>%
     mutate(yr_seq = (year - min(year))+1)
   gpa_ontrack <- left_join(gpa_ontrack, out)
   return(gpa_ontrack)
+}
+
+#' Generate a student-year long table of postsecondary enrollments
+#'
+#' @param hs_outcomes a dataframe of high school outcomes
+#' @param nsc a dataframe of postsecondary institutions
+#'
+#' @return a table of enrollments
+#' @export
+gen_ps_enrollment <- function(hs_outcomes, nsc){
+  ps_pool <- hs_outcomes[hs_outcomes$ps == 1,
+                                 c("sid", "ps_prob", "grad", "gpa", "ps")]
+
+  big <- crossing(sid = as.character(unique(ps_pool$sid)), year = 1:4,
+                  term = c("fall", "spring"))
+  ps_pool <- left_join(big, ps_pool, by = "sid")
+
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term)
+  ps_pool$ps[ps_pool$year > 1] <- sapply(ps_pool$ps_prob[ps_pool$year > 1],
+                                         function(x) rbinom(1, 1, prob = x))
+
+
+
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+    mutate(ps_transfer = markov_cond_list("ALL", n = n()-1, ps_transfer_list,
+                                          t0 = sample(c("0", "1"), 1, prob = c(0.8, 0.2)),
+                                          include.t0 = TRUE)
+    )
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+    mutate(opeid = sample(nsc$opeid, 1, prob = nsc$enroll))
+
+  opeid_changer <- function(opeid){
+    sample(nsc$opeid[nsc$opeid != opeid],
+           1,
+           prob =nsc$enroll[nsc$opeid != opeid])
+  }
+
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+    mutate(ps_change_ind = cumsum(ifelse(ps_transfer == "1", 1, 0)))
+
+
+
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+    mutate(opeid = replace(opeid, ps_change_ind == 1, opeid_changer(opeid)),
+           opeid = replace(opeid, ps_change_ind == 2, opeid_changer(opeid)),
+           opeid = replace(opeid, ps_change_ind == 3, opeid_changer(opeid)),
+           opeid = replace(opeid, ps_change_ind == 4, opeid_changer(opeid))) %>%
+    select(-ps_change_ind)
+  return(ps_pool)
+
 }
 

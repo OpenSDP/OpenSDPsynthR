@@ -129,10 +129,12 @@ simpop <- function(nstu, seed, control = sim_control()){
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   # TODO: Fix hardcoding of postsec
   nsc_postsec <- gen_nsc(n = 35, names = sim_control()$postsec_names)
+  message("Simulating postsecondary outcomes... be patient...")
+  ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year,
               schools = school, assessment = assess, hs_outcomes = hs_outcomes,
-              hs_annual = hs_annual, nsc = nsc_postsec))
+              hs_annual = hs_annual, nsc = nsc_postsec, ps_enroll = ps_enroll))
 }
 
 #' Generate initial student status indicators

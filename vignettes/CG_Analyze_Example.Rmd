@@ -4,22 +4,38 @@ author: "Jared E. Knowles"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{CG Analyze}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "tools/figs/README-",
+  message = FALSE,
+  warning = FALSE,
+  fig.width =8, fig.height = 6.25
+)
+```
 
 ## Open SDP Data
 
 First, we need to generate data suitable to conducting a college-going analysis. 
 
-```{r}
-simouts <- simpop(nstu = 1250L, seed = 8352, control = sim_control(nschls = 9L, 
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(OpenSDP.data)
+library(ggplot2)
+library(tidyr)
+library(scales)
+library(magrittr)
+
+simouts <- simpop(nstu = 1250L, seed = 488234, control = sim_control(nschls = 9L, 
                   minyear=1997, maxyear=2013))
 cg_data <- sdp_cleaner(simouts)
 
 ```
-
 
 
 ## Attainment
@@ -28,11 +44,11 @@ cg_data <- sdp_cleaner(simouts)
 
 ```{r}
 plotdf <- filter(cg_data, chrt_ninth >= 2004 &
-                   chrt_ninth <= 2008)
+                   chrt_ninth <= 2008) %>% 
+  filter(!is.na(ontime))
 plotdf$grad <- ifelse(!is.na(plotdf$chrt_grad) & plotdf$ontime ==1, 1, 0)
-plotdf$seamless_transitioners_any <- as.numeric(plotdf$ps == 1 &
-                                                  plotdf$ontime == 1)
-plotdf$second_year_persisters = as.numeric(plotdf$enroll_any_yr1 == 1 &
+plotdf$seamless_transitioners_any <- ifelse(plotdf$ps == 1, 1, 0)
+plotdf$second_year_persisters <- as.numeric(plotdf$ps == 1 &
                                              plotdf$enroll_any_yr2 == 1)
 
 agencyData <- plotdf %>%
@@ -70,7 +86,7 @@ library(ggplot2)
 library(scales)
 schoolData$outcome[schoolData$outcome == "cohort"] <- "Ninth Graders"
 schoolData$outcome[schoolData$outcome == "grad"] <- "On-time Graduates"
-schoolData$outcome[schoolData$outcome == "seameless_transitioners_any"] <-
+schoolData$outcome[schoolData$outcome == "seamless_transitioners_any"] <-
   "Seamless College Transitioner"
 schoolData$outcome[schoolData$outcome == "second_year_persisters"] <-
   "Second Year Persisters"
@@ -99,4 +115,394 @@ caption = paste0("Sample: 2004-2005 Agency first-time ninth graders. \n",
 "All other data from Agency administrative records."))
 ```
 
+### Progression by Race and Ethnicity
+
+```{r}
+plotdf <- filter(cg_data, chrt_ninth >= 2004 &
+                   chrt_ninth <= 2008)%>% 
+  filter(!is.na(ontime))
+plotdf$grad <- ifelse(!is.na(plotdf$chrt_grad) & plotdf$ontime ==1, 1, 0)
+plotdf$seamless_transitioners_any <- ifelse(plotdf$ps == 1, 1, 0)
+plotdf$second_year_persisters <- as.numeric(plotdf$ps == 1 &
+                                             plotdf$enroll_any_yr2 == 1)
+
+# // Step 3: Create agency-level average outcomes
+progressRace <- plotdf %>% group_by(race_ethnicity) %>%
+  summarize(grad = mean(grad),
+            seamless_transitioners_any = mean(seamless_transitioners_any, na.rm=TRUE),
+            second_year_persisters = mean(second_year_persisters, na.rm=TRUE), N = n())
+# // Step 4: Reformat the data for plotting
+progressRace$cohort <- 1
+progressRace <- progressRace %>% gather(key = outcome,
+                                        value = measure, -N, -race_ethnicity)
+# // Step 5: Recode variables for plot-friendly labels
+progressRace$outcome[progressRace$outcome == "cohort"] <- "Ninth Graders"
+progressRace$outcome[progressRace$outcome == "grad"] <- "On-time Graduates"
+progressRace$outcome[progressRace$outcome == "seameless_transitioners_any"] <-
+  "Seamless College Transitioner"
+progressRace$outcome[progressRace$outcome == "second_year_persisters"] <-
+  "Second Year Persisters"
+progressRace$subset <- ifelse(progressRace$race_ethnicity %in% 
+              c("Black or African American", "White", "Asian", "Hispanic or Latino Ethnicity"),
+                              TRUE, FALSE)
+
+```
+
+```{r}
+ggplot(progressRace[progressRace$subset,],
+       aes(x = outcome, y = measure, group = race_ethnicity,
+           color = race_ethnicity, linetype = race_ethnicity)) +
+  geom_line(size = 1.1) + geom_point(aes(group = 1), color = I("black")) +
+  geom_text(aes(label = round(measure * 100, 1)), vjust = -0.8, 
+            hjust = -0.25, color = I("black")) +
+scale_y_continuous(limits = c(0, 1), label = percent) +
+theme_bw() + theme(legend.position = c(0.825, 0.825)) +
+guides(color = guide_legend("", keywidth = 6,
+                            label.theme =element_text(face = "bold", size = 8,
+                                                      angle = 0)), linetype = "none") +
+labs(y = "Percent of Ninth Graders",
+title = "Student Progression from 9th Grade Through College",
+subtitle = "By Student Race/Ethnicity", x = "",
+caption = paste0("Sample: 2004-2005 Agency first-time ninth graders. \n",
+"Postsecondary enrollment outcomes from NSC matched records. \n",
+"All other data from Agency administrative records."))
+```
+
+### Progression by Race/Ethnicity by FRL
+
+
+```{r}
+plotdf <- filter(cg_data, chrt_ninth >= 2004 &
+                   chrt_ninth <= 2008)%>% 
+  filter(!is.na(ontime))
+plotdf$grad <- ifelse(!is.na(plotdf$chrt_grad) & plotdf$ontime ==1, 1, 0)
+plotdf$seamless_transitioners_any <- ifelse(plotdf$ps == 1, 1, 0)
+plotdf$second_year_persisters <- as.numeric(plotdf$ps == 1 &
+                                             plotdf$enroll_any_yr2 == 1)
+plotdf <- plotdf %>% filter(frpl_ever_hs == 0)
+
+progressRaceFRL <- plotdf %>% group_by(race_ethnicity) %>%
+  summarize(grad = mean(grad),
+            seameless_transitioners_any = mean(seamless_transitioners_any, na.rm=TRUE),
+            second_year_persisters = mean(second_year_persisters, na.rm=TRUE),
+N = n())
+# // Step 5: Reformat the data file so that one variable contains all the
+# outcomes of interest
+progressRaceFRL %<>% filter(N >= 20)
+# // Step 6: Prepare to graph the results
+## Reshape the data
+progressRaceFRL$cohort <- 1
+progressRaceFRL <- progressRaceFRL %>% 
+  gather(key = outcome,value = measure, -N, -race_ethnicity)
+
+## Recode the variables for plot friendly labels
+# // Step 5: Recode variables for plot-friendly labels
+progressRaceFRL$outcome[progressRaceFRL$outcome == "cohort"] <- "Ninth Graders"
+progressRaceFRL$outcome[progressRaceFRL$outcome == "grad"] <- "On-time Graduates"
+progressRaceFRL$outcome[progressRaceFRL$outcome == "seameless_transitioners_any"] <-
+  "Seamless College Transitioner"
+progressRaceFRL$outcome[progressRaceFRL$outcome == "second_year_persisters"] <-
+  "Second Year Persisters"
+progressRaceFRL$subset <- ifelse(progressRaceFRL$race_ethnicity %in% 
+              c("Black or African American", "White", "Asian", "Hispanic or Latino Ethnicity"),
+                              TRUE, FALSE)
+```
+
+
+
+```{r}
+ggplot(
+  progressRaceFRL[progressRaceFRL$subset, ],
+  aes(
+  x = outcome,
+  y = measure,
+  group = race_ethnicity,
+  color = race_ethnicity,
+  linetype = race_ethnicity
+  )
+  ) +
+  geom_line(size = 1.1) + geom_point(aes(group = 1), color = I("black")) +
+  geom_text(
+  aes(label = round(measure * 100, 1)),
+  vjust = -0.8,
+  hjust = -0.25,
+  color = I("black")
+  ) +
+  scale_y_continuous(limits = c(0, 1), label = percent) +
+  theme_bw() + theme(legend.position = c(0.825, 0.825)) +
+  guides(color = guide_legend(
+  "",
+  keywidth = 6,
+  label.theme = element_text(face = "bold", size = 8, angle = 0)
+  ),
+  linetype = "none") +
+  labs(
+  y = "Percent of Ninth Graders",
+  title = "Student Progression from 9th Grade Through College",
+  subtitle = paste0(
+  c(
+  "Among Students Qualifying for Free or Reduced Price Lunch \n",
+  "By Student Race/Ethnicity"
+  )
+  ),
+  x = "",
+  caption = paste0(
+  "Sample: 2004-2005 Agency first-time ninth graders. \n",
+  "Postsecondary enrollment outcomes from NSC matched records.\n",
+  "All other data from Agency administrative records."
+  )
+  )
+```
+
+### Progression by On-Track Status
+
+```{r}
+plotdf <- filter(cg_data, chrt_ninth >= 2004 &
+                   chrt_ninth <= 2008)
+
+plotdf$grad <- ifelse(!is.na(plotdf$chrt_grad) & plotdf$ontime ==1, 1, 0)
+plotdf$seamless_transitioners_any <- ifelse(plotdf$ps == 1, 1, 0)
+plotdf$second_year_persisters <- as.numeric(plotdf$ps == 1 &
+                                             plotdf$enroll_any_yr2 == 1)
+
+# // Step 3: Generate on track indicators that take into account students’ GPAs
+# upon completion of their first year in high school
+plotdf$ot <- NA
+plotdf$ot[plotdf$ontrack_yr1 == 0] <- "Off-Track to Graduate"
+# Check for correctness
+plotdf$ot[plotdf$ontrack_yr1 == 1 & plotdf$cum_gpa_yr1 < 3 &
+            !is.na(plotdf$cum_gpa_yr1)] <- "On-Track to Graduate, GPA < 3.0"
+plotdf$ot[plotdf$ontrack_yr1 == 1 & plotdf$cum_gpa_yr1 >= 3 &
+            !is.na(plotdf$cum_gpa_yr1)] <- "On-Track to Graduate, GPA >= 3.0"
+# // Step 4: Calculate aggregates for the Agency by on track status
+progressTrack <- plotdf %>% group_by(ot) %>%
+  summarize(grad = mean(grad),
+    seamless_transitioners_any = mean(seamless_transitioners_any, na.rm=TRUE),
+    second_year_persisters = mean(second_year_persisters, na.rm=TRUE),
+    N = n())
+
+# of interest
+progressTrack$cohort <- 1
+progressTrack <- progressTrack %>% gather(key = outcome,
+value = measure, -N, -ot)
+progressTrack$outcome[progressTrack$outcome == "cohort"] <- "Ninth Graders"
+progressTrack$outcome[progressTrack$outcome == "grad"] <- "On-time Graduates"
+progressTrack$outcome[progressTrack$outcome == "seamless_transitioners_any"] <-
+"Seamless College Transitioner"
+progressTrack$outcome[progressTrack$outcome == "second_year_persisters"] <-
+"Second Year Persisters"
+
+```
+
+```{r}
+ann_txt <- data.frame(outcome = rep("Second Year Persisters", 3),
+measure = c(0.22, 0.55, 0.85),
+textlabel = c("Off-Track \nto Graduate",
+"On-Track to Graduate,\n GPA < 3.0",
+"On-Track to Graduate,\n GPA >= 3.0"))
+ann_txt$ot <- ann_txt$textlabel
+ggplot(progressTrack,
+aes(x = outcome, y = measure, group = ot,
+color = ot, linetype = ot)) +
+geom_line(size = 1.1) + geom_point(aes(group = 1), color = I("black")) +
+geom_text(aes(label = round(measure * 100, 1)), vjust = -0.8, hjust = -0.25,
+color = I("black")) +
+geom_text(data = ann_txt, aes(label = textlabel)) +
+scale_y_continuous(limits = c(0, 1), label = percent) +
+theme_bw() + theme(legend.position = c(0.825, 0.825)) +
+scale_color_brewer(type = "qual", palette = 2) +
+guides(color = "none",
+linetype = "none") +
+labs(y = "Percent of Ninth Graders",
+title = "Student Progression from 9th Grade Through College",
+subtitle = "By Course Credits and GPA after First High School Year", x = "",
+caption = paste0("Sample: 2004-2005 Agency first-time ninth graders. \n",
+"Postsecondary enrollment outcomes from NSC matched records. \n",
+"All other data from Agency administrative records."))
+```
+
+## Ninth to Tenth Grade Transition by On-Track Status
+
+
+### Proportion of Students On-Track by High School
+
+```{r}
+plotdf <- filter(cg_data, chrt_ninth >= 2005 &
+                   chrt_ninth <= 2008) %>% 
+  filter(!is.na(ontime))
+
+plotdf$grad <- ifelse(!is.na(plotdf$chrt_grad) & plotdf$ontime ==1, 1, 0)
+plotdf$seamless_transitioners_any <- ifelse(plotdf$ps == 1, 1, 0)
+plotdf$second_year_persisters <- as.numeric(plotdf$ps == 1 &
+                                             plotdf$enroll_any_yr2 == 1)
+
+plotdf$ot <- NA
+plotdf$ot[plotdf$ontrack_yr1 == 0] <- "Off-Track to Graduate"
+plotdf$ot[plotdf$ontrack_yr1 == 1 & plotdf$cum_gpa_yr1 < 3 &
+            !is.na(plotdf$cum_gpa_yr1)] <- "On-Track to Graduate, GPA < 3.0"
+plotdf$ot[plotdf$ontrack_yr1 == 1 & plotdf$cum_gpa_yr1 >= 3 &
+            !is.na(plotdf$cum_gpa_yr1)] <- "On-Track to Graduate, GPA >= 3.0"
+
+progressBars <- bind_rows(
+  plotdf %>% group_by(ot) %>% tally() %>% ungroup %>%
+    mutate(count = sum(n), first_hs_code = "Agency Average"),
+  plotdf %>% group_by(first_hs_code, ot) %>% tally() %>% ungroup %>%
+    group_by(first_hs_code) %>%
+    mutate(count = sum(n))
+)
+
+# replace first_hs_name = subinstr(first_hs_name, " High School", "", .)
+# progressBars$first_hs_name <- gsub(" High School", "", progressBars$first_hs_name)
+# // Step 5: For students who are off-track upon completion of their first year
+# of high school, convert the values to be negative for ease of
+# visualization in the graph
+progressBars$n[progressBars$ot == "Off-Track to Graduate"] <- 
+  -progressBars$n[progressBars$ot == "Off-Track to Graduate"]
+
+```
+
+```{r}
+# // Step 6: Plot
+ggplot(progressBars, aes(x = reorder(first_hs_code, n/count),
+                         y = n/count, group = ot)) +
+  geom_bar(aes(fill = ot), stat = 'identity', color = I("black")) +
+  geom_text(aes(label = round(100* n/count, 0)),
+            position = position_stack(vjust=0.3)) +
+  theme_bw() +
+  scale_y_continuous(limits = c(-0.8,1), label = percent,
+                     name = "Percent of Ninth Graders",
+                     breaks = seq(-0.8, 1, 0.2)) +
+  scale_fill_brewer(name = "", type = "qual", palette = 6) +
+  theme(axis.text.x = element_text(angle = 30, color = "black", vjust = 0.5),
+        legend.position = c(0.15, 0.875)) +
+  labs(title = "Proportion of Students On-Track to Graduate by School",
+       subtitle = "End of Ninth Grade On-Track Status \n By High School", x = "",
+       caption = paste0("Sample: 2004-2005 and 2005-20065 Agency first-time ninth
+graders. \n",
+"Postsecondary enrollment outcomes from NSC matched records. \n",
+"All other data from Agency administrative records."))
+```
+
+
+### Ninth to Tenth Grade Transition by On-Track Status
+
+
+## High School Graduation
+
+### High School Completion Rates by School
+
+```{r}
+plotdf <- filter(cg_data, chrt_ninth >= 2005 &
+                   chrt_ninth <= 2008) %>% 
+  filter(!is.na(ontime))
+
+plotdf$grad <- ifelse(!is.na(plotdf$chrt_grad) & plotdf$ontime ==1, 1, 0)
+plotdf$seamless_transitioners_any <- ifelse(plotdf$ps == 1, 1, 0)
+plotdf$second_year_persisters <- as.numeric(plotdf$ps == 1 &
+                                             plotdf$enroll_any_yr2 == 1)
+
+schoolLevel <- bind_rows(
+  plotdf %>% group_by(first_hs_code) %>%
+    summarize(ontime_grad = mean(ontime, na.rm=TRUE),
+              late_grad = mean(late, na.rm=TRUE),
+              count = n()),
+  plotdf %>% ungroup %>%
+    summarize(first_hs_code = "Agency AVERAGE",
+              ontime_grad = mean(ontime, na.rm=TRUE),
+              late_grad = mean(late, na.rm=TRUE),
+              count = n())
+)
+# // Step 3: Reshape the data wide
+schoolLevel <- schoolLevel %>% gather(key = outcome,
+                                      value = measure, -count, -first_hs_code)
+schoolLevel$outcome[schoolLevel$outcome == "ontime_grad"] <- "On-Time HS Graduate"
+schoolLevel$outcome[schoolLevel$outcome == "late_grad"] <- "Graduate in 4+ Years"
+```
+
+```{r}
+ggplot(schoolLevel, aes(x = reorder(first_hs_code, measure), y = measure,
+group = first_hs_code, fill = outcome)) +
+  geom_bar(aes(fill = outcome), stat = 'identity', color = I("black")) +
+  geom_text(aes(label = round(100 * measure, 0)),
+            position = position_stack(vjust = 0.8)) +
+  theme_bw() + theme(panel.grid = element_blank(), axis.ticks.x = element_blank()) +
+  scale_y_continuous(limits = c(0, 1), label = percent, 
+                     name = "Percent of Ninth Graders") + 
+  scale_fill_brewer(name = "", type = "qual", palette = 7) +
+  theme(axis.text.x = element_text(color = "black", angle = 30, vjust = 0.5),
+        legend.position = c(0.15, 0.825)) +
+  labs(title = "High School Graduation Rates by High School",
+       x = "",
+       caption = paste0("Sample: 2004-2005 Agency first-time ninth graders. \n",
+                        "Data from Agency administrative records."))
+
+```
+
+
+### High School Completion Rates by Average 8th Grade Achievement
+
+
+```{r}
+plotdf <- filter(cg_data, chrt_ninth >= 2005 &
+                   chrt_ninth <= 2008) %>% 
+  filter(!is.na(ontime)) %>% filter(!is.na(test_math_8_std))
+
+
+schoolLevel <- bind_rows(
+plotdf %>% group_by(first_hs_code) %>%
+summarize(ontime_grad = mean(ontime, na.rm=TRUE),
+std_score = mean(test_math_8_std, na.rm=TRUE),
+count = n()),
+plotdf %>% ungroup %>%
+summarize(first_hs_code = "Agency AVERAGE",
+ontime_grad = mean(ontime, na.rm=TRUE),
+std_score = mean(test_math_8_std, na.rm=TRUE),
+count = n())
+)
+
+
+
+```
+
+```{r}
+ggplot(schoolLevel[schoolLevel$first_hs_code != "Agency AVERAGE", ],
+       aes(x = std_score, y = ontime_grad)) +
+  geom_vline(xintercept = as.numeric(schoolLevel[schoolLevel$first_hs_code ==
+                                                   "Agency AVERAGE", "std_score"]),
+             linetype = 4, color = I("goldenrod"), size = 1.1) +
+  geom_hline(yintercept = as.numeric(schoolLevel[schoolLevel$first_hs_code ==
+                                                   "Agency AVERAGE", "ontime_grad"]),
+             linetype = 4, color = I("purple"), size = 1.1) +
+  geom_point(size = I(2)) +
+  theme_bw() + theme(panel.grid = element_blank()) +coord_cartesian() +
+  annotate(geom = "text", x = -.85, y = 0.025,
+           label = "Below average math scores & \n below average graduation rates",
+           size = I(2.5)) +
+  annotate(geom = "text", x = .85, y = 0.025,
+           label = "Above average math scores & \n below average graduation rates",
+           size = I(2.5)) +
+  annotate(geom = "text", x = .85, y = 0.975,
+           label = "Above average math scores & \n above average graduation rates",
+           size = I(2.5)) +
+  annotate(geom = "text", x = -.85, y = 0.975,
+           label = "Below average math scores & \n above average graduation rates",
+           size = I(2.5)) +
+  annotate(geom = "text", x = .205, y = 0.025,
+           label = "Agency Average \n Test Score",
+           size = I(2.5), color = I("goldenrod")) +
+  annotate(geom = "text", x = .85, y = 0.61,
+           label = "Agency Average Graduation Rate",
+           size = I(2.5)) +
+  scale_x_continuous(limits = c(-1, 1), breaks = seq(-1, 1, 0.2)) +
+  scale_y_continuous(limits = c(0, 1), label = percent,
+                     name = "Percent of Ninth Graders", breaks = seq(0, 1, 0.1)) +
+  geom_text(aes(label = first_hs_code), nudge_y = 0.065, vjust = "top", size = I(4),
+            nudge_x = 0.01) +
+  labs(title = "High School Graduation Rates by High School",
+       x = "Average 8th Grade Math Standardized Score",
+       subtitle = "By Student Achievement Profile Upon High School Entry",
+       caption = paste0("Sample: 2004-2005 through 2005-2006 Agency first-time ",
+"ninth graders with eighth grade math test scores. \n",
+"Data from Agency administrative records."))
+```
 

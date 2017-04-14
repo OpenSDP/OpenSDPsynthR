@@ -1,0 +1,102 @@
+---
+title: "SDP College Going Analyze Example"
+author: "Jared E. Knowles"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Open SDP Data
+
+First, we need to generate data suitable to conducting a college-going analysis. 
+
+```{r}
+simouts <- simpop(nstu = 1250L, seed = 8352, control = sim_control(nschls = 9L, 
+                  minyear=1997, maxyear=2013))
+cg_data <- sdp_cleaner(simouts)
+
+```
+
+
+
+## Attainment
+
+### Overall Progression
+
+```{r}
+plotdf <- filter(cg_data, chrt_ninth >= 2004 &
+                   chrt_ninth <= 2008)
+plotdf$grad <- ifelse(!is.na(plotdf$chrt_grad) & plotdf$ontime ==1, 1, 0)
+plotdf$seamless_transitioners_any <- as.numeric(plotdf$ps == 1 &
+                                                  plotdf$ontime == 1)
+plotdf$second_year_persisters = as.numeric(plotdf$enroll_any_yr1 == 1 &
+                                             plotdf$enroll_any_yr2 == 1)
+
+agencyData <- plotdf %>%
+  summarize(grad = mean(grad),
+            seamless_transitioners_any = mean(seamless_transitioners_any, na.rm=TRUE),
+            second_year_persisters = mean(second_year_persisters, na.rm=TRUE),
+            N = n())
+agencyData$school_name <- "AGENCY AVERAGE"
+# // 2. Calculate the mean of each outcome variable by first high school attended
+schoolData <- plotdf %>% group_by(first_hs_code) %>%
+  summarize(grad = mean(grad),
+            seamless_transitioners_any = mean(seamless_transitioners_any,
+                                              na.rm=TRUE),
+            second_year_persisters = mean(second_year_persisters, na.rm=TRUE),
+            N = n())
+## high school attended
+names(schoolData)[1] <- "school_name"
+# // 3. Identify the agency maximum values for each of the three outcome variables
+maxSchool <- schoolData %>% summarize_all(.funs = funs("max"))
+maxSchool$school_name <- "AGENCY MAX HS"
+# // 4. Identify the agency minimum values for each of the three outcome variables
+minSchool <- schoolData %>% summarize_all(.funs = funs("min"))
+minSchool$school_name <- "AGENCY MIN HS"
+# // 5. Append the three tempfiles to the school-level file loaded into R
+schoolData <- bind_rows(schoolData, agencyData,
+minSchool, maxSchool)
+rm(agencyData, minSchool, maxSchool)
+# // Step 6: Prepare to graph the results
+library(tidyr)
+schoolData$cohort <- 1
+schoolData <- schoolData %>% gather(key = outcome,
+                                    value = measure, -N, -school_name)
+schoolData$subset <- grepl("AGENCY", schoolData$school_name)
+library(ggplot2)
+library(scales)
+schoolData$outcome[schoolData$outcome == "cohort"] <- "Ninth Graders"
+schoolData$outcome[schoolData$outcome == "grad"] <- "On-time Graduates"
+schoolData$outcome[schoolData$outcome == "seameless_transitioners_any"] <-
+  "Seamless College Transitioner"
+schoolData$outcome[schoolData$outcome == "second_year_persisters"] <-
+  "Second Year Persisters"
+
+```
+
+```{r}
+ggplot(schoolData[schoolData$subset,],
+aes(x = outcome, y = measure, group = school_name,
+color = school_name, linetype = school_name)) +
+geom_line(size = 1.1) + geom_point(aes(group = 1), color = I("black")) +
+geom_text(aes(label = round(measure * 100, 1)), vjust = -0.8, hjust = -0.25,
+color = I("black")) +
+scale_y_continuous(limits = c(0, 1), label = percent) +
+theme_bw() + theme(legend.position = c(0.825, 0.825)) +
+guides(color = guide_legend("", keywidth = 6,
+label.theme = element_text(face = "bold",
+size = 8,
+angle = 0)),
+linetype = "none") +
+labs(y = "Percent of Ninth Graders",
+title = "Student Progression from 9th Grade Through College",
+subtitle = "Agency Average", x = "",
+caption = paste0("Sample: 2004-2005 Agency first-time ninth graders. \n",
+"Postsecondary enrollment outcomes from NSC matched records. \n",
+"All other data from Agency administrative records."))
+```
+
+

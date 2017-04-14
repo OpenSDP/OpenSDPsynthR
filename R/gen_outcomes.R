@@ -459,6 +459,8 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(sid, year) %>%
     mutate(yr_seq = (year - min(year))+1)
   gpa_ontrack <- left_join(gpa_ontrack, out)
+  gpa_ontrack <- gpa_ontrack %>% select(-scale_gpa, -gpa, -grad_prob,
+                                        -ps_prob, -ps)
   return(gpa_ontrack)
 }
 
@@ -466,14 +468,15 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
 #'
 #' @param hs_outcomes a dataframe of high school outcomes
 #' @param nsc a dataframe of postsecondary institutions
-#'
+#' @param control a control object from \code{sim_control()}
+#' @importFrom tidyr crossing
 #' @return a table of enrollments
 #' @export
-gen_ps_enrollment <- function(hs_outcomes, nsc){
+gen_ps_enrollment <- function(hs_outcomes, nsc, control){
   ps_pool <- hs_outcomes[hs_outcomes$ps == 1,
                                  c("sid", "ps_prob", "grad", "gpa", "ps")]
 
-  big <- crossing(sid = as.character(unique(ps_pool$sid)), year = 1:4,
+  big <- tidyr::crossing(sid = as.character(unique(ps_pool$sid)), year = 1:4,
                   term = c("fall", "spring"))
   ps_pool <- left_join(big, ps_pool, by = "sid")
 
@@ -484,7 +487,7 @@ gen_ps_enrollment <- function(hs_outcomes, nsc){
 
 
   ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
-    mutate(ps_transfer = markov_cond_list("ALL", n = n()-1, ps_transfer_list,
+    mutate(ps_transfer = markov_cond_list("ALL", n = n()-1, control$ps_transfer_list,
                                           t0 = sample(c("0", "1"), 1, prob = c(0.8, 0.2)),
                                           include.t0 = TRUE)
     )

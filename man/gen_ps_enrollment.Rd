@@ -4,12 +4,14 @@
 \alias{gen_ps_enrollment}
 \title{Generate a student-year long table of postsecondary enrollments}
 \usage{
-gen_ps_enrollment(hs_outcomes, nsc)
+gen_ps_enrollment(hs_outcomes, nsc, control)
 }
 \arguments{
 \item{hs_outcomes}{a dataframe of high school outcomes}
 
 \item{nsc}{a dataframe of postsecondary institutions}
+
+\item{control}{a control object from \code{sim_control()}}
 }
 \value{
 a table of enrollments

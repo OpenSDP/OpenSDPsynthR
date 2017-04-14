@@ -76,7 +76,11 @@ make_inds <- function(data, col) {
   for(i in col) {
     idx <- which(names(data)==i)
     v <- data[[idx]]
-    stopifnot(class(v)=="factor")
+    if(class(v) != "factor"){
+      warning("Factor not supplied, coercing...")
+      v <- factor(v)
+    }
+    # stopifnot(class(v)=="factor")
     m <- matrix(0, nrow=nrow(data), ncol=nlevels(v))
     m[cbind(seq_along(v), as.integer(v))]<-1
     colnames(m) <- paste(levels(v))

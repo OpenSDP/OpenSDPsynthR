@@ -128,9 +128,10 @@ simpop <- function(nstu, seed, control = sim_control()){
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   # TODO: Fix hardcoding of postsec
-  nsc_postsec <- gen_nsc(n = 35, names = sim_control()$postsec_names)
+  nsc_postsec <- gen_nsc(n = 35, names = control$postsec_names)
   message("Simulating postsecondary outcomes... be patient...")
-  ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec)
+  ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec,
+                                 control = control)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year,
               schools = school, assessment = assess, hs_outcomes = hs_outcomes,
@@ -339,6 +340,16 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
                1,
                replace = FALSE,
                prob = c(0.62, 0.31, 0.04, 0.03)
+             )
+           })
+  g12_cohort$hs_status[g12_cohort$grad == 1] <-
+    sapply(g12_cohort$hs_status[g12_cohort$grad == 1],
+           function(x) {
+             sample(
+               c("ontime", "late"),
+               1,
+               replace = FALSE,
+               prob = c(0.9839, 0.0161) # hardcoded probabilities
              )
            })
   # TODO: Consider filtering this so only HS DIPLOMA eligible

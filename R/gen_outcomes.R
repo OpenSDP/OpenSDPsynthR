@@ -212,13 +212,43 @@ gen_assess <- function(data, control = sim_control()){
   # Need to normalize time
   zed <- simulate(mod, nsim = 500, newdata = data)
   # math <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
-  math <- apply(zed, 1, function(x) sample(sort(x)[100:400], 1))
+  math <- apply(zed, 1, function(x) sample(sort(x)[150:350], 1))
   zed <- simulate(mod, nsim = 500, newdata = data)
   # rdg <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
-  rdg <- apply(zed, 1, function(x) sample(sort(x)[100:400], 1))
-  out <- data.frame(math_ss = math, rdg_ss = rdg)
+  rdg <- apply(zed, 1, function(x) sample(sort(x)[75:425], 1))
+
+  data$math_ss <- math
+  data$rdg_ss <- rdg
+  data <- data %>% dplyr::group_by(time) %>%
+    dplyr::mutate(math_sd = sd(math_ss),
+           rdg_sd = sd(rdg_ss)) %>% as.data.frame()
+  # Perturb the test scores to reduce correlation and induce bias
+  # FRPL bias is underestimated because of the time component so need to add it in
+  # Racial bias is entirely absent
+  data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
+                         data$math_ss, data$frpl, data$math_sd)
+  data$rdg_ss <- mapply(control$assessment_adjustment$perturb_frl,
+                        data$rdg_ss, data$frpl, data$rdg_sd)
+  data$math_ss <- mapply(control$assessment_adjustment$perturb_race,
+                         data$math_ss, data$Race, data$math_sd)
+  data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
+                        data$rdg_ss, data$Race, data$rdg_sd)
+  # Perturb to reduce test correlation
+  data$rdg_ss <- mapply(control$assessment_adjustment$perturb_base,
+                        data$rdg_ss, data$rdg_sd)
+  out <- data.frame(math_ss = data$math_ss, rdg_ss = data$rdg_ss)
   return(out)
 }
+
+
+# ggplot(assess, aes(x = math_ss, y = math_ssb, group = frpl, color = frpl)) +
+#   geom_point(alpha = I(0.3)) + geom_smooth(se = FALSE) +
+#   geom_abline(slope = 1, intercept= 0)
+# ggplot(assess, aes(x = math_ssb, group = frpl, color = frpl)) +
+#   geom_density(alpha = I(0.3)) + facet_wrap(~age)
+# assess$math_ssc <- mapply(perturb_race, assess$math_ssb, assess$Race, assess$math_sd)
+
+
 
 # TODO generalize these two functions to some generic fuzzmatch/generate rmvnorm data
 # Sanitize GPA and credits by rounding to tenths and setting ceiling and floor

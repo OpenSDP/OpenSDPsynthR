@@ -54,7 +54,7 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
                   n = ngrps, p = NULL,
                   cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                   unbalCont = unbalanceRange)
-    mod <- glmer(update(fixed, "sim_data ~ . - math_ss + (1|clustID)"),
+    mod <- glmer(update(fixed, "sim_data ~ . + (1|clustID)"),
                  data = df, family = "binomial")
   } else if(type == "linear"){
     if(missing(error_var)){
@@ -63,6 +63,7 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
     if(missing(with_err_gen)){
       with_err_gen <- "rnorm"
     }
+    # TODO: Include math_ss in the calculations
       df <- sim_reg(fixed = fixed, random = random,
                   fixed_param = fixed_param, random_param = random_param,
                   random3 = NULL,
@@ -73,7 +74,7 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
                   cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                   unbalCont = unbalanceRange,
                   error_var = error_var, with_err_gen = with_err_gen)
-      mod <- lmer(update(fixed, "sim_data ~ . - math_ss + (1|clustID)"),
+      mod <- lmer(update(fixed, "sim_data ~ . + (1|clustID)"),
                    data = df)
   }
 
@@ -81,6 +82,8 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
 
 }
 
+# TODO: figure out where to standardize math_ss to avoid problems with outcomes
+# projected from it
 
 #' Generate a final GPA for students
 #'
@@ -195,8 +198,8 @@ gen_ps <- function(data, control = sim_control()){
 gen_assess <- function(data, control = sim_control()){
   data <- as.data.frame(data)
   df <- do.call(sim_reg, control$assess_sim_par, quote = TRUE)
-  mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1|clustID) + (1|clust3ID)"),
-              data = df)
+  # mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1|clustID) + (1|clust3ID)"),
+  #             data = df)
   mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1+time|clustID) +
                      (1+time|clust3ID)"),
               data = df)
@@ -219,6 +222,7 @@ gen_assess <- function(data, control = sim_control()){
 
   data$math_ss <- math
   data$rdg_ss <- rdg
+  # Bias parameters need to adjust with the scale of the assessment
   data <- data %>% dplyr::group_by(time) %>%
     dplyr::mutate(math_sd = sd(math_ss),
            rdg_sd = sd(rdg_ss)) %>% as.data.frame()
@@ -226,13 +230,17 @@ gen_assess <- function(data, control = sim_control()){
   # FRPL bias is underestimated because of the time component so need to add it in
   # Racial bias is entirely absent
   data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
-                         data$math_ss, data$frpl, data$math_sd)
+                         data$math_ss, data$frpl, data$math_sd,
+                         MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_frl,
-                        data$rdg_ss, data$frpl, data$rdg_sd)
+                        data$rdg_ss, data$frpl, data$rdg_sd,
+                        MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
   data$math_ss <- mapply(control$assessment_adjustment$perturb_race,
-                         data$math_ss, data$Race, data$math_sd)
+                         data$math_ss, data$Race, data$math_sd,
+                         MoreArgs = list(race_par = control$assessment_adjustment$race_list))
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
-                        data$rdg_ss, data$Race, data$rdg_sd)
+                        data$rdg_ss, data$Race, data$rdg_sd,
+                        MoreArgs = list(race_par = control$assessment_adjustment$race_list))
   # Perturb to reduce test correlation
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_base,
                         data$rdg_ss, data$rdg_sd)

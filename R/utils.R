@@ -248,11 +248,30 @@ unscale <- function(x, mean, sd) {
 #' @param x a numeric vector
 #'
 #' @return x mean centered and divided by it's standard deviation
+#' @details If \code{sd(x)} is undefined, this returns a zero
 #' @export
 rescale <- function(x){
   y <- (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
+  y[is.na(y)] <- 0
   return(y)
 }
 
 
-
+#' Rescaling variables in groups
+#'
+#' @param data a dataframe containing variables you wish to rescale
+#' @param var name of the variable to be rescaled
+#' @param group_var character vector of the grouping terms
+#' @param newvar optional character vector for the name of the new rescaled variable
+#' @return data with the newvar appended
+#' @export
+#' @importFrom lazyeval interp
+group_rescale <- function(data, var, group_var, newvar=NULL){
+  if(is.null(newvar)){
+    newvar <- var
+  }
+  varval <- lazyeval::interp(~ OpenSDP.data::rescale(z), z = as.name(var))
+  data <- data %>% group_by_(group_var) %>%
+    mutate_(.dots = setNames(list(varval), newvar))
+  return(data)
+}

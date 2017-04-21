@@ -353,7 +353,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       "Asian" = 0.1,
       "Hispanic or Latino Ethnicity" = -0.25,
       "Demographic Race Two or More Races" = -0.1,
-      "American Indian or Alaska Native" = -0.25
+      "American Indian or Alaska Native" = -0.25,
+      "Native Hawaiian or Other Pacific Islander" = -0.05
     ),
     perturb_race = function(x, race, sd, race_par = race_list){
       dist_mean <- race_par[[which(race == names(race_par))]] * sd

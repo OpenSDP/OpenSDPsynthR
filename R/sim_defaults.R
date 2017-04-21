@@ -123,7 +123,10 @@ simpop <- function(nstu, seed, control = sim_control()){
   g12_cohort <- stu_year[stu_year$grade == "12", ]
   g12_cohort <- na.omit(g12_cohort)
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
+  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss")],
+                          by = c(idvar, "grade"))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
+  g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
   hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)

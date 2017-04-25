@@ -21,7 +21,7 @@ sdp_cleaner <- function(simouts){
       nyears = n()
     )
 
-  scores <- simouts$assessment %>% ungroup %>%
+  scores <- simouts$stu_assess %>% ungroup %>%
     filter(grade %in% c("8")) %>%
     mutate(
       test_math_8_raw = math_ss,

@@ -49,7 +49,7 @@ gen_students <- function(nstu, seed, control = sim_control()){
   demog_master %<>% mutate_at(5:ncol(demog_master),
                               funs(recode(., `0` = "No", `1` = "Yes")))
   demog_master <- as.data.frame(demog_master)
-  demog_master$id_type <- "District"
+  demog_master$id_type <- "Local"
   # Do not need to be warned about NAs in binomial
   return(demog_master)
 }
@@ -63,6 +63,7 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' @return a list with simulated data
 #' @importFrom lubridate year
 #' @import dplyr
+#' @importFrom tidyr gather
 #' @export
 #' @examples
 #' out <- simpop(nstu = 20, seed = 213)
@@ -134,14 +135,25 @@ simpop <- function(nstu, seed, control = sim_control()){
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
   zz <- gen_assess(data = assess, control = control)
   assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
-  # Organize assess tables
-  # assess$score_type <- "scaled"
-  # assess$assess_id <- "0001"
-  # assess$assess_name <- "State Accountability Test"
-  # assess$retest_ind <- sample(c("Yes", "No"), nrow(assess), prob = c(0.9999, 0.0001))
+  assess_long <- assess %>% tidyr::gather(key = "subject", value = "score", math_ss, rdg_ss)
+  assess_long$subject[assess_long$subject == "math_ss"] <- "Mathematics"
+  assess_long$subject[assess_long$subject == "rdg_ss"] <- "English Language Arts"
+  assess_long$score_type <- "scaled"
+  assess_long$assess_id <- "0001"
+  assess_long$assess_name <- "State Accountability Test"
+  assess_long$retest_ind <- sample(c("Yes", "No"), nrow(assess_long),
+                                   replace = TRUE, prob = c(0.9999, 0.0001))
 
+  # Organize assess tables
+  proficiency_levels <- assess_long %>% group_by(year, grade, subject, assess_id) %>%
+    summarize(score_mean = mean(score),
+              score_error = sd(score),
+              ntests = n()) %>%
+    filter(ntests > 30)
   assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
   assess <- assess[, c(idvar, "schid", "year", "grade", "math_ss", "rdg_ss")]
+  assess$grade_enrolled <- assess$grade
+  # Add LEAID
   rm(zz)
   message("Simulating high school outcomes... be patient...")
   g12_cohort <- stu_year[stu_year$grade == "12", ]
@@ -161,8 +173,9 @@ simpop <- function(nstu, seed, control = sim_control()){
                                  control = control)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year,
-              schools = school, assessment = assess, hs_outcomes = hs_outcomes,
-              hs_annual = hs_annual, nsc = nsc_postsec, ps_enroll = ps_enroll))
+              schools = school, stu_assess = assess, hs_outcomes = hs_outcomes,
+              hs_annual = hs_annual, nsc = nsc_postsec, ps_enroll = ps_enroll,
+              assessments = assess_long, proficiency = proficiency_levels))
 }
 
 #' Generate initial student status indicators
@@ -316,7 +329,7 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
                     stringsAsFactors = FALSE)
   out <- cbind(out, attribs)
   out$lea_id <- "0001"
-  out$id_type <- "District"
+  out$id_type <- "Local"
   t1Codes <- c("TGELGBNOPROG", "TGELGBTGPROG" ,"SWELIGTGPROG", "SWELIGNOPROG", "SWELIGSWPROG", "NOTTITLE1ELIG")
   out$title1_status <- sample(t1Codes, nrow(out), replace = TRUE)
   t3Codes <- c("DualLanguage", "TwoWayImmersion", "TransitionalBilingual",
@@ -327,6 +340,8 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
   out$type <- sample(c("K12School", "EducationOrganizationNetwork",
                        "CharterSchoolManagementOrganization"), nrow(out),
                      replace=TRUE, prob = c(0.9, 0.05, 0.05))
+  out$poverty_desig <- sample(c("HighQuartile", "LowQuartile", "Neither"),
+                              nrow(out), replace = TRUE, prob = c(0.25, 0.25, 0.5))
   return(out)
 }
 
@@ -411,7 +426,7 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
 #'
 #' @param n number of institutions to generate
 #' @param names names to use for schools
-#'
+#' @importFrom stringr str_trunc
 #' @return a data.frame of names, IDs, and enrollment weights
 #' @export
 gen_nsc <- function(n, names = NULL){
@@ -431,6 +446,7 @@ gen_nsc <- function(n, names = NULL){
   enroll[enroll == 0] <- sample(1:25, K, replace = FALSE)
   out <- data.frame(opeid = ids, name = names, enroll = enroll,
                     stringsAsFactors = FALSE)
+  out$short_name <- stringr::str_trunc(out$name, 20, "right")
   # out <- cbind(out, attribs)
   return(out)
 }

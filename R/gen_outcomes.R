@@ -499,6 +499,14 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   gpa_ontrack <- left_join(gpa_ontrack, out)
   gpa_ontrack <- gpa_ontrack %>% select(-scale_gpa, -gpa, -grad_prob,
                                         -ps_prob, -ps)
+
+  gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(yr_seq) %>%
+    mutate(credits_earned = cum_credits - lag(cum_credits)) %>%
+    mutate(credits_attempted = credits_earned + sample(c(0, 0.25, 0.5, 1, 1.5, 2),
+                                                       1, prob = c(0.85, 0.01, 0.04, 0.04, 0.02, 0.01))) %>%
+    mutate(cum_credits_attempted = cumsum(credits_attempted)) %>%
+    mutate(expected_grad_hs = min(year[grade == "9"]) + 4,
+           grad_cohort_ind = ifelse("9" %in% grade, "Yes", "No"))
   return(gpa_ontrack)
 }
 

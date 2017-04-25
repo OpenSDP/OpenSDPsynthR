@@ -135,6 +135,7 @@ simpop <- function(nstu, seed, control = sim_control()){
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
   zz <- gen_assess(data = assess, control = control)
   assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
+  assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
   assess_long <- assess %>% tidyr::gather(key = "subject", value = "score", math_ss, rdg_ss)
   assess_long$subject[assess_long$subject == "math_ss"] <- "Mathematics"
   assess_long$subject[assess_long$subject == "rdg_ss"] <- "English Language Arts"
@@ -150,13 +151,13 @@ simpop <- function(nstu, seed, control = sim_control()){
               score_error = sd(score),
               ntests = n()) %>%
     filter(ntests > 30)
-  assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
   assess <- assess[, c(idvar, "schid", "year", "grade", "math_ss", "rdg_ss")]
   assess$grade_enrolled <- assess$grade
   # Add LEAID
   rm(zz)
   message("Simulating high school outcomes... be patient...")
-  g12_cohort <- stu_year[stu_year$grade == "12", ]
+  g12_cohort <- stu_year[stu_year$grade == "12", ] %>% select(1:8, schid) %>%
+    as.data.frame() # hack to fix alignment of tables
   g12_cohort <- na.omit(g12_cohort)
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
   g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss")],
@@ -419,6 +420,15 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
   outcomes <- g12_cohort[, c("sid", "scale_gpa", "gpa",
                              "grad_prob", "grad", "hs_status",
                              "ps_prob", "ps")]
+  outcomes$class_rank <- rank(outcomes$gpa, ties = "first")
+  # Diploma codes
+  diplomaCodes <- c("00806", "00807", "00808", "00809", "00810", "00811")
+  nonDiplomaCodes <- c("00812", "00813", "00814",  "00815", "00816",
+                       "00818", "00819", "09999")
+  outcomes$diploma_type[outcomes$grad == 1] <- sample(diplomaCodes,
+                                                      length(outcomes$diploma_type[outcomes$grad == 1]))
+  outcomes$diploma_type[outcomes$grad == 0] <- sample(nonDiplomaCodes,
+                                                      length(outcomes$diploma_type[outcomes$grad == 0]))
   return(outcomes)
 }
 

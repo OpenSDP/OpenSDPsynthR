@@ -49,6 +49,7 @@ gen_students <- function(nstu, seed, control = sim_control()){
   demog_master %<>% mutate_at(5:ncol(demog_master),
                               funs(recode(., `0` = "No", `1` = "Yes")))
   demog_master <- as.data.frame(demog_master)
+  demog_master$id_type <- "District"
   # Do not need to be warned about NAs in binomial
   return(demog_master)
 }
@@ -98,13 +99,29 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)],
                         by = idvar)
   stu_year <- gen_annual_status(stu_year, control = control)
+  # Identify student promotion/retention
+  stu_year <- stu_year %>% group_by(sid) %>% arrange(sid, year) %>%
+    mutate(grade_diff = num_grade(grade) - num_grade(lag(grade))) %>%
+    mutate(grade_advance = ifelse(grade_diff > 0, "Promotion", "Retention")) %>%
+    select(-grade_diff) %>% ungroup()
+  stu_year <- stu_year %>% group_by(sid) %>%
+    mutate(cohort_year = min(year[grade == "9"])) %>%
+    mutate(cohort_grad_year = cohort_year + 4) %>% ungroup()
+  stu_year$cohort_year[!is.finite(stu_year$cohort_year)] <- NA
+  stu_year$cohort_grad_year[!is.finite(stu_year$cohort_grad_year)] <- NA
   # Create longitudinal ell and ses here
   stu_year <- stu_year %>%
-    select_(idvar, "year", "age", "grade", "frpl", "ell", "iep", "gifted")
+    select_(idvar, "year", "age", "grade", "frpl", "ell", "iep", "gifted",
+            "grade_advance", "cohort_year", "cohort_grad_year", "exit_type")
   message("Sorting your records")
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
   stu_year$age <- round(stu_year$age, 0)
+  ## TODO: Add attendance here
+  stu_year$ndays_possible <- 180
+  stu_year$ndays_attend <- rpois(nrow(stu_year), 180)
+  stu_year$ndays_attend <- ifelse(stu_year$ndays_attend > 180, 180, stu_year$ndays_attend)
+  stu_year$att_rate <- stu_year$ndays_attend / stu_Year$ndays_possible
   message("Creating ", control$nschls, " schools for you...")
   school <- gen_schools(n = control$nschls, mean = control$school_means,
                         sigma = control$school_cov_mat,
@@ -221,6 +238,11 @@ gen_student_years <- function(data, control=sim_control()){
                           units = "years", precise = TRUE)
   # Cut off ages before X
   stu_year %<>% filter(stu_year$age >= 4)
+  stu_year$enrollment_status <- "Currently Enrolled"
+  # Fill out CEDS Spec
+  stu_year$cohort_grad_year <- NA
+  stu_year$cohort_year <- NA
+  stu_year$exit_type <- NA
   return(stu_year)
 }
 
@@ -286,6 +308,7 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
   out <- data.frame(schid = ids, name = names, enroll = enroll,
                     stringsAsFactors = FALSE)
   out <- cbind(out, attribs)
+  out$lea_id <- "0001"
   return(out)
 }
 

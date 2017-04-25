@@ -275,3 +275,17 @@ group_rescale <- function(data, var, group_var, newvar=NULL){
     mutate_(.dots = setNames(list(varval), newvar))
   return(data)
 }
+
+#' Convert a character representation of grades to numeric
+#'
+#' @param grade a character vector of grades with character labels
+#'
+#' @return a numeric vector, length of grade, representing grade levels as numbers
+#' @export
+num_grade <- function(grade){
+  grade[grade == "g13"] <- "13"
+  grade[grade == "KG"] <- "0"
+  grade[grade == "PK"] <- "-1"
+  grade <- as.numeric(grade)
+  return(grade)
+}

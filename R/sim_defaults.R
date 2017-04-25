@@ -121,7 +121,7 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year$ndays_possible <- 180
   stu_year$ndays_attend <- rpois(nrow(stu_year), 180)
   stu_year$ndays_attend <- ifelse(stu_year$ndays_attend > 180, 180, stu_year$ndays_attend)
-  stu_year$att_rate <- stu_year$ndays_attend / stu_Year$ndays_possible
+  stu_year$att_rate <- stu_year$ndays_attend / stu_year$ndays_possible
   message("Creating ", control$nschls, " schools for you...")
   school <- gen_schools(n = control$nschls, mean = control$school_means,
                         sigma = control$school_cov_mat,
@@ -129,10 +129,17 @@ simpop <- function(nstu, seed, control = sim_control()){
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
   stu_year <- assign_schools(student = stu_year, schools = school)
   message("Simulating assessment table... be patient...")
-  assess <- left_join(stu_year, demog_master[, 1:4])
+  assess <- left_join(stu_year[, c("sid", "year", "age", "grade", "frpl",
+                                   "ell", "iep", "gifted", "schid")], demog_master[, 1:4])
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
   zz <- gen_assess(data = assess, control = control)
   assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
+  # Organize assess tables
+  # assess$score_type <- "scaled"
+  # assess$assess_id <- "0001"
+  # assess$assess_name <- "State Accountability Test"
+  # assess$retest_ind <- sample(c("Yes", "No"), nrow(assess), prob = c(0.9999, 0.0001))
+
   assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
   assess <- assess[, c(idvar, "schid", "year", "grade", "math_ss", "rdg_ss")]
   rm(zz)
@@ -309,6 +316,17 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
                     stringsAsFactors = FALSE)
   out <- cbind(out, attribs)
   out$lea_id <- "0001"
+  out$id_type <- "District"
+  t1Codes <- c("TGELGBNOPROG", "TGELGBTGPROG" ,"SWELIGTGPROG", "SWELIGNOPROG", "SWELIGSWPROG", "NOTTITLE1ELIG")
+  out$title1_status <- sample(t1Codes, nrow(out), replace = TRUE)
+  t3Codes <- c("DualLanguage", "TwoWayImmersion", "TransitionalBilingual",
+               "DevelopmentalBilingual", "HeritageLanguage",
+               "ShelteredEnglishInstruction", "StructuredEnglishImmersion",
+               "SDAIE", "ContentBasedESL", "PullOutESL", "Other")
+  out$title3_program_type <- sample(t3Codes, nrow(out), replace=TRUE)
+  out$type <- sample(c("K12School", "EducationOrganizationNetwork",
+                       "CharterSchoolManagementOrganization"), nrow(out),
+                     replace=TRUE, prob = c(0.9, 0.05, 0.05))
   return(out)
 }
 

@@ -10,7 +10,8 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
   ps_transfer_list = NULL, grade_levels = NULL, school_means = NULL,
   school_cov_mat = NULL, school_names = NULL, postsec_names,
   gpa_sim_parameters = NULL, grad_sim_parameters = NULL,
-  ps_sim_parameters = NULL, assess_sim_par = NULL)
+  ps_sim_parameters = NULL, assess_sim_par = NULL,
+  assessment_adjustment = NULL)
 }
 \arguments{
 \item{nschls}{integer for number of schools to create, default is 2}
@@ -52,6 +53,8 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
 \item{ps_sim_parameters}{a list of parameters to pass to \code{gen_outcome_model}}
 
 \item{assess_sim_par}{a list of parameters to pass to \code{gen_outcome_model}}
+
+\item{assessment_adjustment}{a list of parameters to adjust assessment scores}
 }
 \value{
 a named list

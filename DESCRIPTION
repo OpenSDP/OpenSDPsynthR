@@ -14,12 +14,12 @@ Imports: lubridate,
   purrr,
   mvtnorm,
   simglm,
-  tidyr
+  tidyr,
+  stringr
 Suggests: testthat,
     knitr,
     rmarkdown,
-    ggplot2,
-    tidyr
+    ggplot2
 Remotes: lebebr01/simglm
 License: MIT + file LICENSE
 Encoding: UTF-8

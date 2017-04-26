@@ -15,3 +15,6 @@ x mean centered and divided by it's standard deviation
 \description{
 Reliabily rescale numerics with missingness
 }
+\details{
+If \code{sd(x)} is undefined, this returns a zero
+}

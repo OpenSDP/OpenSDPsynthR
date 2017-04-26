@@ -19,6 +19,7 @@
 #' @param grad_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @param ps_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
 #' @param assess_sim_par a list of parameters to pass to \code{gen_outcome_model}
+#' @param assessment_adjustment a list of parameters to adjust assessment scores
 #' @return a named list
 #' @export
 sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
@@ -29,7 +30,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         school_names=NULL, postsec_names, gpa_sim_parameters=NULL,
                         grad_sim_parameters=NULL,
                         ps_sim_parameters = NULL,
-                        assess_sim_par = NULL){
+                        assess_sim_par = NULL,
+                        assessment_adjustment = NULL){
   nschls <- nschls
 
   # temporarily hardcoding these values here for testing
@@ -344,6 +346,37 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                              list(f = make_markov_series,
                                   pars = list(tm = tm_convert(tm))))
 
+  assessment_adjustment <- list(
+    race_list = list(
+      "White" = 0.1,
+      "Black or African American" = -0.4,
+      "Asian" = 0.1,
+      "Hispanic or Latino Ethnicity" = -0.25,
+      "Demographic Race Two or More Races" = -0.1,
+      "American Indian or Alaska Native" = -0.25,
+      "Native Hawaiian or Other Pacific Islander" = -0.05
+    ),
+    perturb_race = function(x, race, sd, race_par = race_list){
+      dist_mean <- race_par[[which(race == names(race_par))]] * sd
+      dist_sd <- abs(sd * (dist_mean/sd))
+      y <- x + rnorm(1, dist_mean, sqrt(dist_sd^3))
+      return(y)
+    },
+
+    frl_list = list("0" = 0.01, "1" = -0.5),
+
+    perturb_frl = function(x, frl, sd, frl_par = frl_list){
+      dist_mean <- frl_par[[which(frl == names(frl_par))]] * sd
+      dist_sd <- abs(sd * (dist_mean/sd))
+      y <- x + rnorm(1, dist_mean, sqrt(dist_sd))
+      return(y)
+    },
+    perturb_base = function(x, sd){
+      y <- x + rnorm(1, 0, sd * 0.8)
+      return(y)
+    }
+  )
+
 
   school_names <- sch_names
   postsec_names <- ps_names
@@ -368,7 +401,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     gpa_sim_parameters,
     grad_sim_parameters,
     ps_sim_parameters,
-    assess_sim_par))
+    assess_sim_par,
+    assessment_adjustment))
 
 }
 

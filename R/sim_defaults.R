@@ -49,6 +49,7 @@ gen_students <- function(nstu, seed, control = sim_control()){
   demog_master %<>% mutate_at(5:ncol(demog_master),
                               funs(recode(., `0` = "No", `1` = "Yes")))
   demog_master <- as.data.frame(demog_master)
+  demog_master$id_type <- "Local"
   # Do not need to be warned about NAs in binomial
   return(demog_master)
 }
@@ -62,6 +63,7 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' @return a list with simulated data
 #' @importFrom lubridate year
 #' @import dplyr
+#' @importFrom tidyr gather
 #' @export
 #' @examples
 #' out <- simpop(nstu = 20, seed = 213)
@@ -98,13 +100,29 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)],
                         by = idvar)
   stu_year <- gen_annual_status(stu_year, control = control)
+  # Identify student promotion/retention
+  stu_year <- stu_year %>% group_by(sid) %>% arrange(sid, year) %>%
+    mutate(grade_diff = num_grade(grade) - num_grade(lag(grade))) %>%
+    mutate(grade_advance = ifelse(grade_diff > 0, "Promotion", "Retention")) %>%
+    select(-grade_diff) %>% ungroup()
+  stu_year <- stu_year %>% group_by(sid) %>%
+    mutate(cohort_year = min(year[grade == "9"])) %>%
+    mutate(cohort_grad_year = cohort_year + 4) %>% ungroup()
+  stu_year$cohort_year[!is.finite(stu_year$cohort_year)] <- NA
+  stu_year$cohort_grad_year[!is.finite(stu_year$cohort_grad_year)] <- NA
   # Create longitudinal ell and ses here
   stu_year <- stu_year %>%
-    select_(idvar, "year", "age", "grade", "frpl", "ell", "iep", "gifted")
+    select_(idvar, "year", "age", "grade", "frpl", "ell", "iep", "gifted",
+            "grade_advance", "cohort_year", "cohort_grad_year", "exit_type")
   message("Sorting your records")
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
   stu_year$age <- round(stu_year$age, 0)
+  ## TODO: Add attendance here
+  stu_year$ndays_possible <- 180
+  stu_year$ndays_attend <- rpois(nrow(stu_year), 180)
+  stu_year$ndays_attend <- ifelse(stu_year$ndays_attend > 180, 180, stu_year$ndays_attend)
+  stu_year$att_rate <- stu_year$ndays_attend / stu_year$ndays_possible
   message("Creating ", control$nschls, " schools for you...")
   school <- gen_schools(n = control$nschls, mean = control$school_means,
                         sigma = control$school_cov_mat,
@@ -112,18 +130,40 @@ simpop <- function(nstu, seed, control = sim_control()){
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
   stu_year <- assign_schools(student = stu_year, schools = school)
   message("Simulating assessment table... be patient...")
-  assess <- left_join(stu_year, demog_master[, 1:4])
+  assess <- left_join(stu_year[, c("sid", "year", "age", "grade", "frpl",
+                                   "ell", "iep", "gifted", "schid")], demog_master[, 1:4])
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
   zz <- gen_assess(data = assess, control = control)
   assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
   assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
+  assess_long <- assess %>% tidyr::gather(key = "subject", value = "score", math_ss, rdg_ss)
+  assess_long$subject[assess_long$subject == "math_ss"] <- "Mathematics"
+  assess_long$subject[assess_long$subject == "rdg_ss"] <- "English Language Arts"
+  assess_long$score_type <- "scaled"
+  assess_long$assess_id <- "0001"
+  assess_long$assess_name <- "State Accountability Test"
+  assess_long$retest_ind <- sample(c("Yes", "No"), nrow(assess_long),
+                                   replace = TRUE, prob = c(0.9999, 0.0001))
+
+  # Organize assess tables
+  proficiency_levels <- assess_long %>% group_by(year, grade, subject, assess_id) %>%
+    summarize(score_mean = mean(score),
+              score_error = sd(score),
+              ntests = n()) %>%
+    filter(ntests > 30)
   assess <- assess[, c(idvar, "schid", "year", "grade", "math_ss", "rdg_ss")]
+  assess$grade_enrolled <- assess$grade
+  # Add LEAID
   rm(zz)
   message("Simulating high school outcomes... be patient...")
-  g12_cohort <- stu_year[stu_year$grade == "12", ]
+  g12_cohort <- stu_year[stu_year$grade == "12", ] %>% select(1:8, schid) %>%
+    as.data.frame() # hack to fix alignment of tables
   g12_cohort <- na.omit(g12_cohort)
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
+  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss")],
+                          by = c(idvar, "grade"))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
+  g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
   hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
@@ -134,8 +174,9 @@ simpop <- function(nstu, seed, control = sim_control()){
                                  control = control)
   message("Success! Returning you student and student-year data in a list.")
   return(list(demog_master = demog_master, stu_year = stu_year,
-              schools = school, assessment = assess, hs_outcomes = hs_outcomes,
-              hs_annual = hs_annual, nsc = nsc_postsec, ps_enroll = ps_enroll))
+              schools = school, stu_assess = assess, hs_outcomes = hs_outcomes,
+              hs_annual = hs_annual, nsc = nsc_postsec, ps_enroll = ps_enroll,
+              assessments = assess_long, proficiency = proficiency_levels))
 }
 
 #' Generate initial student status indicators
@@ -218,6 +259,11 @@ gen_student_years <- function(data, control=sim_control()){
                           units = "years", precise = TRUE)
   # Cut off ages before X
   stu_year %<>% filter(stu_year$age >= 4)
+  stu_year$enrollment_status <- "Currently Enrolled"
+  # Fill out CEDS Spec
+  stu_year$cohort_grad_year <- NA
+  stu_year$cohort_year <- NA
+  stu_year$exit_type <- NA
   return(stu_year)
 }
 
@@ -283,6 +329,20 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
   out <- data.frame(schid = ids, name = names, enroll = enroll,
                     stringsAsFactors = FALSE)
   out <- cbind(out, attribs)
+  out$lea_id <- "0001"
+  out$id_type <- "Local"
+  t1Codes <- c("TGELGBNOPROG", "TGELGBTGPROG" ,"SWELIGTGPROG", "SWELIGNOPROG", "SWELIGSWPROG", "NOTTITLE1ELIG")
+  out$title1_status <- sample(t1Codes, nrow(out), replace = TRUE)
+  t3Codes <- c("DualLanguage", "TwoWayImmersion", "TransitionalBilingual",
+               "DevelopmentalBilingual", "HeritageLanguage",
+               "ShelteredEnglishInstruction", "StructuredEnglishImmersion",
+               "SDAIE", "ContentBasedESL", "PullOutESL", "Other")
+  out$title3_program_type <- sample(t3Codes, nrow(out), replace=TRUE)
+  out$type <- sample(c("K12School", "EducationOrganizationNetwork",
+                       "CharterSchoolManagementOrganization"), nrow(out),
+                     replace=TRUE, prob = c(0.9, 0.05, 0.05))
+  out$poverty_desig <- sample(c("HighQuartile", "LowQuartile", "Neither"),
+                              nrow(out), replace = TRUE, prob = c(0.25, 0.25, 0.5))
   return(out)
 }
 
@@ -360,6 +420,15 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
   outcomes <- g12_cohort[, c("sid", "scale_gpa", "gpa",
                              "grad_prob", "grad", "hs_status",
                              "ps_prob", "ps")]
+  outcomes$class_rank <- rank(outcomes$gpa, ties = "first")
+  # Diploma codes
+  diplomaCodes <- c("00806", "00807", "00808", "00809", "00810", "00811")
+  nonDiplomaCodes <- c("00812", "00813", "00814",  "00815", "00816",
+                       "00818", "00819", "09999")
+  outcomes$diploma_type[outcomes$grad == 1] <- sample(diplomaCodes,
+                                                      length(outcomes$diploma_type[outcomes$grad == 1]))
+  outcomes$diploma_type[outcomes$grad == 0] <- sample(nonDiplomaCodes,
+                                                      length(outcomes$diploma_type[outcomes$grad == 0]))
   return(outcomes)
 }
 
@@ -367,7 +436,7 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
 #'
 #' @param n number of institutions to generate
 #' @param names names to use for schools
-#'
+#' @importFrom stringr str_trunc
 #' @return a data.frame of names, IDs, and enrollment weights
 #' @export
 gen_nsc <- function(n, names = NULL){
@@ -387,6 +456,7 @@ gen_nsc <- function(n, names = NULL){
   enroll[enroll == 0] <- sample(1:25, K, replace = FALSE)
   out <- data.frame(opeid = ids, name = names, enroll = enroll,
                     stringsAsFactors = FALSE)
+  out$short_name <- stringr::str_trunc(out$name, 20, "right")
   # out <- cbind(out, attribs)
   return(out)
 }

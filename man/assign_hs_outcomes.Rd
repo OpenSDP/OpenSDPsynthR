@@ -4,12 +4,12 @@
 \alias{assign_hs_outcomes}
 \title{Assign high school outcomes}
 \usage{
-assign_hs_outcomes(g12_cohort, control = sim_control())
+assign_hs_outcomes(data, control = sim_control())
 }
 \arguments{
-\item{g12_cohort}{a dataframe with certain high school attributes}
-
 \item{control}{control parameters from the \code{sim_control()} function}
+
+\item{g12_cohort}{a dataframe with certain high school attributes}
 }
 \value{
 an outcome dataframe

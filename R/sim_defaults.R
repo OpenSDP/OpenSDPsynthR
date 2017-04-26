@@ -105,6 +105,8 @@ simpop <- function(nstu, seed, control = sim_control()){
     mutate(grade_diff = num_grade(grade) - num_grade(lag(grade))) %>%
     mutate(grade_advance = ifelse(grade_diff > 0, "Promotion", "Retention")) %>%
     select(-grade_diff) %>% ungroup()
+  stu_year <- as.data.frame(stu_year)
+  stu_year$year <- as.numeric(stu_year$year) # coerce to numeric to avoid user integer inputs
   stu_year <- stu_year %>% group_by(sid) %>%
     mutate(cohort_year = min(year[grade == "9"])) %>%
     mutate(cohort_grad_year = cohort_year + 4) %>% ungroup()
@@ -113,7 +115,8 @@ simpop <- function(nstu, seed, control = sim_control()){
   # Create longitudinal ell and ses here
   stu_year <- stu_year %>%
     select_(idvar, "year", "age", "grade", "frpl", "ell", "iep", "gifted",
-            "grade_advance", "cohort_year", "cohort_grad_year", "exit_type")
+            "grade_advance", "cohort_year", "cohort_grad_year", "exit_type",
+            "enrollment_status") # hack to keep these variables in place
   message("Sorting your records")
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
@@ -383,17 +386,16 @@ assign_schools <- function(student, schools, method = NULL){
 #' @param control control parameters from the \code{sim_control()} function
 #'
 #' @return an outcome dataframe
-assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
-  g12_cohort$scale_gpa <- gen_gpa(data = g12_cohort,
-                                  control = control)
+assign_hs_outcomes <- function(data, control = sim_control()){
+  data$scale_gpa <- gen_gpa(data = data, control = control)
   # rescale GPA
-  g12_cohort$gpa <- rescale_gpa(g12_cohort$scale_gpa)
-  zzz <- gen_grad(data = g12_cohort,
+  data$gpa <- rescale_gpa(data$scale_gpa)
+  zzz <- gen_grad(data = data,
                   control = control)
-  g12_cohort <- bind_cols(g12_cohort, zzz)
-  g12_cohort$hs_status <- "hs_grad"
-  g12_cohort$hs_status[g12_cohort$grad == 0] <-
-    sapply(g12_cohort$hs_status[g12_cohort$grad == 0],
+  data <- bind_cols(data, zzz)
+  data$hs_status <- "hs_grad"
+  data$hs_status[data$grad == 0] <-
+    sapply(data$hs_status[data$grad == 0],
            function(x) {
              sample(
                c("dropout", "transferout", "still_enroll", "disappear"),
@@ -402,8 +404,8 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
                prob = c(0.62, 0.31, 0.04, 0.03)
              )
            })
-  g12_cohort$hs_status[g12_cohort$grad == 1] <-
-    sapply(g12_cohort$hs_status[g12_cohort$grad == 1],
+  data$hs_status[data$grad == 1] <-
+    sapply(data$hs_status[data$grad == 1],
            function(x) {
              sample(
                c("ontime", "late"),
@@ -413,11 +415,11 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
              )
            })
   # TODO: Consider filtering this so only HS DIPLOMA eligible
-    zzz <- gen_ps(g12_cohort, control = control)
-    g12_cohort <- bind_cols(g12_cohort, zzz)
-  # ps_eligible <- gen_ps(data = g12_cohort[g12_cohort$grad == 1, ],
+    zzz <- gen_ps(data, control = control)
+    data <- bind_cols(data, zzz)
+  # ps_eligible <- gen_ps(data = data[data$grad == 1, ],
   #                       control = control)
-  outcomes <- g12_cohort[, c("sid", "scale_gpa", "gpa",
+  outcomes <- data[, c("sid", "scale_gpa", "gpa",
                              "grad_prob", "grad", "hs_status",
                              "ps_prob", "ps")]
   outcomes$class_rank <- rank(outcomes$gpa, ties = "first")
@@ -425,10 +427,13 @@ assign_hs_outcomes <- function(g12_cohort, control = sim_control()){
   diplomaCodes <- c("00806", "00807", "00808", "00809", "00810", "00811")
   nonDiplomaCodes <- c("00812", "00813", "00814",  "00815", "00816",
                        "00818", "00819", "09999")
+  outcomes$diploma_type <- NA
   outcomes$diploma_type[outcomes$grad == 1] <- sample(diplomaCodes,
-                                                      length(outcomes$diploma_type[outcomes$grad == 1]))
+                                                      length(outcomes$diploma_type[outcomes$grad == 1]),
+                                                      replace = TRUE)
   outcomes$diploma_type[outcomes$grad == 0] <- sample(nonDiplomaCodes,
-                                                      length(outcomes$diploma_type[outcomes$grad == 0]))
+                                                      length(outcomes$diploma_type[outcomes$grad == 0]),
+                                                      replace = TRUE)
   return(outcomes)
 }
 

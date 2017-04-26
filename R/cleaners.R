@@ -153,123 +153,211 @@ sdp_cleaner <- function(simouts){
 ## CEDS
 ######################
 
+#' Title
+#'
+#' @param simouts
+#' @param output
+#'
+#' @return
+#' @export
+#'
+#' @examples
+ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
+  if(output == "directory" & is.null(directory)){
+    directory <- tempdir()
+  }
+  if(!file.exists(directory)){
+    dir.create(directory)
+  }
 
-# K12 Student Identity
-## - Student Identification System / demog_master$id_type = "Local"
-## - Student Identifier / demog_master$sid
+  tmp_output <- function(object, directory){
+    filename <- file.path(directory, deparse(substitute(object)))
+    filename <- paste0(filename, ".csv")
+    write.csv(object, filename, row.names = FALSE)
+  }
 
-# K12 Student Demographic
-## - American Indian or ALaska Native / demog_master$American.Indian.or.Alaska.Native
-## - Asian / demog_master$Asian
-## - Birthdate / demog_master$Birthdate
-## - Black or African American / demog_master$ Black.or.African.American
-## - Demographic Race Two or More Races / demog_master$Demographic.Race.Two.or.More.Races
-## - Hispanic or Latino Ethnicity / demog_master$Hispanic.or.Latino.Ethnicity
-## - Native Hawaiian or Other Pacific Islander /demog_master$Native.Hawaiian.or.Other.Pacific.Islander
-## - Sex / demog_master$Sex
-## - White / demog_master$White
+  k12_student_identity <- data.frame(
+    "Student Identification System" = simouts$demog_master$id_type,
+    "Student Identifier" = simouts$demog_master$sid)
 
-# K12 Limited English Proficiency
-## - Limited English Proficiency Entry Date / stu_year$year
-## - Limited English Proficiency Exit Date / stu_year$year
-## - Limited English Proficiency Status / stu_year$ell
-## - Title III Limited English Proficient Participation Status / stu_year$ell
+  tmp_output(k12_student_identity, directory = directory)
 
-# - K12 Student Economically DIsadvantaged
-## - Economic Disadvantage Status / stu_year$frpl
-## - Participation in School Food Service Programs / stu_year$frpl
-## - Status End Date / stu_year$year
-## - Status Start Date / stu_year$year
+  k12_student_demographic <- data.frame(
+    "Student Identifier" = simouts$demog_master$sid,
+    "American Indian or Alaska Native" = simouts$demog_master$American.Indian.or.Alaska.Native,
+    "Asian" = simouts$demog_master$Asian,
+    "Birthdate" = simouts$demog_master$Birthdate,
+    "Black or African American" = simouts$demog_master$Black.or.African.American,
+    "Demographic Race Two or More Races" = simouts$demog_master$Demographic.Race.Two.or.More.Races,
+    "Hispanic or Latino Ethnicity" = simouts$demog_master$Hispanic.or.Latino.Ethnicity,
+    "Native Hawaiian or Other Pacific Islander" = simouts$demog_master$Native.Hawaiian.or.Other.Pacific.Islander,
+    "Sex" = simouts$demog_master$Sex,
+    "White" = simouts$demog_master$White
+    )
+  k12_limited_english_proficiency <- data.frame(
+    "Student Identifier" = simouts$stu_year$sid,
+    "Limited English Proficiency Entry Date" = simouts$stu_year$year,
+    "Limited English Proficiency Exit Date" = simouts$stu_year$year + 1,
+    "Limited English Proficiency Status" = simouts$stu_year$ell,
+    "Title III Limited English Proficient Participation Status" = simouts$stu_year$ell
+  )
+  k12_student_economically_disadvantaged <- data.frame(
+    "Student Identifier" = simouts$stu_year$sid,
+    "Economic Disadvantage Status" = simouts$stu_year$frpl,
+    "Participation in School Food Service Programs" = simouts$stu_year$frpl,
+    "Status End Date" = simouts$stu_year$year + 1,
+    "Status Start Date" = simouts$stu_year$year
+  )
+  k12_student_enrollment <- data.frame(
+    "Student Identifier" = simouts$stu_year$sid,
+    "Cohort Year" = simouts$stu_year$cohort_year,
+    "Cohort Graduation Year" = simouts$stu_year$cohort_grad_year,
+    "Enrollment Entry Date" = simouts$stu_year$year,
+    "Enrollment Exit Date" = simouts$stu_year$year +1,
+    "Enrollment Status" = simouts$stu_year$enrollment_status,
+    "Entry Grade Level" = simouts$stu_year$grade,
+    "Entry Type" = simouts$stu_year$entry_code,
+    "Exit Grade Level" = simouts$stu_year$grade_advance,
+    "Exit or Withdrawal Status" = simouts$stu_year$exit_type,
+    "End Of Term Status" = simouts$stu_year$grade_advance,
+    "Gifted and Talented Indicator" = simouts$stu_year$gifted,
+    "School Identifier" = simouts$stu_year$schid,
+    "Local Education Agency Identifier" = simouts$stu_year$lea_id,
+    "Resonsible District Identifier" = simouts$stu_year$lea_id,
+    "Responsible School Identifier" = simouts$stu_year$schid,
+    "Responsible School Type" = "Accountable",
+    "Responsible District Type" = "Accountable"
+  )
+  k12_student_academic_record <- data.frame(
+    "Student Identifier" = simouts$hs_annual$sid,
+    "School Identifier" = simouts$hs_annual$schid,
+    "Credits Earned Cumulative" = simouts$hs_annual$cum_credits,
+    "Credits Attempted Cumulative" = simouts$hs_annual$cum_credits_attempted,
+    "Diploma Or Credential Award Date" = simouts$hs_annual$expected_grad_hs,
+    "GPA Cumulative" = simouts$hs_annual$cum_gpa,
+    "Graduation Rate Survey Indicator" = simouts$hs_annual$grad_cohort_ind,
+    "Graduation Rate Survey Cohort Year" = simouts$hs_annual$expected_grad_hs,
+    "Number of Credits Attempted" = simouts$hs_annual$credits_attempted,
+    "Number of Credits Earned" = simouts$hs_annual$credits_earned,
+    "Projected Graduation Date" = simouts$hs_annual$expected_grad_hs
+  )
+
+  k12_student_academic_record_tmp <- data.frame(
+    "High School Diploma Type" = simouts$hs_outcomes$diploma_type,
+    "High School Student Class Rank" = simouts$hs_outcomes$class_rank,
+    "Postsecondary Enrollment Action" = simouts$hs_outcomes$ps
+  )
+  k12_student_attendance <- data.frame(
+    "Student Identifier" = simouts$stu_year$sid,
+    "Number of Days Absent" = simouts$stu_year$ndays_possible - simouts$stu_year$ndays_attend,
+    "Number of Days in Attendance" = simouts$stu_year$ndays_attend,
+    "Student Attendance Rate" = simouts$stu_year$att_rate
+  )
+  k12_school_identification <- data.frame(
+    "Name of Institution" = simouts$schools$name,
+    "Organization Type" = simouts$schools$type,
+    "School Identifier" = simouts$schools$schid,
+    "School Identification System" = simouts$schools$id_type,
+    "Local Education Agency Identifier" = simouts$schools$lea_id,
+    "Short Name of Institution" = simouts$schools$name
+  )
+  k12_school_institution_characteristics <- data.frame(
+    "School Identifier" = simouts$schools$schid,
+    "State Poverty Designation" = simouts$schools$poverty_desig,
+    "Title I School Status" = simouts$schools$title1_status,
+    "Title III Language Instruction Program Type" = simouts$schools$title3_program_type
+  )
+  ps_institution_directory <- data.frame(
+    "Name of Institution" = simouts$nsc$name,
+    "Short Name of Institution" = simouts$nsc$short_name,
+    "Institution Identifier" = simouts$nsc$opeid,
+    "Institution Identifier Type" = "OPEID"
+  )
+
+  k12_student_enrollment <- data.frame(
+    "Student Identifier" = simouts$stu_year$sid,
+    "Year" = simouts$stu_year$year,
+    "Entry Grade Level" = simouts$stu_year$grade,
+    "Entry Type" = "01821",
+    "Exit Grade Level" = simouts$stu_year$grade,
+    "Exit or Withdrawal Status" = simouts$stu_year$exit_type,
+    "School Identifier" = simouts$stu_year$schid
+  )
+
+  ps_student_institution_enrollment <- data.frame(
+    "Student Identifier" = simouts$ps_enroll$sid,
+    "Enrollment Entry Date" = simouts$ps_enroll$year,
+    "Enrollment Exit Date" = simouts$ps_enroll$year + 1,
+    "Name of Institution" = simouts$ps_enroll$opeid, # change to name
+    "Diploma or Credential Award Date" = "NA"
+  )
+  assessment_registration <- data.frame(
+    # add LEA ID
+    "Student Identifier" = simouts$assessments$sid,
+    "School Identifier" = simouts$assessments$schid,
+    "Assessment Registration Grade Level to Be Assessed" = simouts$assessments$grade,
+    "Grade Level When Assessed" = simouts$assessments$grade,
+    "Assessment Accomodation Category" = NA,
+    "Retest Indicator" = simouts$assessments$retest_ind
+  )
+  assessment_result <- data.frame(
+    "Student Identifier" = simouts$assessments$sid,
+    "Assessment Score Metric Type" = simouts$assessments$score_type,
+    "Assessment Result Score Value" = simouts$assessments$score
+  )
+  assessment <- data.frame(
+    "Assessment Identifier" = simouts$assessments$assess_id,
+    "Assessment Short Name" = simouts$assessments$assess_name,
+    "Assessment Academic Subject" = simouts$assessments$subject,
+    "Assessment Level for Which Designed" = simouts$assessments$grade
+  )
+  assessment <- assessment[!duplicated(assessment),]
 
 
-# - K12 Student Enrollment
-## - Cohort Year / stu_year$cohort_year
-## - Cohort Graduation Year / stu_year$cohort_grad_year
-## - Enrollment Entry Date / stu_year$year
-## - Enrollment Exit Date / stu_year$year
-## - Enrollment Status / stu_year$ENROLLMENTSTATUS
-## - Entry Grade Level / stu_year$grade
-## - Entry Type / stu_year$entry_code
-## - Exit Grade Level / stu_year$grade
-## - Exit or Withdrawal Status / stu_year$exit_type
-## - Gifted and Talented Indicator / stu_year$gifted
-## - School Identifier / stu_year$schid
-## - Local Education Agency Identifier / stu_year$LEAID
-## - Responsible District Identifier / stu_year$LEAID
-## - Responsible School Identifier / stu_year$schid
-## - Responsible School Type / stu_year$LEAID
-## - Responsible District Type / stu_year$LEA_TYPE
-
-# - K12 Student Academic Record (long by term)
-## - Student Identifier / hs_annual$sid
-## - School Identifier / hs_annual$schid
-## - Credits earned cumulative / hs_annual$cum_credits
-## - Credits attempted cumulative / hs_annual$cum_creditsATTEMPTED?
-## - Diploma or Credential Award Date / hs_outcomes$GRAD_YEAR
-## - End of Term Status /  stu_year$PROMOTIONRETENTION
-## - GPA Cumulative / hs_annual$cum_gpa
-## - Graduation Rate Survey Cohort Year / hs_annual$year
-## - Graduation Rate Survey Indicator / hs_annual$grad_cohort_ind
-## - High school Diploma Type / hs_outcomes$diploma_type
-## - High school student class rank / hs_outcomes$class_rank
-## - Number of credits attempted / hs_annual$credits_attempted
-## - Number of credits earned / hs_annual$credits_earned
-## - Postsecondary Enrollment Action hs_outcomes$ps [Enrolled/NotENrolled/No Information]
-## - Projected Graduation Date / hs_annual$expected_grad
-
-# K12 Student Attendance
-## - Number of Days Absent - stu_year$ndays_possible
-## - NUmber of Days in Attendance / stu_year$ndays_attend
-## - Student Attendance Rate / stu_year$att_rate
 
 
-# - K12 School Identification
-## - Name of Institution / school$name
-## - Organization Type / school$type ??
-## - School Identification System / school$id_type = "District"
-## - School Identifier / school$schid
-## - Short name of institution / school$name
+}
 
-# K12 School Institution Characteristics
-## - State Poverty Designation / school$poverty_desig = HighQuartile/LowQuartile/Neither
-## - Title I School Status / school$title1_status
-## - Title III Language Instruction Porgram Type / school$title3_program_type
-
-# PS Institution Directory
-## - Name of Institution / nsc$name
-## - Short Name of Institution / nsc$short_name
-
-# PS Student Institution Enrollment
-## - Enrollment Entry Date /  ps_enroll$year
-## - Enrollment Exit Date / ps_enroll$year
-## - Name of Institution / ps_enroll$nsc_inst_name
-## - Diploma or Credential Award Date / ps_enroll$ps_grad_date
-
-## Assessment
-## Assessment - Assessment Registration - School Identifier / assessment$schid
-## Assessment - Assessment Registration - Student Identifier  / assessment$sid
-## Assessment - Assessment Registration - Assessment Registration Grade Level to Be Assessed / assessment$grade
-## Assessment - Assessment Registration - Grade Level When Assessed / assessment$grade_enrolled
-## Assessment - Assessment Registration - Assessment Accomodation Category / assessment$accomodation
-## Assessment - Assessment Registration - Local Education Agency Identifer / assessment$LEA
-## Assessment - Assessment Registration - Retest Indicator / assessment$retest_ind
-
-# assessmentresult
-## - Assessment Result - Assessment Score Metric Type / assessment$score_type
-## - AssessmentResultScoreValue / assessment$score
 ## - Assessment Result Score STandard Error / assessment$error
-
-# Assessment
-## Assessment Identifier / assessment$assess_id
-## Assessment Short Name / assessment$assess_name
-## Assessment Academic Subject / assessment$subject
-## Assessment Level for Which Designed / assessment$assessment_grade
 
 # assessment performance level
 ## - Assessment Performance Level Identifier / assessment$prof_level
 ## - Assessment Performance Level Label / assessment$prof_level_name
 ## - Assessment Performance Level Lower Cut Score / assessment$min_score
 ## - Assessment Performance Level Upper Cut Score / assessment$max_score
+
+
+# transfer_dim <-
+# 01821 - Transfer from a public school in the same local education agency
+# 01822 - Transfer from a public school in a different local education agency in the same state
+# 01823 - Transfer from a public school in a different state
+# 01824 - Transfer from a private, non-religiously-affiliated school in the same local education agency
+# 01825 - Transfer from a private, non-religiously-affiliated school in a different LEA in the same state
+# 01826 - Transfer from a private, non-religiously-affiliated school in a different state
+# 01827 - Transfer from a private, religiously-affiliated school in the same local education agency
+# 01828 - Transfer from a private, religiously-affiliated school in a different LEA in the same state
+# 01829 - Transfer from a private, religiously-affiliated school in a different state
+# 01830 - Transfer from a school outside of the country
+# 01831 - Transfer from an institution
+# 01832 - Transfer from a charter school
+# 01833 - Transfer from home schooling
+# 01835 - Re-entry from the same school with no interruption of schooling
+# 01836 - Re-entry after a voluntary withdrawal
+# 01837 - Re-entry after an involuntary withdrawal
+# 01838 - Original entry into a United States school
+# 01839 - Original entry into a United States school from a foreign country with no interruption in schooling
+# 01840 - Original entry into a United States school from a foreign country with an interruption in schooling
+# 09999 - Other
+
+
+# - K12 Student Academic Record (long by term)
+## - Diploma or Credential Award Date / hs_outcomes$GRAD_YEAR
+## - End of Term Status /  stu_year$PROMOTIONRETENTION
+## - GPA Cumulative / hs_annual$cum_gpa
+## - Postsecondary Enrollment Action hs_outcomes$ps [Enrolled/NotENrolled/No Information]
+## - Projected Graduation Date / hs_annual$expected_grad
+
+
 
 
 # SEA Identification

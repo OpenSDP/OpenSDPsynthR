@@ -501,7 +501,7 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
                                         -ps_prob, -ps)
 
   gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(yr_seq) %>%
-    mutate(credits_earned = cum_credits - lag(cum_credits)) %>%
+    mutate(credits_earned = cum_credits - ifelse(!is.na(lag(cum_credits)), lag(cum_credits), 0)) %>%
     mutate(credits_attempted = credits_earned + sample(c(0, 0.25, 0.5, 1, 1.5, 2),
                                                        1, prob = c(0.85, 0.01, 0.04, 0.04, 0.02, 0.01))) %>%
     mutate(cum_credits_attempted = cumsum(credits_attempted)) %>%

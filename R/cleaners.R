@@ -170,17 +170,14 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
     dir.create(directory)
   }
 
-  tmp_output <- function(object, directory){
-    filename <- file.path(directory, deparse(substitute(object)))
-    filename <- paste0(filename, ".csv")
-    write.csv(object, filename, row.names = FALSE)
-  }
 
   k12_student_identity <- data.frame(
     "Student Identification System" = simouts$demog_master$id_type,
     "Student Identifier" = simouts$demog_master$sid)
 
-  tmp_output(k12_student_identity, directory = directory)
+  if(!"Native.Hawaiian.or.Other.Pacific.Islander" %in% colnames(simouts$demog_master)){
+    simouts$demog_master$Native.Hawaiian.or.Other.Pacific.Islander <- 0
+  }
 
   k12_student_demographic <- data.frame(
     "Student Identifier" = simouts$demog_master$sid,
@@ -194,6 +191,8 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
     "Sex" = simouts$demog_master$Sex,
     "White" = simouts$demog_master$White
     )
+
+
   k12_limited_english_proficiency <- data.frame(
     "Student Identifier" = simouts$stu_year$sid,
     "Limited English Proficiency Entry Date" = simouts$stu_year$year,
@@ -208,6 +207,16 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
     "Status End Date" = simouts$stu_year$year + 1,
     "Status Start Date" = simouts$stu_year$year
   )
+
+  # TODO Add entry code
+  if(!"entry_code" %in% names(simouts$stu_year)){
+    simouts$stu_year$entry_code <- "018001"
+  }
+  if(!"lea_id" %in% names(simouts$stu_year)){
+    simouts$stu_year <- ungroup(simouts$stu_year)
+    simouts$stu_year$lea_id <- "0001"
+  }
+
   k12_student_enrollment <- data.frame(
     "Student Identifier" = simouts$stu_year$sid,
     "Cohort Year" = simouts$stu_year$cohort_year,
@@ -230,6 +239,7 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
   )
   k12_student_academic_record <- data.frame(
     "Student Identifier" = simouts$hs_annual$sid,
+    "Year" = simouts$hs_annual$year,
     "School Identifier" = simouts$hs_annual$schid,
     "Credits Earned Cumulative" = simouts$hs_annual$cum_credits,
     "Credits Attempted Cumulative" = simouts$hs_annual$cum_credits_attempted,
@@ -243,10 +253,20 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
   )
 
   k12_student_academic_record_tmp <- data.frame(
+    "Student Identifier" = simouts$hs_outcomes$sid,
     "High School Diploma Type" = simouts$hs_outcomes$diploma_type,
     "High School Student Class Rank" = simouts$hs_outcomes$class_rank,
     "Postsecondary Enrollment Action" = simouts$hs_outcomes$ps
   )
+  k12_student_academic_record <- k12_student_academic_record[!duplicated(k12_student_academic_record),]
+
+  k12_student_academic_record <- left_join(k12_student_academic_record,
+                                           k12_student_academic_record_tmp,
+                                           by = "Student.Identifier")
+  k12_student_academic_record_tmp <- NULL
+  k12_student_academic_record <- k12_student_academic_record[!duplicated(k12_student_academic_record),]
+
+
   k12_student_attendance <- data.frame(
     "Student Identifier" = simouts$stu_year$sid,
     "Number of Days Absent" = simouts$stu_year$ndays_possible - simouts$stu_year$ndays_attend,
@@ -274,15 +294,6 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
     "Institution Identifier Type" = "OPEID"
   )
 
-  k12_student_enrollment <- data.frame(
-    "Student Identifier" = simouts$stu_year$sid,
-    "Year" = simouts$stu_year$year,
-    "Entry Grade Level" = simouts$stu_year$grade,
-    "Entry Type" = "01821",
-    "Exit Grade Level" = simouts$stu_year$grade,
-    "Exit or Withdrawal Status" = simouts$stu_year$exit_type,
-    "School Identifier" = simouts$stu_year$schid
-  )
 
   ps_student_institution_enrollment <- data.frame(
     "Student Identifier" = simouts$ps_enroll$sid,
@@ -295,6 +306,7 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
     # add LEA ID
     "Student Identifier" = simouts$assessments$sid,
     "School Identifier" = simouts$assessments$schid,
+    "Year" = simouts$assessments$year,
     "Assessment Registration Grade Level to Be Assessed" = simouts$assessments$grade,
     "Grade Level When Assessed" = simouts$assessments$grade,
     "Assessment Accomodation Category" = NA,
@@ -302,8 +314,11 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
   )
   assessment_result <- data.frame(
     "Student Identifier" = simouts$assessments$sid,
+    "Year" = simouts$assessments$year,
+    "Assessment Academic Subject" = simouts$assessments$subject,
     "Assessment Score Metric Type" = simouts$assessments$score_type,
-    "Assessment Result Score Value" = simouts$assessments$score
+    "Assessment Result Score Value" = simouts$assessments$score,
+    "Assessment Identifier" = simouts$assessments$assess_id
   )
   assessment <- data.frame(
     "Assessment Identifier" = simouts$assessments$assess_id,
@@ -313,7 +328,29 @@ ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
   )
   assessment <- assessment[!duplicated(assessment),]
 
+  tmp_output <- function(object, directory){
+    filename <- file.path(directory, deparse(substitute(object)))
+    filename <- paste0(filename, ".csv")
+    write.csv(object, filename, row.names = FALSE)
+  }
 
+
+  tmp_output(k12_student_identity, directory = directory)
+  tmp_output(k12_student_demographic, directory = directory)
+  tmp_output(k12_limited_english_proficiency, directory = directory)
+  tmp_output(k12_student_economically_disadvantaged, directory = directory)
+  tmp_output(k12_student_enrollment, directory = directory)
+  tmp_output(k12_student_academic_record, directory = directory)
+  tmp_output(k12_student_attendance, directory = directory)
+  tmp_output(k12_school_identification, directory = directory)
+  tmp_output(k12_school_institution_characteristics, directory = directory)
+  tmp_output(ps_institution_directory, directory = directory)
+  tmp_output(k12_student_enrollment, directory = directory)
+  tmp_output(ps_student_institution_enrollment, directory = directory)
+  tmp_output(assessment_registration, directory = directory)
+  tmp_output(assessment_result, directory = directory)
+  tmp_output(assessment, directory = directory)
+  zip("CEDS_lite.zip", directory)
 
 
 }

@@ -1,0 +1,108 @@
+---
+title: "Example Collaboration"
+author: "Jared Knowles"
+date: "April 14, 2017"
+output: html_document
+---
+
+```{r setup, echo=TRUE, results='hide', message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(OpenSDP.data)
+simouts <- simpop(nstu = 1250L, seed = 488234, 
+                  control = sim_control(nschls = 9L, 
+                                        minyear=1997, maxyear=2013))
+
+```
+
+## Identify
+
+```{r identifyElements}
+names(simouts$assessment)
+names(simouts$demog_master)
+names(simouts$stu_year)
+```
+
+## Clean
+
+TBD
+
+## Connect
+
+```{r kwikconnect}
+analyze_table <- left_join(simouts$demog_master, simouts$assessment, 
+                           by = "sid")
+analyze_table <- left_join(analyze_table, simouts$stu_year, 
+                           by = c("sid", "year"))
+
+analyze_table %>% group_by(sid) %>% 
+  summarize(nobs = n()) %>% select(-sid) %>% summary
+
+analyze_table <- analyze_table %>% filter(grade.x %in% 
+                                            c("3", "4", "5", "6", "7"))
+
+```
+
+
+## Analyze
+
+```{r quickmodels}
+
+# simple
+
+simp_mod <- lm(math_ss ~ Race + grade.x + frpl + ell + iep + gifted, 
+               data = analyze_table)
+
+summary(simp_mod)
+
+# school effect
+
+sch_mod <- lm(math_ss ~ Race + grade.x + frpl + ell + iep + gifted + 
+                schid.x, 
+               data = analyze_table)
+
+summary(sch_mod)
+
+```
+
+
+
+## Report
+
+```{r}
+library(broom)
+library(ggplot2)
+
+plot_mod <- tidy(sch_mod)
+plot_mod$model <- "school"
+tmp <- tidy(simp_mod)
+tmp$model <- "simple"
+plot_mod <- bind_rows(plot_mod, tmp); rm(tmp)
+
+
+ggplot(plot_mod[plot_mod$term %in% c("frpl1", "ell1", "iep1"), ], 
+       aes(x = term, y = estimate, ymin = estimate-std.error, 
+           ymax = estimate+std.error, group = model, color = model)) + 
+  geom_linerange(position = position_dodge(width = 1), size = 2) + 
+  theme_bw() + geom_hline(yintercept = 0, color = I("red")) + 
+  theme(legend.position = "bottom")
+
+
+
+
+```
+
+
+```{r schoolEffects}
+ggplot(plot_mod[plot_mod$term %in% c("schid.x1", "schid.x2", 
+                                     "schid.x3", "schid.x4", 
+                                     "schid.x5", "schid.x6", 
+                                     "schid.x7", "schid.x8", 
+                                     "schid.x9"), ], 
+       aes(x = term, y = estimate, ymin = estimate-std.error, 
+           ymax = estimate+std.error)) + 
+  geom_linerange(size = 2) + 
+  theme_bw() + geom_hline(yintercept = 0, color = I("red")) + 
+  theme(legend.position = "bottom")
+
+```
+

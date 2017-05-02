@@ -289,3 +289,103 @@ num_grade <- function(grade){
   grade <- as.numeric(grade)
   return(grade)
 }
+
+#' Validate probability list formatting and structure
+#'
+#' @param list list that is to be passed as a probability list to simulation functions
+#'
+#' @return Logical TRUE if list is valid, error if list is not valid.
+#' @export
+validate_probability_list <- function(list){
+  stopifnot(class(list) == "list")
+  if(!"GROUPVARS" %in% names(list)){
+    stop("List must contain a named element GROUPVARS that defines the variable
+         in the data to assign different probability functions, e.g. Sex or Race")
+  }
+  if(!class(list$GROUPVARS) %in% c("character", "factor")){
+    stop("List element GROUPVARS must be a character or factor which can be
+         coerced to a character which defines the levels of a grouping term.")
+  }
+  if(!all(unlist(lapply(gifted_list[-which("GROUPVARS" == names(gifted_list))], class)) == "list")){
+    stop("List elements not GROUPVARS must each be a list.")
+  }
+  if(!all(unlist(
+    lapply(
+      lapply(
+        gifted_list[-which("GROUPVARS" == names(gifted_list))], names),
+      function(x) x == c("f", "pars"))))){
+    stop("All list elements except GROUPVARS must contain exactly two elements,
+         'f' and 'pars'.")
+  }
+  message("List validated.")
+  return(TRUE)
+}
+
+
+
+#' Validate outcome simulation list formatting and structure
+#'
+#' @param list list that is to be passed as a parameter list to outcome simulation functions
+#'
+#' @return Logical TRUE if list is valid, error if list is not valid.
+#' @export
+validate_sim_parameter <- function(list){
+  stopifnot(class(list) == "list")
+  if(any(!c("fixed", "random_var", "cov_param", "cor_vars",
+           "fixed_param", "ngrps", "unbalanceRange") %in% names(list))){
+    stop("List must have named elements 'fixed', 'random_var', 'cov_param',
+         'cor_vars', 'fixed_param', 'ngrps', and 'unbalanceRange'")
+  }
+  if(class(list$fixed) != "formula"){
+    stop("Fixed must be a formula object defining the fixed component of the
+         outcome formula.")
+  }
+  if(attr(terms(list$fixed), "response") > 0){
+    stop("Formula must not have a response or LHS variable defined.")
+  }
+  K <- length(attr(terms(list$fixed), "term.labels"))
+  if(class(list$random_var) != "numeric"){
+    stop("Random variance must be expressed as a numeric value. Consider a value
+         in the range of 0.01 to 0.2")
+  }
+  if(length(list$random_var) > 1){
+    stop("Random variance element of the list can only be length 1.")
+  }
+  if(class(list$cov_param) != "list"){
+    stop("cov_param element must be a list that defines the parameters of the
+         covariate simulation.")
+  }
+  if(!all(c("dist_fun", "var_type", "opts") %in% names(list$cov_param))){
+    stop("cov_param list must have three elements, dist_fun, var_type, and opts")
+  }
+  if(length(list$cov_param$dist_fun) != K){
+    stop("cov_param$dist_fun must have the same length as the terms in list$fixed")
+  }
+  if(length(list$cor_vars) != (K^2 - K)/2){
+    cor_elements <- (K^2 - K) /2
+    stop("Correlation vector cor_vars must specify ", cor_elements, " correlation
+         matrix elements.")
+  }
+  if(length(list$fixed_param) != K+1){
+    stop("List element fixed_param must define beta coefficient values for ", K+1,
+         " parameters specified in the fixed formula and one intercept.")
+  }
+  if(class(list$fixed_param) != "numeric"){
+    stop("Please define fixed parameters as numeric.")
+  }
+  if(length(list$ngrps) != 1){
+    stop("Element ngrps must be length 1 numeric or integer")
+  }
+  if(!class(list$ngrps) %in% c("numeric", "integer")){
+    stop("Element ngrps must be an integer or numeric")
+  }
+  if(length(list$unbalanceRange) != 2){
+    stop("Element unbalanceRange must be length 2, numeric or integer")
+  }
+  if(!class(list$unbalanceRange) %in% c("numeric", "integer")){
+    stop("unbalanceRange must be numeric or integer")
+  }
+  message("Simulation parameters validated.")
+  return(TRUE)
+}
+

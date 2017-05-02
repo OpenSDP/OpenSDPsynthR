@@ -153,15 +153,15 @@ sdp_cleaner <- function(simouts){
 ## CEDS
 ######################
 
-#' Title
+#' CEDS oputput function
 #'
-#' @param simouts
-#' @param output
+#' @param simouts a simulation list resulting from a call to the \code{\link{simpop}}
+#' function
+#' @param output a character, default "directory", specifying where the output should good
+#' @param directory a path to a directory to store the output files
 #'
-#' @return
+#' @return Nothing. Output is saved out to a file on disk.
 #' @export
-#'
-#' @examples
 ceds_cleaner <- function(simouts, output = "directory", directory = NULL){
   if(output == "directory" & is.null(directory)){
     directory <- tempdir()

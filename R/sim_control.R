@@ -1,25 +1,49 @@
 #' Set control parameters for simulated data
-#' @param nschls integer for number of schools to create, default is 2
-#' @param race_groups vector of labels for race groups
-#' @param race_prob vector of numerics, same length as \code{race_groups}
-#' @param minyear an integer
-#' @param maxyear an integer
-#' @param ses_list a probability list
-#' @param iep_list a probability list
-#' @param ell_list a probability list
-#' @param ps_transfer_list a probability list
-#' @param grade_levels a probability list
-#' @param gifted_list a probability list
-#' @param n_cohorts number of cohorts to produce
-#' @param school_means a named vector of means for school level attributes
-#' @param school_cov_mat a covariance matrix for the school level attributes
-#' @param school_names a vector to draw school names from
-#' @param postsec_names a vector to draw NSC names from
-#' @param gpa_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
-#' @param grad_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
-#' @param ps_sim_parameters a list of parameters to pass to \code{gen_outcome_model}
-#' @param assess_sim_par a list of parameters to pass to \code{gen_outcome_model}
-#' @param assessment_adjustment a list of parameters to adjust assessment scores
+#' @param nschls integer- number of schools to create, default is 2
+#' @param race_groups character - vector of labels for race groups
+#' @param race_prob numerics - same length as \code{race_groups}
+#' @param minyear integer - the first year student records are observed
+#' @param maxyear integer - the last year student records are observed
+#' @param ses_list a probability list defining probabilities of being low
+#' socioeconomic status, see Details
+#' @param iep_list a probability list defining probabilities of being on an
+#' individualized education plan
+#' @param ell_list a probability list defining probabilities for being an English
+#' language learner
+#' @param ps_transfer_list a probability list for transferring postsecondary
+#' institutions after enrolling
+#' @param grade_levels a probability list for grade promotion and retention
+#' @param gifted_list a probability list defining the probability of being in
+#' a gifted and talented program
+#' @param n_cohorts integer - the number of graduation/grade-level cohorts to produce
+#' @param school_means numeric - a named vector of means for school level attributes
+#' @param school_cov_mat matrix - a covariance matrix for the school level attributes
+#' @param school_names character - a vector to draw school names from
+#' @param postsec_names character - a vector to draw postsecondary institution
+#' names from
+#' @param gpa_sim_parameters list - parameters to pass to \code{gen_outcome_model}
+#' @param grad_sim_parameters list - parameters to pass to \code{gen_outcome_model}
+#' @param ps_sim_parameters list - parameters to pass to \code{gen_outcome_model}
+#' @param assess_sim_par list - parameters to pass to \code{gen_outcome_model}
+#' @param assessment_adjustment list - parameters to adjust assessment scores by
+#' for bias
+#' @details This function has a full set of default values that are designed to
+#' produce realistic data. These defaults can be overridden by specifying any
+#' of the arguments to be overridden as an option to the function call.
+#'
+#' There are two unique data structures that are used to set options for simulations.
+#' The first is a \code{probability_list}, a list which defines a grouping factor, and
+#' for each level of the grouping factor a function and parameters to generate
+#' probability distribution from.
+#'
+#' The \code{sim_parameters} data structure defines the parameters for the outcome
+#' simulation. Outcomes are simulated using a simulated multilevel model structure
+#' and this data structure contains the parameters that describe the model and the
+#' error structure of data generated from that model.
+#'
+#' To modify either of these elements, use the \code{\link{validate_probability_list}}
+#' or \code{\link{validate_sim_parameter}} helper functions to ensure that all
+#' of the parameters are defined with valid values.
 #' @return a named list
 #' @export
 sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
@@ -43,8 +67,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   )
   tm_gifted_m <- tm_gifted_f
   tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
-  tm_gifted_m <- tm_gifted_m / rowSums(tm_gifted_m)
-  tm_gifted_f <- tm_gifted_f / rowSums(tm_gifted_f)
+  tm_gifted_m <- tm_convert(tm_gifted_m)
+  tm_gifted_f <- tm_convert(tm_gifted_f)
 
   gifted_list <- list(
     "Male" = list(f = make_markov_series,

@@ -14,51 +14,77 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
   assessment_adjustment = NULL)
 }
 \arguments{
-\item{nschls}{integer for number of schools to create, default is 2}
+\item{nschls}{integer- number of schools to create, default is 2}
 
-\item{race_groups}{vector of labels for race groups}
+\item{race_groups}{character - vector of labels for race groups}
 
-\item{race_prob}{vector of numerics, same length as \code{race_groups}}
+\item{race_prob}{numerics - same length as \code{race_groups}}
 
-\item{ses_list}{a probability list}
+\item{ses_list}{a probability list defining probabilities of being low
+socioeconomic status, see Details}
 
-\item{minyear}{an integer}
+\item{minyear}{integer - the first year student records are observed}
 
-\item{maxyear}{an integer}
+\item{maxyear}{integer - the last year student records are observed}
 
-\item{n_cohorts}{number of cohorts to produce}
+\item{n_cohorts}{integer - the number of graduation/grade-level cohorts to produce}
 
-\item{gifted_list}{a probability list}
+\item{gifted_list}{a probability list defining the probability of being in
+a gifted and talented program}
 
-\item{iep_list}{a probability list}
+\item{iep_list}{a probability list defining probabilities of being on an
+individualized education plan}
 
-\item{ell_list}{a probability list}
+\item{ell_list}{a probability list defining probabilities for being an English
+language learner}
 
-\item{ps_transfer_list}{a probability list}
+\item{ps_transfer_list}{a probability list for transferring postsecondary
+institutions after enrolling}
 
-\item{grade_levels}{a probability list}
+\item{grade_levels}{a probability list for grade promotion and retention}
 
-\item{school_means}{a named vector of means for school level attributes}
+\item{school_means}{numeric - a named vector of means for school level attributes}
 
-\item{school_cov_mat}{a covariance matrix for the school level attributes}
+\item{school_cov_mat}{matrix - a covariance matrix for the school level attributes}
 
-\item{school_names}{a vector to draw school names from}
+\item{school_names}{character - a vector to draw school names from}
 
-\item{postsec_names}{a vector to draw NSC names from}
+\item{postsec_names}{character - a vector to draw postsecondary institution
+names from}
 
-\item{gpa_sim_parameters}{a list of parameters to pass to \code{gen_outcome_model}}
+\item{gpa_sim_parameters}{list - parameters to pass to \code{gen_outcome_model}}
 
-\item{grad_sim_parameters}{a list of parameters to pass to \code{gen_outcome_model}}
+\item{grad_sim_parameters}{list - parameters to pass to \code{gen_outcome_model}}
 
-\item{ps_sim_parameters}{a list of parameters to pass to \code{gen_outcome_model}}
+\item{ps_sim_parameters}{list - parameters to pass to \code{gen_outcome_model}}
 
-\item{assess_sim_par}{a list of parameters to pass to \code{gen_outcome_model}}
+\item{assess_sim_par}{list - parameters to pass to \code{gen_outcome_model}}
 
-\item{assessment_adjustment}{a list of parameters to adjust assessment scores}
+\item{assessment_adjustment}{list - parameters to adjust assessment scores by
+for bias}
 }
 \value{
 a named list
 }
 \description{
 Set control parameters for simulated data
+}
+\details{
+This function has a full set of default values that are designed to
+produce realistic data. These defaults can be overridden by specifying any
+of the arguments to be overridden as an option to the function call.
+
+There are two unique data structures that are used to set options for simulations.
+The first is a \code{probability_list}, a list which defines a grouping factor, and
+for each level of the grouping factor a function and parameters to generate
+probability distribution from.
+
+The \code{sim_parameters} data structure defines the parameters for the outcome
+simulation. Outcomes are simulated using a simulated multilevel model structure
+and this data structure contains the parameters that describe the model and the
+error structure of data generated from that model.
+
+To modify either of these elements, use the \code{\link{validate_probability_list}}
+or \code{\link{validate_sim_parameter}} helper functions to ensure that all
+of the parameters are defined with valid values.
 }

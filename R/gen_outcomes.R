@@ -454,6 +454,7 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   zzz <- gen_credits(gpa_ontrack = gpa_temp)
   gpa_ontrack <- gen_annual_gpa(gpa_ontrack = zzz)
   gpa_ontrack <- gen_ontrack(gpa_ontrack = gpa_ontrack)
+  gpa_ontrack$sid <- as.character(gpa_ontrack$sid)
 
   ot <- gpa_ontrack %>% select(sid, ontrack_yr1:ontrack_yr4) %>%
     tidyr::gather(key = "yr", value = "ontrack", ontrack_yr1:ontrack_yr4)
@@ -483,17 +484,18 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   gpa$yr <- gsub("cum_gpa_yr", "", gpa$yr)
   gpa$yr <- as.numeric(gpa$yr)
 
-  out <- left_join(ot, cred)
+  out <- inner_join(ot, cred, by = c("sid" = "sid", "yr" = "yr"))
   out <- left_join(out, credela)
   out <- left_join(out, credmath)
   out <- left_join(out, gpa)
   rm(ot, cred, credela, credmath, gpa, zzz, gpa_temp)
   out$yr_seq <- out$yr; out$yr <- NULL
-
+# TODO: Duplication happens here, students who repeat grades are thrown off
+  #  from the structure above
   gpa_ontrack <- left_join(stu_year[
     stu_year$grade %in% c("9", "10", "11", "12"),
     c("sid", "year", "grade", "schid")], hs_outcomes)
-
+# TODO: check on the year sequence and merging here
   gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(sid, year) %>%
     mutate(yr_seq = (year - min(year))+1)
   gpa_ontrack <- left_join(gpa_ontrack, out)

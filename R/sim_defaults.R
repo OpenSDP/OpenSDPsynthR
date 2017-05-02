@@ -161,13 +161,14 @@ simpop <- function(nstu, seed, control = sim_control()){
   message("Simulating high school outcomes... be patient...")
   g12_cohort <- stu_year[stu_year$grade == "12", ] %>% select(1:8, schid) %>%
     as.data.frame() # hack to fix alignment of tables
+  # TODO: Students who repeat grade 12 have two rows in this dataframe
   g12_cohort <- na.omit(g12_cohort)
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
-  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss")],
-                          by = c(idvar, "grade"))
+  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss", "year")],
+                          by = c(idvar, "grade", "year"))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
-  hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
+  hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   # TODO: Fix hardcoding of postsec
@@ -394,6 +395,16 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                   control = control)
   data <- bind_cols(data, zzz)
   data$hs_status <- "hs_grad"
+  data <- bind_rows(data %>% group_by(sid) %>%
+                     mutate(nrow = n()) %>% filter(nrow == 1) %>%
+                      mutate(grad_cohort = year) %>%
+                     select(-nrow),
+                   data %>% group_by(sid) %>%
+                     mutate(nrow = n()) %>% filter(nrow > 1) %>%
+                     mutate(first_flag = ifelse(year == min(year),1, 0),
+                            grad_cohort = year) %>%
+                     filter(first_flag == 1) %>% select(-first_flag, -nrow)
+                     )
   data$hs_status[data$grad == 0] <-
     sapply(data$hs_status[data$grad == 0],
            function(x) {

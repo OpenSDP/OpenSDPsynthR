@@ -12,6 +12,7 @@ sdp_cleaner <- function(simouts){
     summarize(
       first_hs_code = first(schid),
       last_hs_code = last(schid),
+      longest_hs_code = names(which.max(table(schid))),
       frpl_ever_hs = ifelse(any(frpl == "1"), "1", "0"),
       iep_ever_hs = ifelse(any(iep == "1"), "1", "0"),
       ell_ever_hs = ifelse(any(ell == "1"), "1", "0"),
@@ -20,6 +21,17 @@ sdp_cleaner <- function(simouts){
       chrt_grad = min(year[grade == "12"]),
       nyears = n()
     )
+  hs_summary <- left_join(hs_summary, simouts$schools[, c("schid", "name")],
+                          by = c("first_hs_code" = "schid"))
+  hs_summary %<>% rename(first_hs_name = name)
+  hs_summary <- left_join(hs_summary, simouts$schools[, c("schid", "name")],
+                          by = c("last_hs_code" = "schid"))
+  hs_summary %<>% rename(last_hs_name = name)
+  hs_summary <- left_join(hs_summary, simouts$schools[, c("schid", "name")],
+                          by = c("longest_hs_code" = "schid"))
+  hs_summary %<>% rename(longest_hs_name = name)
+
+
 
   demog_clean <- simouts$demog_master %>%
     group_by(sid) %>%
@@ -106,6 +118,14 @@ sdp_cleaner <- function(simouts){
                      idvar = "sid",
                      direction = "wide")
 
+  nsc <- simouts$nsc
+  nsc$type <- NA
+  nsc$type[grepl("COMMUNITY", nsc$name)] <- "2yr"
+  nsc$type[grepl("UNIVERSITY", nsc$name)] <- "4yr"
+  nsc$type[grepl("PRIVATE", nsc$name)] <- "4yr"
+  nsc$type[grepl("COLLEGE OF", nsc$name)] <- "other"
+
+
 
   final_data <- left_join(demog_clean, hs_summary, by = "sid")
   final_data <- left_join(final_data, outcomes_wide, by = "sid")
@@ -113,23 +133,27 @@ sdp_cleaner <- function(simouts){
   final_data <- left_join(final_data, ps_wide, by = "sid")
   final_data <- left_join(final_data, scores, by = "sid")
   final_data <- left_join(final_data, credits_wide, by = "sid")
-  # Rename (old - to new name)
-  # late = late_grad
-  # still_enroll = still_enrl
-  # ontime = ontime_grad
-  # Duplicate/create (new - from)
-  # test_math_8 = test_math_8_std
-  # test_ela_8 = test_ela_8_std
-  # ontrack_endyr1 = ontrack_yr1
-  # ontrack_endyr2 = ontrack_yr2
-  # ontrack_endyr3 = ontrack_yr3
-  # ontrack_endyr4 = ontrack_yr4
-  # cum_credits_yr1_math =
-
-  # iep_ever = iep_ever_hs
-  # ell_ever = ell_ever_hs
-  # frpl_ever = frpl_ever_hs
-  # gifted_ever = gifted_ever_hs
+  final_data$test_math_8 <- final_data$test_math_8_std
+  final_data$test_ela_8 <- final_data$test_ela_8_std
+  final_data %<>% rename(late_grad = late,
+                         still_enrl = still_enroll,
+                         ontime_grad = ontime,
+                         ontrack_endyr1 = ontrack_yr1,
+                         ontrack_endyr2 = ontrack_yr2,
+                         ontrack_endyr3 = ontrack_yr3,
+                         ontrack_endyr4 = ontrack_yr4,
+                         cum_credits_yr1_ela = cum_credits_ela_yr1,
+                         cum_credits_yr1_math = cum_credits_math_yr1,
+                         cum_credits_yr2_ela = cum_credits_ela_yr2,
+                         cum_credits_yr2_math = cum_credits_math_yr2,
+                         cum_credits_yr3_ela = cum_credits_ela_yr3,
+                         cum_credits_yr3_math = cum_credits_math_yr3,
+                         cum_credits_yr4_ela = cum_credits_ela_yr4,
+                         cum_credits_yr4_math = cum_credits_math_yr4,
+                         cum_gpa_final = gpa,
+                         hs_diploma_type = diploma_type,
+                         hs_diploma = grad
+                         )
   # last_hs_name = last_hs_name
   # longest_hs_name = longest_hs_name
   #
@@ -140,11 +164,22 @@ sdp_cleaner <- function(simouts){
   return(final_data)
 }
 
+# TODO: Calculate status each year
+# TODO: Differentiate 4yr, 2yr, and any PS enrollment types
+
+
+
+
 # library(haven)
 # fileName <- "analysis/CG_Analysis.dta"
 # con <- unz(description = "../SDP-Toolkit-for-R/data/analysis.zip",
 #            filename = fileName, open = "rb")
+# con <- unz(description = "../SDPToolkitR/data/analysis.zip",
+#            filename = fileName, open = "rb")
 # cg_target <- read_stata(con)
+#
+# names(cg_target)[!names(cg_target) %in% names(cg_data)]
+
 #
 # c("hs_diploma", "hs_diploma_type", "hs_diploma_date", "frpl_ever",
 #   "iep_ever", "ell_ever", "gifted_ever", "longest_hs_code", "first_hs_name",

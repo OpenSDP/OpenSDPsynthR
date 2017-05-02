@@ -21,6 +21,24 @@ sdp_cleaner <- function(simouts){
       nyears = n()
     )
 
+  demog_clean <- simouts$demog_master %>%
+    group_by(sid) %>%
+    summarize(
+      male = if_else(Sex == "Male", 1, 0),
+      race_ethnicity = Race
+    )
+
+  demog_summary <- simouts$stu_year %>%
+    group_by(sid) %>% arrange(sid, year) %>%
+    summarize(
+      frpl_ever = ifelse(any(frpl == "1"), "1", "0"),
+      iep_ever = ifelse(any(iep == "1"), "1", "0"),
+      ell_ever = ifelse(any(ell == "1"), "1", "0"),
+      gifted_ever = ifelse(any(gifted == "1"), "1", "0")
+    )
+  demog_clean <- left_join(demog_clean, demog_summary)
+  rm(demog_summary)
+
   scores <- simouts$stu_assess %>% ungroup %>%
     filter(grade %in% c("8")) %>%
     mutate(
@@ -35,7 +53,11 @@ sdp_cleaner <- function(simouts){
       qrt_8_composite = ntile(test_composite_8, 4)
     )
 
-  credits_long <- na.omit(na.omit(as.data.frame(simouts$hs_annual[, c(1, 7, 8:12)])))
+  credits_long <- na.omit(na.omit(as.data.frame(simouts$hs_annual[, c(1, 7, 9:13)])))
+  credits_long <- simouts$hs_annual %>%
+    select(sid, yr_seq, ontrack, cum_credits, cum_credits_ela, cum_credits_math,
+           cum_gpa)
+  credits_long <- na.omit(as.data.frame(credits_long))
   credits_wide <- reshape(credits_long,
                           timevar = "yr_seq",
                           sep = "_yr",
@@ -61,6 +83,7 @@ sdp_cleaner <- function(simouts){
   outcomes_wide <- as.data.frame(outcomes_wide)
   outcomes_wide <- outcomes_wide %>% select(-scale_gpa, -gpa, -grad_prob,
                                             -grad, -hs_status, -ps_prob, -ps)
+  outcomes_clean <- outcomes_clean %>% select(-diploma_type, -class_rank)
 
   ps_long <- simouts$ps_enroll
   ps_long <- ps_long[, c("sid", "year", "term", "ps", "opeid")]
@@ -83,20 +106,74 @@ sdp_cleaner <- function(simouts){
                      idvar = "sid",
                      direction = "wide")
 
-  demog_clean <- simouts$demog_master %>%
-    group_by(sid) %>%
-    summarize(
-      male = if_else(Sex == "Male", 1, 0),
-      race_ethnicity = Race
-    )
+
   final_data <- left_join(demog_clean, hs_summary, by = "sid")
   final_data <- left_join(final_data, outcomes_wide, by = "sid")
   final_data <- left_join(final_data, outcomes_clean, by = "sid")
   final_data <- left_join(final_data, ps_wide, by = "sid")
   final_data <- left_join(final_data, scores, by = "sid")
   final_data <- left_join(final_data, credits_wide, by = "sid")
+  # Rename (old - to new name)
+  # late = late_grad
+  # still_enroll = still_enrl
+  # ontime = ontime_grad
+  # Duplicate/create (new - from)
+  # test_math_8 = test_math_8_std
+  # test_ela_8 = test_ela_8_std
+  # ontrack_endyr1 = ontrack_yr1
+  # ontrack_endyr2 = ontrack_yr2
+  # ontrack_endyr3 = ontrack_yr3
+  # ontrack_endyr4 = ontrack_yr4
+  # cum_credits_yr1_math =
+
+  # iep_ever = iep_ever_hs
+  # ell_ever = ell_ever_hs
+  # frpl_ever = frpl_ever_hs
+  # gifted_ever = gifted_ever_hs
+  # last_hs_name = last_hs_name
+  # longest_hs_name = longest_hs_name
+  #
+  # first_college_opeid_any
+  # first_college_opeid_2yr
+  # first_college_opeid_4ry
+  # first_college_name_any
   return(final_data)
 }
+
+# library(haven)
+# fileName <- "analysis/CG_Analysis.dta"
+# con <- unz(description = "../SDP-Toolkit-for-R/data/analysis.zip",
+#            filename = fileName, open = "rb")
+# cg_target <- read_stata(con)
+#
+# c("hs_diploma", "hs_diploma_type", "hs_diploma_date", "frpl_ever",
+#   "iep_ever", "ell_ever", "gifted_ever", "longest_hs_code", "first_hs_name",
+#   "last_hs_name", "longest_hs_name", "last_wd_group", "ontime_grad",
+#   "late_grad", "still_enrl", "test_math_8", "test_ela_8", "first_college_opeid_any",
+#   "first_college_opeid_2yr", "first_college_opeid_4yr", "first_college_name_any",
+#   "first_college_name_2yr", "first_college_name_4yr", "enrl_1oct_grad_yr1_2yr",
+#   "enrl_1oct_grad_yr1_4yr", "enrl_1oct_grad_yr1_any", "enrl_1oct_grad_yr2_2yr",
+#   "enrl_1oct_grad_yr2_4yr", "enrl_1oct_grad_yr2_any", "enrl_1oct_grad_yr3_2yr",
+#   "enrl_1oct_grad_yr3_4yr", "enrl_1oct_grad_yr3_any", "enrl_1oct_grad_yr4_2yr",
+#   "enrl_1oct_grad_yr4_4yr", "enrl_1oct_grad_yr4_any", "enrl_ever_w2_grad_2yr",
+#   "enrl_ever_w2_grad_4yr", "enrl_ever_w2_grad_any", "enrl_grad_persist_4yr",
+#   "enrl_grad_persist_2yr", "enrl_grad_persist_any", "enrl_grad_all4_4yr",
+#   "enrl_grad_all4_2yr", "enrl_grad_all4_any", "enrl_1oct_ninth_yr1_2yr",
+#   "enrl_1oct_ninth_yr1_4yr", "enrl_1oct_ninth_yr1_any", "enrl_1oct_ninth_yr2_2yr",
+#   "enrl_1oct_ninth_yr2_4yr", "enrl_1oct_ninth_yr2_any", "enrl_1oct_ninth_yr3_2yr",
+#   "enrl_1oct_ninth_yr3_4yr", "enrl_1oct_ninth_yr3_any", "enrl_1oct_ninth_yr4_2yr",
+#   "enrl_1oct_ninth_yr4_4yr", "enrl_1oct_ninth_yr4_any", "enrl_ever_w2_ninth_2yr",
+#   "enrl_ever_w2_ninth_4yr", "enrl_ever_w2_ninth_any", "enrl_ninth_persist_4yr",
+#   "enrl_ninth_persist_2yr", "enrl_ninth_persist_any", "enrl_ninth_all4_4yr",
+#   "enrl_ninth_all4_2yr", "enrl_ninth_all4_any", "enrl_1oct_grad_yr5_2yr",
+#   "enrl_1oct_ninth_yr5_2yr", "enrl_1oct_grad_yr5_4yr", "enrl_1oct_ninth_yr5_4yr",
+#   "cum_credits_yr1_ela", "cum_credits_yr1_math", "cum_credits_yr2_ela",
+#   "cum_credits_yr2_math", "cum_credits_yr3_ela", "cum_credits_yr3_math",
+#   "cum_credits_yr4_ela", "cum_credits_yr4_math", "ontrack_endyr1",
+#   "ontrack_endyr2", "ontrack_endyr3", "ontrack_endyr4", "status_after_yr1",
+#   "status_after_yr2", "status_after_yr3", "status_after_yr4", "ontrack_hsgrad_sample",
+#   "cum_gpa_yr1", "cum_gpa_yr2", "cum_gpa_yr3", "cum_gpa_yr4", "cum_gpa_final",
+#   "sat_act_concordance", "highly_qualified", "ontrack_sample")
 
 ## Postsecondary wide
 

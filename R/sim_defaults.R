@@ -414,19 +414,18 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                prob = c(0.9839, 0.0161) # hardcoded probabilities
              )
            })
-  # TODO: Consider filtering this so only HS DIPLOMA eligible
     zzz <- gen_ps(data, control = control)
     data <- bind_cols(data, zzz)
-  # ps_eligible <- gen_ps(data = data[data$grad == 1, ],
-  #                       control = control)
-  outcomes <- data[, c("sid", "scale_gpa", "gpa",
+    outcomes <- data[, c("sid", "scale_gpa", "gpa",
                              "grad_prob", "grad", "hs_status",
                              "ps_prob", "ps")]
+
   outcomes$class_rank <- rank(outcomes$gpa, ties = "first")
   # Diploma codes
   diplomaCodes <- c("00806", "00807", "00808", "00809", "00810", "00811")
   nonDiplomaCodes <- c("00812", "00813", "00814",  "00815", "00816",
                        "00818", "00819", "09999")
+  outcomes$ps[outcomes$grad == 0] <- 0
   outcomes$diploma_type <- NA
   outcomes$diploma_type[outcomes$grad == 1] <- sample(diplomaCodes,
                                                       length(outcomes$diploma_type[outcomes$grad == 1]),

@@ -109,7 +109,7 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year$year <- as.numeric(stu_year$year) # coerce to numeric to avoid user integer inputs
   stu_year <- stu_year %>% group_by(sid) %>%
     mutate(cohort_year = min(year[grade == "9"])) %>%
-    mutate(cohort_grad_year = cohort_year + 4) %>% ungroup()
+    mutate(cohort_grad_year = cohort_year + 3) %>% ungroup()
   stu_year$cohort_year[!is.finite(stu_year$cohort_year)] <- NA
   stu_year$cohort_grad_year[!is.finite(stu_year$cohort_grad_year)] <- NA
   # Create longitudinal ell and ses here
@@ -159,8 +159,8 @@ simpop <- function(nstu, seed, control = sim_control()){
   # Add LEAID
   rm(zz)
   message("Simulating high school outcomes... be patient...")
-  g12_cohort <- stu_year[stu_year$grade == "12", ] %>% select(1:8, schid) %>%
-    as.data.frame() # hack to fix alignment of tables
+  g12_cohort <- stu_year[stu_year$grade == "12", ] %>%
+    select(1:8, schid, cohort_grad_year) %>% as.data.frame() # hack to fix alignment of tables
   # TODO: Students who repeat grade 12 have two rows in this dataframe
   g12_cohort <- na.omit(g12_cohort)
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
@@ -168,6 +168,7 @@ simpop <- function(nstu, seed, control = sim_control()){
                           by = c(idvar, "grade", "year"))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
+  # TODO
   hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
@@ -395,16 +396,11 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                   control = control)
   data <- bind_cols(data, zzz)
   data$hs_status <- "hs_grad"
-  data <- bind_rows(data %>% group_by(sid) %>%
-                     mutate(nrow = n()) %>% filter(nrow == 1) %>%
-                      mutate(grad_cohort = year) %>%
-                     select(-nrow),
-                   data %>% group_by(sid) %>%
-                     mutate(nrow = n()) %>% filter(nrow > 1) %>%
-                     mutate(first_flag = ifelse(year == min(year),1, 0),
-                            grad_cohort = year) %>%
-                     filter(first_flag == 1) %>% select(-first_flag, -nrow)
-                     )
+  data$hs_status[data$grad == 0] <- "none"
+  data$hs_status[data$grad == 1] <- ifelse(data$cohort_grad_year == data$year,
+                                           "ontime",
+                                           ifelse(data$cohort_grad_year > data$year,
+                                                  "early", "late"))
   data$hs_status[data$grad == 0] <-
     sapply(data$hs_status[data$grad == 0],
            function(x) {
@@ -415,21 +411,21 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                prob = c(0.62, 0.31, 0.04, 0.03)
              )
            })
-  data$hs_status[data$grad == 1] <-
-    sapply(data$hs_status[data$grad == 1],
-           function(x) {
-             sample(
-               c("ontime", "late"),
-               1,
-               replace = FALSE,
-               prob = c(0.9839, 0.0161) # hardcoded probabilities
-             )
-           })
+  data <- bind_rows(data %>% group_by(sid) %>%
+                      mutate(nrow = n()) %>% filter(nrow == 1) %>%
+                      select(-nrow),
+                    data %>% group_by(sid) %>%
+                      mutate(nrow = n()) %>% filter(nrow > 1) %>%
+                      mutate(first_flag = ifelse(year == min(year), 1, 0)) %>%
+                      filter(first_flag == 1) %>% select(-first_flag, -nrow)
+                    )
     zzz <- gen_ps(data, control = control)
     data <- bind_cols(data, zzz)
     outcomes <- data[, c("sid", "scale_gpa", "gpa",
                              "grad_prob", "grad", "hs_status",
-                             "ps_prob", "ps")]
+                             "ps_prob", "ps", "year")]
+    outcomes$grad_date <- outcomes$year
+    outcomes$year <- NULL
 
   outcomes$class_rank <- rank(outcomes$gpa, ties = "first")
   # Diploma codes
@@ -438,6 +434,7 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                        "00818", "00819", "09999")
   outcomes$ps[outcomes$grad == 0] <- 0
   outcomes$diploma_type <- NA
+  #TODO Diploma type probabilities
   outcomes$diploma_type[outcomes$grad == 1] <- sample(diplomaCodes,
                                                       length(outcomes$diploma_type[outcomes$grad == 1]),
                                                       replace = TRUE)

@@ -21,14 +21,16 @@ sdp_cleaner <- function(simouts){
       chrt_grad = min(year[grade == "12"]),
       nyears = n()
     )
-  hs_summary <- left_join(hs_summary, simouts$schools[, c("schid", "name")],
-                          by = c("first_hs_code" = "schid"))
+  schools <- as.data.frame(simouts$schools)
+  attributes(schools$schid) <- NULL
+  hs_summary <- inner_join(hs_summary, schools[, c("schid", "name")],
+                           by=setNames("schid", "first_hs_code"))
   hs_summary %<>% rename(first_hs_name = name)
-  hs_summary <- left_join(hs_summary, simouts$schools[, c("schid", "name")],
-                          by = c("last_hs_code" = "schid"))
+  hs_summary <- left_join(hs_summary, schools[, c("schid", "name")],
+                          by=setNames("schid", "last_hs_code"))
   hs_summary %<>% rename(last_hs_name = name)
-  hs_summary <- left_join(hs_summary, simouts$schools[, c("schid", "name")],
-                          by = c("longest_hs_code" = "schid"))
+  hs_summary <- left_join(hs_summary, schools[, c("schid", "name")],
+                          by=setNames("schid", "longest_hs_code"))
   hs_summary %<>% rename(longest_hs_name = name)
 
 
@@ -118,7 +120,7 @@ sdp_cleaner <- function(simouts){
                      idvar = "sid",
                      direction = "wide")
 
-  nsc <- simouts$nsc
+  nsc <- as.data.frame(simouts$nsc)
   nsc$type <- NA
   nsc$type[grepl("COMMUNITY", nsc$name)] <- "2yr"
   nsc$type[grepl("UNIVERSITY", nsc$name)] <- "4yr"
@@ -154,9 +156,9 @@ sdp_cleaner <- function(simouts){
                          hs_diploma_type = diploma_type,
                          hs_diploma = grad
                          )
-  # last_hs_name = last_hs_name
-  # longest_hs_name = longest_hs_name
-  #
+
+  # OK -- time to reconcile ps_enrollment type, student annual status, and
+  # cohort 9 and cohort grad outcomes
   # first_college_opeid_any
   # first_college_opeid_2yr
   # first_college_opeid_4ry

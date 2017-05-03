@@ -492,9 +492,14 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   out$yr_seq <- out$yr; out$yr <- NULL
 # TODO: Duplication happens here, students who repeat grades are thrown off
   #  from the structure above
-  gpa_ontrack <- left_join(stu_year[
-    stu_year$grade %in% c("9", "10", "11", "12"),
-    c("sid", "year", "grade", "schid")], hs_outcomes)
+  # Only take the first 4 years
+  clean_years <- stu_year %>% group_by(sid) %>%
+    filter(grade %in% c("9", "10", "11", "12")) %>%
+    arrange(year) %>%
+    mutate(yr_seq = (year-min(year)) + 1) %>%
+    filter(yr_seq < 5) %>% select(-yr_seq) %>%
+    select(sid, year , grade, schid)
+  gpa_ontrack <- left_join(hs_outcomes, clean_years)
 # TODO: check on the year sequence and merging here
   gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(sid, year) %>%
     mutate(yr_seq = (year - min(year))+1)

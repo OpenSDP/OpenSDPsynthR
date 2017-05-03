@@ -290,6 +290,17 @@ num_grade <- function(grade){
   return(grade)
 }
 
+#' Convert NA values to 0 in a vector
+#'
+#' @param x a numeric vector containing NAs
+#'
+#' @return a numeric vector where all NA values are 0
+#' @export
+zeroNA <- function(x){
+  x[is.na(x)] <- 0
+  return(x)
+}
+
 #' Validate probability list formatting and structure
 #'
 #' @param list list that is to be passed as a probability list to simulation functions

@@ -411,6 +411,8 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                prob = c(0.62, 0.31, 0.04, 0.03)
              )
            })
+  data %<>% group_by(sid) %>%
+    mutate(chrt_grad = min(year[grad == 1]))
   data <- bind_rows(data %>% group_by(sid) %>%
                       mutate(nrow = n()) %>% filter(nrow == 1) %>%
                       select(-nrow),
@@ -423,8 +425,8 @@ assign_hs_outcomes <- function(data, control = sim_control()){
     data <- bind_cols(data, zzz)
     outcomes <- data[, c("sid", "scale_gpa", "gpa",
                              "grad_prob", "grad", "hs_status",
-                             "ps_prob", "ps", "year")]
-    outcomes$grad_date <- outcomes$year
+                             "ps_prob", "ps", "year", "chrt_grad")]
+    # outcomes$grad_cohort <- outcomes$year
     outcomes$year <- NULL
 
   outcomes$class_rank <- rank(outcomes$gpa, ties = "first")

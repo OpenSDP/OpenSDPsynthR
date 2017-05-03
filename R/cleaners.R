@@ -18,7 +18,6 @@ sdp_cleaner <- function(simouts){
       ell_ever_hs = ifelse(any(ell == "1"), "1", "0"),
       gifted_ever_hs = ifelse(any(gifted == "1"), "1", "0"),
       chrt_ninth = min(year[grade == "9"]),
-      chrt_grad = min(year[grade == "12"]),
       nyears = n()
     )
   schools <- as.data.frame(simouts$schools)
@@ -79,6 +78,9 @@ sdp_cleaner <- function(simouts){
                           direction = "wide")
   rm(credits_long)
 
+  # simouts$hs_outcomes$grad_cohort == cohort_grad
+
+
   outcomes_clean <- bind_rows(
     simouts$hs_outcomes %>% group_by(sid) %>%
       mutate(nrow = n()) %>%
@@ -114,6 +116,10 @@ sdp_cleaner <- function(simouts){
     )
   ps_long <- as.data.frame(ps_long)
 
+  # do the enrolled thing by yr_seq
+  # ensure first that all yr_seq combinations are present
+
+
   ps_wide <- reshape(ps_long[, c("sid", "year", "enroll_any", "enroll_full")],
                      timevar = "year",
                      sep = "_yr",
@@ -121,14 +127,86 @@ sdp_cleaner <- function(simouts){
                      direction = "wide")
 
 
+  chrt_data <- simouts$hs_outcomes %>% select(sid, chrt_grad)
+  chrt_data <- left_join(chrt_data,
+                         simouts$stu_year %>% group_by(sid) %>%
+                           summarize(chrt_ninth = min(year[grade == "9"])))
+  chrt_data$chrt_ninth <- chrt_data$chrt_ninth + 3
+
+  simouts$ps_enroll <- left_join(simouts$ps_enroll, chrt_data)
+  # now need to break this out by type, then split wide by year
+  ps_wide <- simouts$ps_enroll %>% group_by(sid, yr_seq) %>%
+    summarize(enrl_1oct_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == yr_seq),
+                                   1, 0),
+           enrl_1oct_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == yr_seq),
+                                   1, 0),
+           enrl_ever_w2_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) <= yr_seq + 1),
+                                 1, 0),
+           enrl_ever_w2_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) <= yr_seq + 1),
+                                      1, 0)) %>%
+    gather(variable, value, -(sid:yr_seq)) %>%
+    unite(temp, yr_seq, variable) %>%
+    spread(temp, value) %>%
+    rename(
+      enrl_1oct_grad_yr1_any = `1_enrl_1oct_grad`,
+      enrl_1oct_grad_yr2_any = `2_enrl_1oct_grad`,
+      enrl_1oct_grad_yr3_any = `3_enrl_1oct_grad`,
+      enrl_1oct_grad_yr4_any = `4_enrl_1oct_grad`,
+      enrl_1oct_ninth_yr1_any = `1_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr2_any = `2_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr3_any = `3_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr4_any = `4_enrl_1oct_ninth`
+    )
+
+  simouts$ps_enroll$ps_type[is.na(simouts$ps_enroll$ps_type)] <- "other"
+  simouts$ps_enroll$ps_type <- as.factor(simouts$ps_enroll$ps_type)
+
+  zzz <- simouts$ps_enroll %>% group_by(sid, yr_seq, ps_type) %>%
+    tidyr::complete(sid, yr_seq, ps_type) %>%
+    group_by(sid, yr_seq, ps_type) %>%
+    summarize(enrl_1oct_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == 1),
+                                      1, 0),
+              enrl_1oct_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == 1),
+                                       1, 0),
+              enrl_ever = ifelse(any(ps > 0 ), 1, 0)) %>%
+    mutate(enrl_1oct_grad = zeroNA(enrl_1oct_grad),
+           enrl_1oct_ninth = zeroNA(enrl_1oct_ninth),
+           enrl_ever = zeroNA(enrl_ever)) %>%
+    gather(variable, value, -(sid:ps_type)) %>%
+    unite(temp, ps_type, yr_seq, variable) %>%
+    spread(temp, value)
+
+  ps_wide <- left_join(ps_wide, zzz, by = "sid")
+  rm(zzz)
+
+
+#
+#   enrl_1oct_grad_yr1_4yr
+#   enrl_1oct_ninth_yr1_4yr
+#   enrl_ever
+
+  sdp_ps <- simouts$ps_enroll %>% group_by(sid) %>%
+    arrange(sid, year, desc(term)) %>%
+    summarize(first_college_opeid_any = first(opeid),
+              first_college_opeid_2yr = first(opeid[ps_type == "2yr"]),
+              first_college_opeid_4yr = first(opeid[ps_type == "4yr"]),
+              first_college_name_any = first(ps_short_name),
+              first_college_name_2yr = first(ps_short_name[ps_type == "2yr"]),
+              first_college_name_4yr = first(ps_short_name[ps_type == "4yr"])
+              )
+
+  sdp_ps <- left_join(sdp_ps, ps_wide, by = "sid")
+
+
   final_data <- left_join(demog_clean, hs_summary, by = "sid")
   final_data <- left_join(final_data, outcomes_wide, by = "sid")
   final_data <- left_join(final_data, outcomes_clean, by = "sid")
-  final_data <- left_join(final_data, ps_wide, by = "sid")
+  final_data <- left_join(final_data, sdp_ps, by = "sid")
   final_data <- left_join(final_data, scores, by = "sid")
   final_data <- left_join(final_data, credits_wide, by = "sid")
   final_data$test_math_8 <- final_data$test_math_8_std
   final_data$test_ela_8 <- final_data$test_ela_8_std
+  final_data$chrt_grad.y <- NULL
   final_data %<>% rename(late_grad = late,
                          still_enrl = still_enroll,
                          ontime_grad = ontime,
@@ -146,8 +224,13 @@ sdp_cleaner <- function(simouts){
                          cum_credits_yr4_math = cum_credits_math_yr4,
                          cum_gpa_final = gpa,
                          hs_diploma_type = diploma_type,
-                         hs_diploma = grad
-                         )
+                         hs_diploma = grad,
+                         chrt_grad = chrt_grad.x
+  )
+
+
+  # need to join ps_enroll with expected 9th grade, and expected 12th grade enrollment
+  # then need to compare and check that ps is 1 for the fall that meets this
 
   # OK -- time to reconcile ps_enrollment type, student annual status, and
   # cohort 9 and cohort grad outcomes

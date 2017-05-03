@@ -528,14 +528,14 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
 gen_ps_enrollment <- function(hs_outcomes, nsc, control){
   ps_pool <- hs_outcomes[hs_outcomes$ps == 1,
                                  c("sid", "ps_prob", "grad", "gpa", "ps",
-                                   "grad_date")]
+                                   "chrt_grad")]
 
   big <- tidyr::crossing(sid = as.character(unique(ps_pool$sid)), year = 1:4,
                   term = c("fall", "spring"))
   ps_pool <- left_join(big, ps_pool, by = "sid")
   ps_pool$yr_seq <- ps_pool$year
-  ps_pool$year <- ps_pool$grad_date + ps_pool$year -1
-  ps_pool$grad_date <- NULL
+  ps_pool$year <- ps_pool$chrt_grad + ps_pool$year # for fall part of school year
+  ps_pool$chrt_grad <- NULL
   ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term)
   ps_pool$ps[ps_pool$yr_seq > 1] <- sapply(ps_pool$ps_prob[ps_pool$yr_seq > 1],
                                          function(x) rbinom(1, 1, prob = x))

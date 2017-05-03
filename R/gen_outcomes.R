@@ -527,24 +527,27 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
 #' @export
 gen_ps_enrollment <- function(hs_outcomes, nsc, control){
   ps_pool <- hs_outcomes[hs_outcomes$ps == 1,
-                                 c("sid", "ps_prob", "grad", "gpa", "ps")]
+                                 c("sid", "ps_prob", "grad", "gpa", "ps",
+                                   "grad_date")]
 
   big <- tidyr::crossing(sid = as.character(unique(ps_pool$sid)), year = 1:4,
                   term = c("fall", "spring"))
   ps_pool <- left_join(big, ps_pool, by = "sid")
-
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term)
-  ps_pool$ps[ps_pool$year > 1] <- sapply(ps_pool$ps_prob[ps_pool$year > 1],
+  ps_pool$yr_seq <- ps_pool$year
+  ps_pool$year <- ps_pool$grad_date + ps_pool$year -1
+  ps_pool$grad_date <- NULL
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term)
+  ps_pool$ps[ps_pool$yr_seq > 1] <- sapply(ps_pool$ps_prob[ps_pool$yr_seq > 1],
                                          function(x) rbinom(1, 1, prob = x))
 
 
 
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
     mutate(ps_transfer = markov_cond_list("ALL", n = n()-1, control$ps_transfer_list,
                                           t0 = sample(c("0", "1"), 1, prob = c(0.8, 0.2)),
                                           include.t0 = TRUE)
     )
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
     mutate(opeid = sample(nsc$opeid, 1, prob = nsc$enroll))
 
   opeid_changer <- function(opeid){
@@ -552,19 +555,22 @@ gen_ps_enrollment <- function(hs_outcomes, nsc, control){
            1,
            prob =nsc$enroll[nsc$opeid != opeid])
   }
+  # Set enrollment year
 
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
     mutate(ps_change_ind = cumsum(ifelse(ps_transfer == "1", 1, 0)))
-
-
-
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, year, term) %>%
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
     mutate(opeid = replace(opeid, ps_change_ind == 1, opeid_changer(opeid)),
            opeid = replace(opeid, ps_change_ind == 2, opeid_changer(opeid)),
            opeid = replace(opeid, ps_change_ind == 3, opeid_changer(opeid)),
            opeid = replace(opeid, ps_change_ind == 4, opeid_changer(opeid))) %>%
     select(-ps_change_ind)
+  attributes(ps_pool$opeid) <- NULL # Make join work by dropping attributes of IDs
+  attributes(nsc$opeid) <- NULL
+  ps_pool <- left_join(ps_pool, nsc %>% select(opeid, short_name, type))
+  ps_pool %<>% rename(ps_short_name = short_name,
+                      ps_type = type)
+  ps_pool %<>% filter(!(yr_seq == 1 & term == "spring"))
   return(ps_pool)
-
 }
 

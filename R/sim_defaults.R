@@ -469,6 +469,11 @@ gen_nsc <- function(n, names = NULL){
   out <- data.frame(opeid = ids, name = names, enroll = enroll,
                     stringsAsFactors = FALSE)
   out$short_name <- stringr::str_trunc(out$name, 20, "right")
+  out$type <- NA
+  out$type[grepl("COMMUNITY", out$name)] <- "2yr"
+  out$type[grepl("UNIVERSITY", out$name)] <- "4yr"
+  out$type[grepl("PRIVATE", out$name)] <- "4yr"
+  out$type[grepl("COLLEGE OF", out$name)] <- "other"
   # out <- cbind(out, attribs)
   return(out)
 }

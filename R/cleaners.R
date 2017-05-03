@@ -120,14 +120,6 @@ sdp_cleaner <- function(simouts){
                      idvar = "sid",
                      direction = "wide")
 
-  nsc <- as.data.frame(simouts$nsc)
-  nsc$type <- NA
-  nsc$type[grepl("COMMUNITY", nsc$name)] <- "2yr"
-  nsc$type[grepl("UNIVERSITY", nsc$name)] <- "4yr"
-  nsc$type[grepl("PRIVATE", nsc$name)] <- "4yr"
-  nsc$type[grepl("COLLEGE OF", nsc$name)] <- "other"
-
-
 
   final_data <- left_join(demog_clean, hs_summary, by = "sid")
   final_data <- left_join(final_data, outcomes_wide, by = "sid")

@@ -118,15 +118,11 @@ sdp_cleaner <- function(simouts){
 
   # do the enrolled thing by yr_seq
   # ensure first that all yr_seq combinations are present
-
-
   ps_wide <- reshape(ps_long[, c("sid", "year", "enroll_any", "enroll_full")],
                      timevar = "year",
                      sep = "_yr",
                      idvar = "sid",
                      direction = "wide")
-
-
   chrt_data <- simouts$hs_outcomes %>% select(sid, chrt_grad)
   chrt_data <- left_join(chrt_data,
                          simouts$stu_year %>% group_by(sid) %>%
@@ -144,9 +140,9 @@ sdp_cleaner <- function(simouts){
                                  1, 0),
            enrl_ever_w2_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) <= yr_seq + 1),
                                       1, 0)) %>%
-    gather(variable, value, -(sid:yr_seq)) %>%
-    unite(temp, yr_seq, variable) %>%
-    spread(temp, value) %>%
+    tidyr::gather(variable, value, -(sid:yr_seq)) %>%
+    tidyr::unite(temp, yr_seq, variable) %>%
+    tidyr::spread(temp, value) %>%
     rename(
       enrl_1oct_grad_yr1_any = `1_enrl_1oct_grad`,
       enrl_1oct_grad_yr2_any = `2_enrl_1oct_grad`,
@@ -172,31 +168,83 @@ sdp_cleaner <- function(simouts){
     mutate(enrl_1oct_grad = zeroNA(enrl_1oct_grad),
            enrl_1oct_ninth = zeroNA(enrl_1oct_ninth),
            enrl_ever = zeroNA(enrl_ever)) %>%
-    gather(variable, value, -(sid:ps_type)) %>%
-    unite(temp, ps_type, yr_seq, variable) %>%
-    spread(temp, value)
+    tidyr::gather(variable, value, -(sid:ps_type)) %>%
+    tidyr::unite(temp, ps_type, yr_seq, variable) %>%
+    tidyr::spread(temp, value)
 
   ps_wide <- left_join(ps_wide, zzz, by = "sid")
   rm(zzz)
 
-
-#
-#   enrl_1oct_grad_yr1_4yr
-#   enrl_1oct_ninth_yr1_4yr
-#   enrl_ever
-
-  sdp_ps <- simouts$ps_enroll %>% group_by(sid) %>%
+    simouts$ps_enroll$ps_type %<>% as.character()
+  sdp_ps <- simouts$ps_enroll %>%  group_by(sid) %>%
     arrange(sid, year, desc(term)) %>%
-    summarize(first_college_opeid_any = first(opeid),
-              first_college_opeid_2yr = first(opeid[ps_type == "2yr"]),
-              first_college_opeid_4yr = first(opeid[ps_type == "4yr"]),
-              first_college_name_any = first(ps_short_name),
-              first_college_name_2yr = first(ps_short_name[ps_type == "2yr"]),
-              first_college_name_4yr = first(ps_short_name[ps_type == "4yr"])
+    select(sid, opeid, ps_short_name, ps_type) %>%
+    summarize(first_college_opeid_any = opeid[1],
+              first_college_opeid_2yr = opeid[ps_type == "2yr"][1],
+              first_college_opeid_4yr = opeid[ps_type == "4yr"][1],
+              first_college_name_any = ps_short_name[1], # make selection of first element safe
+              first_college_name_2yr = ps_short_name[ps_type == "2yr"][1],
+              first_college_name_4yr = ps_short_name[ps_type == "4yr"][1]
               )
+  simouts$ps_enroll$ps_type %<>% as.factor()
+
+  ps_career <- simouts$ps_enroll %>% group_by(sid, ps_type) %>%
+    tidyr::complete(sid, ps_type) %>%
+    summarise(enroll_count = sum(ps),
+            chrt_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == 1),
+                   1, 0),
+            chrt_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == 1),
+                               1, 0)) %>%
+    mutate(all4 = ifelse(enroll_count >= 4, 1, 0)
+           ) %>%
+    mutate(enroll_count = zeroNA(enroll_count),
+           chrt_grad = zeroNA(chrt_grad),
+           chrt_ninth = zeroNA(chrt_ninth),
+           all4 = zeroNA(all4)
+           )
+
+  ps_career2 <- simouts$ps_enroll %>%
+    group_by(sid) %>%
+    mutate(persist = ifelse(any(ps[yr_seq == 2] == 1), 1, 0)) %>%
+    group_by(sid, ps_type) %>%
+    tidyr::complete(sid, ps_type) %>%
+    summarise(persist = ifelse(any(persist > 0), 1, 0),
+              chrt_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == 1),
+                                 1, 0),
+              chrt_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == 1),
+                                  1, 0)) %>%
+    mutate(persist = zeroNA(persist),
+           chrt_grad = zeroNA(chrt_grad),
+           chrt_ninth = zeroNA(chrt_ninth)
+    )
+
+  ps_career <- left_join(ps_career, ps_career2)
+  ps_career$enroll_count <- NULL
+  ps_career %<>%
+    tidyr::gather(key = "chrt", value = "observed", chrt_grad, chrt_ninth)
+ # compute any
+  ps_career <- bind_rows(ps_career,
+                         ps_career %>% group_by(sid, chrt) %>%
+                           summarize(ps_type = "any",
+                                     all4 = max(all4),
+                                     persist = max(persist),
+                                     observed = max(observed)))
+
+  ps_career %<>% filter(observed == 1) %>%
+    filter(!is.na(ps_type)) %>%
+    filter(ps_type != "other") %>%
+    select(-observed)
+  ps_career %<>% gather(key = "persist", value = "obs", all4, persist)
+# TODO: Fix this where 1 is getting filled in for all possible values
+  zzz <- ps_career %>% gather(variable, value, -(sid:persist)) %>%
+    tidyr::unite(temp, chrt, ps_type, persist, variable) %>%
+    tidyr::spread(temp, value)
+
+  # calculate persist
+  # calculat all4
+  # calculate w2
 
   sdp_ps <- left_join(sdp_ps, ps_wide, by = "sid")
-
 
   final_data <- left_join(demog_clean, hs_summary, by = "sid")
   final_data <- left_join(final_data, outcomes_wide, by = "sid")
@@ -225,7 +273,45 @@ sdp_cleaner <- function(simouts){
                          cum_gpa_final = gpa,
                          hs_diploma_type = diploma_type,
                          hs_diploma = grad,
-                         chrt_grad = chrt_grad.x
+                         chrt_grad = chrt_grad.x,
+                         enrl_ever_w2_grad_any_yr1 = `1_enrl_ever_w2_grad`,
+                         enrl_ever_w2_ninth_any_yr1 = `1_enrl_ever_w2_ninth`,
+                         enrl_1oct_grad_yr1_2yr = `2yr_1_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr1_2yr = `2yr_1_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr1_2yr = `2yr_1_enrl_ever`,
+                         enrl_1oct_grad_yr2_2yr = `2yr_2_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr2_2yr= `2yr_2_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr2_2yr = `2yr_2_enrl_ever`,
+                         enrl_1oct_grad_yr3_2yr = `2yr_3_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr3_2yr = `2yr_3_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr3_2yr = `2yr_3_enrl_ever`,
+                         enrl_1oct_grad_yr4_2yr = `2yr_4_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr4_2yr = `2yr_4_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr4_2yr = `2yr_4_enrl_ever`,
+                         enrl_1oct_grad_yr1_4yr = `4yr_1_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr1_4yr = `4yr_1_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr1_4yr = `4yr_1_enrl_ever`,
+                         enrl_1oct_grad_yr2_4yr = `4yr_2_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr2_4yr = `4yr_2_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr2_4yr = `4yr_2_enrl_ever`,
+                         enrl_1oct_grad_yr3_4yr = `4yr_3_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr3_4yr = `4yr_3_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr3_4yr = `4yr_3_enrl_ever`,
+                         enrl_1oct_grad_yr4_4yr = `4yr_4_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr4_4yr = `4yr_4_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr4_4yr = `4yr_4_enrl_ever`,
+                         enrl_1oct_grad_yr1_other = `other_1_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr1_other = `other_1_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr1_other = `other_1_enrl_ever`,
+                         enrl_1oct_grad_yr2_other = `other_2_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr2_other = `other_2_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr2_other = `other_2_enrl_ever`,
+                         enrl_1oct_grad_yr3_other = `other_3_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr3_other = `other_3_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr3_other = `other_3_enrl_ever`,
+                         enrl_1oct_grad_yr4_other = `other_4_enrl_1oct_grad`,
+                         enrl_1oct_ninth_yr4_other = `other_4_enrl_1oct_ninth`,
+                         enrl_ever_w2_yr4_other = `other_4_enrl_ever`
   )
 
 

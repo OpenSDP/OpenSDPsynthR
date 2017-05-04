@@ -153,6 +153,19 @@ sdp_cleaner <- function(simouts){
       enrl_1oct_ninth_yr3_any = `3_enrl_1oct_ninth`,
       enrl_1oct_ninth_yr4_any = `4_enrl_1oct_ninth`
     )
+  # enrl_ever_w2_grad_any
+
+  tmp <- ps_wide %>% select(sid, contains("enrl_ever"))
+  tmp$enrl_ever_w2_grad_any <- tmp$`1_enrl_ever_w2_grad` + tmp$`2_enrl_ever_w2_grad` +
+    tmp$`3_enrl_ever_w2_grad` + tmp$`4_enrl_ever_w2_grad`
+  tmp$enrl_ever_w2_ninth_any <- tmp$`1_enrl_ever_w2_ninth` + tmp$`2_enrl_ever_w2_ninth` +
+    tmp$`3_enrl_ever_w2_ninth` + tmp$`4_enrl_ever_w2_ninth`
+
+  tmp %<>% select(sid, enrl_ever_w2_grad_any, enrl_ever_w2_ninth_any)
+  tmp$enrl_ever_w2_grad_any <- ifelse(tmp$enrl_ever_w2_grad_any > 0, 1, 0)
+  tmp$enrl_ever_w2_ninth_any <- ifelse(tmp$enrl_ever_w2_ninth_any > 0, 1, 0)
+  ps_wide %<>% select(sid, contains("1oct_"))
+  ps_wide <- left_join(ps_wide, tmp); rm(tmp)
 
   simouts$ps_enroll$ps_type[is.na(simouts$ps_enroll$ps_type)] <- "other"
   simouts$ps_enroll$ps_type <- as.factor(simouts$ps_enroll$ps_type)
@@ -164,18 +177,37 @@ sdp_cleaner <- function(simouts){
                                       1, 0),
               enrl_1oct_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == 1),
                                        1, 0),
-              enrl_ever = ifelse(any(ps > 0 ), 1, 0)) %>%
+              enrl_ever_w2_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) >= 2),
+                                     1, 0),
+              enrl_ever_w2_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) >= 2),
+                                     1, 0)) %>%
     mutate(enrl_1oct_grad = zeroNA(enrl_1oct_grad),
            enrl_1oct_ninth = zeroNA(enrl_1oct_ninth),
-           enrl_ever = zeroNA(enrl_ever)) %>%
+           enrl_ever_w2_ninth = zeroNA(enrl_ever_w2_ninth),
+           enrl_ever_w2_grad = zeroNA(enrl_ever_w2_grad)) %>%
     tidyr::gather(variable, value, -(sid:ps_type)) %>%
     tidyr::unite(temp, ps_type, yr_seq, variable) %>%
     tidyr::spread(temp, value)
 
-  ps_wide <- left_join(ps_wide, zzz, by = "sid")
-  rm(zzz)
+  tmp <- zzz %>% select(sid, contains("enrl_ever_w2"))
+  tmp$enrl_ever_w2_grad_2yr <- tmp$`2yr_1_enrl_ever_w2_grad` + tmp$`2yr_2_enrl_ever_w2_grad` +
+    tmp$`2yr_3_enrl_ever_w2_grad` + tmp$`2yr_4_enrl_ever_w2_grad`
+  tmp$enrl_ever_w2_grad_4yr <- tmp$`4yr_1_enrl_ever_w2_grad` + tmp$`4yr_2_enrl_ever_w2_grad` +
+    tmp$`4yr_3_enrl_ever_w2_grad` + tmp$`4yr_4_enrl_ever_w2_grad`
+  tmp$enrl_ever_w2_ninth_2yr <- tmp$`2yr_1_enrl_ever_w2_ninth` + tmp$`2yr_2_enrl_ever_w2_ninth` +
+    tmp$`2yr_3_enrl_ever_w2_ninth` + tmp$`2yr_4_enrl_ever_w2_ninth`
+  tmp$enrl_ever_w2_ninth_4yr <- tmp$`4yr_1_enrl_ever_w2_ninth` + tmp$`4yr_2_enrl_ever_w2_ninth` +
+    tmp$`4yr_3_enrl_ever_w2_ninth` + tmp$`4yr_4_enrl_ever_w2_ninth`
 
-    simouts$ps_enroll$ps_type %<>% as.character()
+  tmp <- tmp %>% select(sid, enrl_ever_w2_grad_2yr, enrl_ever_w2_grad_4yr,
+                        enrl_ever_w2_ninth_2yr, enrl_ever_w2_ninth_4yr)
+  tmp[, 2:5] <- apply(tmp[, 2:5], 2, function(x) ifelse(x > 0, 1, 0))
+  zzz <- zzz %>% select(sid, contains("enrl_1oct"))
+  zzz <- left_join(zzz, tmp)
+  ps_wide <- left_join(ps_wide, zzz, by = "sid")
+  rm(zzz, tmp)
+
+  simouts$ps_enroll$ps_type %<>% as.character()
   sdp_ps <- simouts$ps_enroll %>%  group_by(sid) %>%
     arrange(sid, year, desc(term)) %>%
     select(sid, opeid, ps_short_name, ps_type) %>%
@@ -236,15 +268,13 @@ sdp_cleaner <- function(simouts){
     select(-observed)
   ps_career %<>% gather(key = "persist", value = "obs", all4, persist)
 # TODO: Fix this where 1 is getting filled in for all possible values
-  zzz <- ps_career %>% gather(variable, value, -(sid:persist)) %>%
+  ps_career <- ps_career %>% gather(variable, value, -(sid:persist)) %>%
     tidyr::unite(temp, chrt, ps_type, persist, variable) %>%
     tidyr::spread(temp, value)
-
-  # calculate persist
-  # calculat all4
-  # calculate w2
+  ps_career[, 2:ncol(ps_career)] <- apply(ps_career[, 2:ncol(ps_career)], 2, zeroNA)
 
   sdp_ps <- left_join(sdp_ps, ps_wide, by = "sid")
+  sdp_ps <- left_join(sdp_ps, ps_career, by = "sid")
 
   final_data <- left_join(demog_clean, hs_summary, by = "sid")
   final_data <- left_join(final_data, outcomes_wide, by = "sid")
@@ -274,61 +304,80 @@ sdp_cleaner <- function(simouts){
                          hs_diploma_type = diploma_type,
                          hs_diploma = grad,
                          chrt_grad = chrt_grad.x,
-                         enrl_ever_w2_grad_any_yr1 = `1_enrl_ever_w2_grad`,
-                         enrl_ever_w2_ninth_any_yr1 = `1_enrl_ever_w2_ninth`,
                          enrl_1oct_grad_yr1_2yr = `2yr_1_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr1_2yr = `2yr_1_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr1_2yr = `2yr_1_enrl_ever`,
                          enrl_1oct_grad_yr2_2yr = `2yr_2_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr2_2yr= `2yr_2_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr2_2yr = `2yr_2_enrl_ever`,
                          enrl_1oct_grad_yr3_2yr = `2yr_3_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr3_2yr = `2yr_3_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr3_2yr = `2yr_3_enrl_ever`,
                          enrl_1oct_grad_yr4_2yr = `2yr_4_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr4_2yr = `2yr_4_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr4_2yr = `2yr_4_enrl_ever`,
                          enrl_1oct_grad_yr1_4yr = `4yr_1_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr1_4yr = `4yr_1_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr1_4yr = `4yr_1_enrl_ever`,
                          enrl_1oct_grad_yr2_4yr = `4yr_2_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr2_4yr = `4yr_2_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr2_4yr = `4yr_2_enrl_ever`,
                          enrl_1oct_grad_yr3_4yr = `4yr_3_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr3_4yr = `4yr_3_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr3_4yr = `4yr_3_enrl_ever`,
                          enrl_1oct_grad_yr4_4yr = `4yr_4_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr4_4yr = `4yr_4_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr4_4yr = `4yr_4_enrl_ever`,
                          enrl_1oct_grad_yr1_other = `other_1_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr1_other = `other_1_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr1_other = `other_1_enrl_ever`,
                          enrl_1oct_grad_yr2_other = `other_2_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr2_other = `other_2_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr2_other = `other_2_enrl_ever`,
                          enrl_1oct_grad_yr3_other = `other_3_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr3_other = `other_3_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr3_other = `other_3_enrl_ever`,
                          enrl_1oct_grad_yr4_other = `other_4_enrl_1oct_grad`,
                          enrl_1oct_ninth_yr4_other = `other_4_enrl_1oct_ninth`,
-                         enrl_ever_w2_yr4_other = `other_4_enrl_ever`
+                         enrl_grad_persist_4yr = chrt_grad_4yr_persist_obs,
+                         enrl_grad_persist_2yr = chrt_grad_2yr_persist_obs,
+                         enrl_grad_persist_any = chrt_grad_any_persist_obs,
+                         enrl_ninth_persist_4yr = chrt_ninth_4yr_persist_obs,
+                         enrl_ninth_persist_2yr = chrt_ninth_2yr_persist_obs,
+                         enrl_ninth_persist_any = chrt_ninth_any_persist_obs,
+                         enrl_grad_all4_4yr = chrt_grad_4yr_all4_obs,
+                         enrl_grad_all4_2yr = chrt_grad_2yr_all4_obs,
+                         enrl_grad_all4_any = chrt_grad_any_all4_obs,
+                         enrl_ninth_all4_4yr = chrt_ninth_4yr_all4_obs,
+                         enrl_ninth_all4_2yr = chrt_ninth_2yr_all4_obs,
+                         enrl_ninth_all4_any = chrt_ninth_any_all4_obs
   )
 
+  final_data$last_wd_group[final_data$hs_diploma == 1] <- "Graduated"
+  final_data$last_wd_group[final_data$hs_diploma == 0] <- final_data$hs_status[final_data$hs_diploma == 0]
+  final_data$last_wd_group[final_data$last_wd_group == "transferout"] <- "Transfer Out"
+  final_data$last_wd_group[final_data$last_wd_group == "dropout"] <- "Drop Out"
+  final_data$last_wd_group[final_data$last_wd_group %in% c("disappear", "still_enroll", "dropout")] <- "Other"
+  final_data$chrt_grad[!is.finite(final_data$chrt_grad)] <- NA
+  final_data$hs_diploma_date <- paste0("05/25/", final_data$chrt_grad)
+  final_data$hs_diploma_date[is.na(final_data$chrt_grad)] <- NA
+  final_data$highly_qualified <- sapply(final_data$ps_prob - 0.2, rbinom, n=1, size=1)
+  final_data$highly_qualified[is.na(final_data$highly_qualified)] <- 0
+  final_data$status_after_yr1 <- ifelse(!is.na(final_data$ontrack_endyr1) &
+                                          final_data$ontrack_endyr1 == 1,
+                                        "Enrolled, On-Track", "Enrolled, Off-Track")
+  final_data$status_after_yr2 <- ifelse(!is.na(final_data$ontrack_endyr2) &
+                                          final_data$ontrack_endyr2 == 1,
+                                        "Enrolled, On-Track", "Enrolled, Off-Track")
+  final_data$status_after_yr3 <- ifelse(!is.na(final_data$ontrack_endyr3) &
+                                          final_data$ontrack_endyr3 == 1,
+                                        "Enrolled, On-Track", "Enrolled, Off-Track")
+  final_data$status_after_yr4 <- ifelse(!is.na(final_data$ontrack_endyr4) &
+                                          final_data$ontrack_endyr4 == 1,
+                                        "Enrolled, On-Track", "Enrolled, Off-Track")
 
-  # need to join ps_enroll with expected 9th grade, and expected 12th grade enrollment
-  # then need to compare and check that ps is 1 for the fall that meets this
-
-  # OK -- time to reconcile ps_enrollment type, student annual status, and
-  # cohort 9 and cohort grad outcomes
-  # first_college_opeid_any
-  # first_college_opeid_2yr
-  # first_college_opeid_4ry
-  # first_college_name_any
+  final_data$status_after_yr3[final_data$hs_status == "early"] <- "Graduated"
+  final_data$status_after_yr4[final_data$hs_status == "ontime"] <- "Graduated On-Time"
+  final_data$status_after_yr4[final_data$hs_status == "dropout"] <- "Dropped Out"
+  final_data$status_after_yr4[final_data$hs_status == "disappear"] <- "Disappear"
+  final_data$status_after_yr4[final_data$hs_status == "late"] <- "Still Enrolled"
   return(final_data)
 }
 
+
+
 # TODO: Calculate status each year
-# TODO: Differentiate 4yr, 2yr, and any PS enrollment types
+# TODO: ontrack_sample?
+
 
 
 

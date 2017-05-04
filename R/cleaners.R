@@ -341,12 +341,18 @@ sdp_cleaner <- function(simouts){
                          enrl_ninth_all4_2yr = chrt_ninth_2yr_all4_obs,
                          enrl_ninth_all4_any = chrt_ninth_any_all4_obs
   )
-
-  final_data$last_wd_group[final_data$hs_diploma == 1] <- "Graduated"
-  final_data$last_wd_group[final_data$hs_diploma == 0] <- final_data$hs_status[final_data$hs_diploma == 0]
-  final_data$last_wd_group[final_data$last_wd_group == "transferout"] <- "Transfer Out"
-  final_data$last_wd_group[final_data$last_wd_group == "dropout"] <- "Drop Out"
-  final_data$last_wd_group[final_data$last_wd_group %in% c("disappear", "still_enroll", "dropout")] <- "Other"
+  final_data$last_wd_group <- NA
+  final_data$last_wd_group[final_data$hs_diploma == 1 &
+                             !is.na(final_data$hs_diploma)] <- "Graduated"
+  final_data$last_wd_group[final_data$hs_diploma == 0 &
+                             !is.na(final_data$hs_diploma)] <- final_data$hs_status[final_data$hs_diploma == 0 &
+                                                                                    !is.na(final_data$hs_diploma)]
+  final_data$last_wd_group[final_data$last_wd_group == "transferout"&
+                             !is.na(final_data$hs_diploma)] <- "Transfer Out"
+  final_data$last_wd_group[final_data$last_wd_group == "dropout"&
+                             !is.na(final_data$hs_diploma)] <- "Drop Out"
+  final_data$last_wd_group[final_data$last_wd_group %in% c("disappear", "still_enroll", "dropout") &
+                             !is.na(final_data$hs_diploma)] <- "Other"
   final_data$chrt_grad[!is.finite(final_data$chrt_grad)] <- NA
   final_data$hs_diploma_date <- paste0("05/25/", final_data$chrt_grad)
   final_data$hs_diploma_date[is.na(final_data$chrt_grad)] <- NA

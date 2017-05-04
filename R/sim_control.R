@@ -259,7 +259,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                  0.143, -0.003, 0.127, 0.060, 0.007, 0.001),
     fixed_param = c(0.3799, 0.417892, 0.168458, 0.042588580,
                     -0.289399599, -0.007401886, -0.374127),
-    ngrps = nschls, unbalanceRange = c(100, 1500), type = "linear"
+    ngrps = nschls + 5, unbalanceRange = c(100, 1500), type = "linear"
   )
 
   grad_sim_parameters <- list(
@@ -290,7 +290,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       1.7816, 0.10764, 1.05872, -0.07352, -0.07959,
       -0.331647,-0.22318254, 0.0590
     ),
-    ngrps = 30,
+    ngrps = nschls + 5,
     unbalanceRange = c(100, 1500)
   )
 
@@ -322,7 +322,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       0.0921, 0.20401, 1.125067, 0.11834, -0.561429,
       -0.31560,-0.126704, -0.03387
     ),
-    ngrps = 30,
+    ngrps = nschls + 5,
     unbalanceRange = c(100, 1500)
   )
   assess_sim_par <- list(
@@ -351,7 +351,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     unbalCont3 = c(100, 800),
     unbal = TRUE,
     # Total number of level 2 groups = k * n
-    k = 15, # level 3 groups
+    k = nschls + 5, # level 3 groups
     n = 200, # obs per group level 2 group
     p = 400, # obs per group?
     error_var = 1,

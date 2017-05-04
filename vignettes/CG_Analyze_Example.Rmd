@@ -35,6 +35,7 @@ simouts <- simpop(nstu = 5000L, seed = 488234,
                   control = sim_control(nschls = 15L, minyear=2000, 
                                         maxyear=2016))
 cg_data <- sdp_cleaner(simouts)
+# sdp_cleaner is duplicating things
 
 ```
 

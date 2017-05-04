@@ -213,10 +213,10 @@ gen_assess <- function(data, control = sim_control()){
   #TODO: Decide what to do, peg time to age or to grade
   data$time <- data$age - min(data$age)
   # Need to normalize time
-  zed <- simulate(mod, nsim = 500, newdata = data)
+  zed <- simulate(mod, nsim = 500, newdata = data, allow.new.levels = TRUE)
   # math <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
   math <- apply(zed, 1, function(x) sample(sort(x)[150:350], 1))
-  zed <- simulate(mod, nsim = 500, newdata = data)
+  zed <- simulate(mod, nsim = 500, newdata = data, allow.new.levels = TRUE)
   # rdg <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
   rdg <- apply(zed, 1, function(x) sample(sort(x)[75:425], 1))
 

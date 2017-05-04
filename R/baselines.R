@@ -183,7 +183,11 @@ school_transitions <- function(nschls = 15L, diag_limit = 0.9){
     empty[i, ][empty[i,] ==0] <- rand_vect_cont(nschls-1, 1-diag(empty)[i])
   }
   school_tm <- empty
-  sch_dims <- sprintf("%02d", 1:nschls)
+  if(nschls < 100){
+    sch_dims <- sprintf("%02d", 1:nschls)
+  } else{
+    sch_dims <- sprintf("%03d", 1:nschls)
+  }
   dimnames(school_tm) <- list(sch_dims, sch_dims)
   return(school_tm)
 }

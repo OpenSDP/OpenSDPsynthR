@@ -134,7 +134,8 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year <- assign_schools(student = stu_year, schools = school)
   message("Simulating assessment table... be patient...")
   assess <- left_join(stu_year[, c("sid", "year", "age", "grade", "frpl",
-                                   "ell", "iep", "gifted", "schid")], demog_master[, 1:4])
+                                   "ell", "iep", "gifted", "schid")],
+                      demog_master[, 1:4])
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
   zz <- gen_assess(data = assess, control = control)
   assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
@@ -146,7 +147,7 @@ simpop <- function(nstu, seed, control = sim_control()){
   assess_long$assess_id <- "0001"
   assess_long$assess_name <- "State Accountability Test"
   assess_long$retest_ind <- sample(c("Yes", "No"), nrow(assess_long),
-                                   replace = TRUE, prob = c(0.9999, 0.0001))
+                                   replace = TRUE, prob = c(0.0001, 0.9999))
 
   # Organize assess tables
   proficiency_levels <- assess_long %>% group_by(year, grade, subject, assess_id) %>%
@@ -324,6 +325,9 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
     stop("Please add more names or select a smaller n to generate unique names")
   }
   ids <- wakefield::id(n)
+  if(any(nchar(ids) < 2)){
+    ids <- sprintf("%02d", as.numeric(ids))
+  }
   enroll <- rnbinom(n, size = 0.5804251, mu = 360.8085106) # starting values from existing district
   names <- sample(names, size = n, replace = FALSE)
   attribs <- mvtnorm::rmvnorm(n, mean = mean_vec, sigma = cov_mat)

@@ -55,7 +55,8 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
                   cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                   unbalCont = unbalanceRange)
     mod <- glmer(update(fixed, "sim_data ~ . + (1|clustID)"),
-                 data = df, family = "binomial")
+                 data = df, family = "binomial", nAGQ = 0, # boost speed
+                 control=glmerControl(optimizer = "nloptwrap"))
   } else if(type == "linear"){
     if(missing(error_var)){
       error_var <- 2.5
@@ -203,7 +204,6 @@ gen_assess <- function(data, control = sim_control()){
   mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1+time|clustID) +
                      (1+time|clust3ID)"),
               data = df)
-
   sch_id_var <- names(data)[which(names(data) %in%
                                c("SCH", "schid"))]
   stu_id_var <- names(data)[which(names(data) %in%
@@ -211,15 +211,18 @@ gen_assess <- function(data, control = sim_control()){
   data$clust3ID <- as.numeric(data[, sch_id_var])
   data$clustID <- as.numeric(data[, stu_id_var])
   #TODO: Decide what to do, peg time to age or to grade
-  data$time <- data$age - min(data$age)
   # Need to normalize time
+  data$time <- data$age - min(data$age)
   zed <- simulate(mod, nsim = 500, newdata = data, allow.new.levels = TRUE)
+  # sort each row, then sample from sorted rows, since sort is expensive
+  zed <- t(apply(zed, 1, sort))
   # math <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
-  math <- apply(zed, 1, function(x) sample(sort(x)[150:350], 1))
-  zed <- simulate(mod, nsim = 500, newdata = data, allow.new.levels = TRUE)
+  math <- apply(zed, 1, function(x) sample(x[150:350], 1))
+  rdg <- apply(zed, 1, function(x) sample(x[75:425], 1))
+  # No need to run simulation code twice, it is expensive
+  #
+  # zed <- simulate(mod, nsim = 500, newdata = data, allow.new.levels = TRUE)
   # rdg <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
-  rdg <- apply(zed, 1, function(x) sample(sort(x)[75:425], 1))
-
   data$math_ss <- math
   data$rdg_ss <- rdg
   # Bias parameters need to adjust with the scale of the assessment

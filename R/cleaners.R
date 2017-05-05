@@ -55,7 +55,7 @@ sdp_cleaner <- function(simouts){
   # Take the most recent score
   scores <- simouts$stu_assess %>% ungroup %>%
     group_by(sid, grade) %>%
-    mutate(keep = ifelse(year == max(year), 1, 0)) %>%
+    mutate(keep = ifelse(year == min(year), 1, 0)) %>%
     filter(keep == 1) %>% select(-keep) %>%
     ungroup %>%
     filter(grade %in% c("8")) %>%

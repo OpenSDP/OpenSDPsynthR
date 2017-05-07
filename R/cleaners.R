@@ -347,53 +347,7 @@ sdp_cleaner <- function(simouts){
                   "chrt_ninth_any_all4_obs" = "enrl_ninth_all4_any")
 
   names(final_data)[names(final_data) %in% names(rename_map)] %<>% rename_map[.]
-  #
-  # final_data %<>% rename(late_grad = late,
-  #                        still_enrl = still_enroll,
-  #                        ontime_grad = ontime,
-  #                        ontrack_endyr1 = ontrack_yr1,
-  #                        ontrack_endyr2 = ontrack_yr2,
-  #                        ontrack_endyr3 = ontrack_yr3,
-  #                        ontrack_endyr4 = ontrack_yr4,
-  #                        cum_credits_yr1_ela = cum_credits_ela_yr1,
-  #                        cum_credits_yr1_math = cum_credits_math_yr1,
-  #                        cum_credits_yr2_ela = cum_credits_ela_yr2,
-  #                        cum_credits_yr2_math = cum_credits_math_yr2,
-  #                        cum_credits_yr3_ela = cum_credits_ela_yr3,
-  #                        cum_credits_yr3_math = cum_credits_math_yr3,
-  #                        cum_credits_yr4_ela = cum_credits_ela_yr4,
-  #                        cum_credits_yr4_math = cum_credits_math_yr4,
-  #                        cum_gpa_final = gpa,
-  #                        hs_diploma_type = diploma_type,
-  #                        hs_diploma = grad,
-  #                        chrt_grad = chrt_grad.x,
-  #                        enrl_1oct_grad_yr1_2yr = `2yr_1_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr1_2yr = `2yr_1_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr2_2yr = `2yr_2_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr2_2yr= `2yr_2_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr3_2yr = `2yr_3_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr3_2yr = `2yr_3_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr4_2yr = `2yr_4_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr4_2yr = `2yr_4_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr1_4yr = `4yr_1_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr1_4yr = `4yr_1_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr2_4yr = `4yr_2_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr2_4yr = `4yr_2_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr3_4yr = `4yr_3_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr3_4yr = `4yr_3_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr4_4yr = `4yr_4_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr4_4yr = `4yr_4_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr1_other = `other_1_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr1_other = `other_1_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr2_other = `other_2_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr2_other = `other_2_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr3_other = `other_3_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr3_other = `other_3_enrl_1oct_ninth`,
-  #                        enrl_1oct_grad_yr4_other = `other_4_enrl_1oct_grad`,
-  #                        enrl_1oct_ninth_yr4_other = `other_4_enrl_1oct_ninth`,
-  #                        enrl_grad_persist_4yr = chrt_grad_4yr_persist_obs,
-  #
-  # )
+
   final_data$last_wd_group <- NA
   final_data$last_wd_group[final_data$hs_diploma == 1 &
                              !is.na(final_data$hs_diploma)] <- "Graduated"
@@ -429,6 +383,19 @@ sdp_cleaner <- function(simouts){
   final_data$status_after_yr4[final_data$hs_status == "dropout"] <- "Dropped Out"
   final_data$status_after_yr4[final_data$hs_status == "disappear"] <- "Disappear"
   final_data$status_after_yr4[final_data$hs_status == "late"] <- "Still Enrolled"
+  # Recodes
+  final_data$race_ethnicity <- as.character(final_data$race_ethnicity)
+  final_data$race_ethnicity[final_data$race_ethnicity == "Black or African American"] <- "Black"
+  final_data$race_ethnicity[final_data$race_ethnicity == "Asian"] <- "Asian"
+  final_data$race_ethnicity[final_data$race_ethnicity == "Hispanic or Latino Ethnicity"] <- "Hispanic"
+  final_data$race_ethnicity[final_data$race_ethnicity == "American Indian or Alaska Native"] <- "Native American"
+  final_data$race_ethnicity[final_data$race_ethnicity == "White"] <- "White"
+  final_data$race_ethnicity[final_data$race_ethnicity %in% c("Demographic Race Two or More Races",
+                                                             "Native Hawaiian or Other Pacific Islander")] <- "Multiple/Other"
+
+  final_data$race_ethnicity <- factor(final_data$race_ethnicity,
+                                      levels = c("Black", "Asian", "Hispanic",
+                                                 "Native American", "White", "Multiple/Other"))
   return(final_data)
 }
 

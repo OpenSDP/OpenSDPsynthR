@@ -43,8 +43,6 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
   # data_str <- "long"
   # cov_param <- NULL
   if(type == "binary"){
-    # TODO - document that an omitted variable is generated and then ignored
-    # in the second stage
     df <- sim_glm(fixed = fixed, random = random,
                   fixed_param = fixed_param, random_param = random_param,
                   random3 = NULL,
@@ -64,8 +62,7 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
     if(missing(with_err_gen)){
       with_err_gen <- "rnorm"
     }
-    # TODO: Include math_ss in the calculations
-      df <- sim_reg(fixed = fixed, random = random,
+    df <- sim_reg(fixed = fixed, random = random,
                   fixed_param = fixed_param, random_param = random_param,
                   random3 = NULL,
                   random_param3 = NULL,
@@ -83,8 +80,6 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
 
 }
 
-# TODO: figure out where to standardize math_ss to avoid problems with outcomes
-# projected from it
 
 #' Generate a final GPA for students
 #'
@@ -109,6 +104,23 @@ gen_gpa <- function(data, control=sim_control()){
   # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
   zed <- simulate(gpa_sim$sim_model, nsim = 500, newdata = data)
   out <- apply(zed, 1, function(x) sample(x, 1))
+  # Perturb the gpa
+  # FRPL bias is underestimated because of the time component so need to add it in
+  # Racial bias is entirely absent
+  # data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
+  #                        data$math_ss, data$frpl, data$math_sd,
+  #                        MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_frl,
+  #                       data$rdg_ss, data$frpl, data$rdg_sd,
+  #                       MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+  # data$math_ss <- mapply(control$assessment_adjustment$perturb_race,
+  #                        data$math_ss, data$Race, data$math_sd,
+  #                        MoreArgs = list(race_par = control$assessment_adjustment$race_list))
+  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
+  #                       data$rdg_ss, data$Race, data$rdg_sd,
+  #                       MoreArgs = list(race_par = control$assessment_adjustment$race_list))
+  # # Perturb to reduce test correlation
+
   # Export
   return(out)
 }
@@ -138,6 +150,24 @@ gen_grad <- function(data, control = sim_control()){
                   family = "binomial")
   out_prob <- apply(zed, 1, mean)
   out_binom <- sapply(out_prob, function(x) rbinom(1, 1, x))
+  # TODO: Perturb graduation by race
+  # Perturb the test scores to reduce correlation and induce bias
+  # FRPL bias is underestimated because of the time component so need to add it in
+  # Racial bias is entirely absent
+  # data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
+  #                        data$math_ss, data$frpl, data$math_sd,
+  #                        MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_frl,
+  #                       data$rdg_ss, data$frpl, data$rdg_sd,
+  #                       MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+  # data$math_ss <- mapply(control$assessment_adjustment$perturb_race,
+  #                        data$math_ss, data$Race, data$math_sd,
+  #                        MoreArgs = list(race_par = control$assessment_adjustment$race_list))
+  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
+  #                       data$rdg_ss, data$Race, data$rdg_sd,
+  #                       MoreArgs = list(race_par = control$assessment_adjustment$race_list))
+  # # Perturb to reduce test correlation
+
   # Export
   out <- data.frame(grad_prob = out_prob, grad = out_binom)
   return(out)
@@ -353,18 +383,40 @@ gen_credits <- function(gpa_ontrack){
   )
 
   sim_credits <- mvtnorm::rmvnorm(5000, mean = mean_struc, sigma = cov_matrix)
+  sim_credits[, 1] <- recode_credits(sim_credits[, 1], top = 8)
+  sim_credits[, 2] <- recode_credits(sim_credits[, 2], top = 16)
+  sim_credits[, 3] <- recode_credits(sim_credits[, 3], top = 24)
+  sim_credits[, 4] <- recode_credits(sim_credits[, 4], top = 32)
+  sim_credits[, 5:12] <- apply(sim_credits[, 5:12], 2, recode_credits)
+  sim_credits[, 2] <- ifelse(sim_credits[, 2] > sim_credits[, 1],
+                             sim_credits[, 2], sim_credits[, 1] + runif(1, 0, 5))
+  sim_credits[, 3] <- ifelse(sim_credits[, 3] > sim_credits[, 2],
+                             sim_credits[, 3], sim_credits[, 2] + runif(1, 0, 5))
+  sim_credits[, 4] <- ifelse(sim_credits[, 4] > sim_credits[, 3],
+                             sim_credits[, 4], sim_credits[, 3] + runif(1, 0, 5))
+# Enforce credits not being able to go down year to year
+  for(i in c(7, 9, 11)){
+    sim_credits[, i] <- ifelse(sim_credits[, i] > sim_credits[, i-2],
+                               sim_credits[, i], sim_credits[, i-2] + runif(1, 0, 2))
+  }
+  for(i in c(8, 10, 12)){
+    sim_credits[, i] <- ifelse(sim_credits[, i] > sim_credits[, i-2],
+                               sim_credits[, i], sim_credits[, i-2] + runif(1, 0, 2))
+  }
   sim_credits <- as.data.frame(sim_credits)
+
 
   credit_pattern <- vector(length(gpa_ontrack$gpa), mode = "list")
   TOL <- 2.9162 # sigma from model of gpa on yr4 credits
   for(i in 1:length(gpa_ontrack$gpa)){
     G <- (gpa_ontrack$gpa[[i]] * 2.9464) + 17.7185 # beta from model
-
+    # Fuzzy draw from the total credits vector based on link between credits and GPA
     candidate <- sim_credits[sim_credits[, 4] > G - TOL & sim_credits[, 4] < G + TOL, ]
     credit_pattern[[i]] <- candidate[sample(row.names(candidate), 1),]
   }
-
   credit_pattern <- bind_rows(credit_pattern)
+  credit_pattern <- apply(credit_pattern, 2,  function(x) ceiling(x*2) / 2) #round
+  credit_pattern <- as.data.frame(credit_pattern)
   out <- bind_cols(gpa_ontrack, credit_pattern)
   return(out)
 }
@@ -422,12 +474,10 @@ gen_ontrack <- function(gpa_ontrack){
   # on track by end of 10th: 10 total credits, 1 math, 2  English
   # on track by end of 11th: 15 total credits, 2 math, 3 English
   #on track by end of 12th: 20 total credits, 3 math, 4 English
-  gpa_ontrack$cum_credits_yr1_ela <- exp(gpa_ontrack$cum_credits_yr1_ela)
-  gpa_ontrack$cum_credits_yr1_math <- exp(gpa_ontrack$cum_credits_yr1_math)
   gpa_ontrack$ontrack_yr1 <- ifelse(
-    gpa_ontrack$cum_credits_yr1 >= 5 &
+    (gpa_ontrack$cum_credits_yr1 >= 5 &
       gpa_ontrack$cum_credits_yr1_math >= 1 &
-      gpa_ontrack$cum_credits_yr1_ela >= 1, 1, 0)
+      gpa_ontrack$cum_credits_yr1_ela >= 1), 1, 0)
   gpa_ontrack$ontrack_yr2 <- ifelse(
     gpa_ontrack$cum_credits_yr2 >= 10 &
       gpa_ontrack$cum_credits_yr2_math >= 1 &
@@ -442,7 +492,6 @@ gen_ontrack <- function(gpa_ontrack){
       gpa_ontrack$cum_credits_yr4_ela >= 4, 1, 0)
   return(gpa_ontrack)
 }
-
 
 #' Generate annual HS outcomes
 #'
@@ -493,8 +542,6 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   out <- left_join(out, gpa)
   rm(ot, cred, credela, credmath, gpa, zzz, gpa_temp)
   out$yr_seq <- out$yr; out$yr <- NULL
-# TODO: Duplication happens here, students who repeat grades are thrown off
-  #  from the structure above
   # Only take the first 4 years
   clean_years <- stu_year %>% group_by(sid) %>%
     filter(grade %in% c("9", "10", "11", "12")) %>%

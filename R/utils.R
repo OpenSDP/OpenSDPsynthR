@@ -256,6 +256,21 @@ rescale <- function(x){
   return(y)
 }
 
+#' Recode numeric data into plausible credit data
+#'
+#' @param x numeric, vector of numerics to be truncated
+#' @param top integer, maximum allowable value
+#' @details enforces no negative numbers and truncates data at a user specified
+#' maximum
+#' @return a vector, length of x, with truncated values
+#' @export
+recode_credits <- function(x, top = 6){
+  y <- x
+  y[y < 0] <- 0 #base code
+  y[y > top] <- top # top code
+  return(y)
+}
+
 
 #' Rescaling variables in groups
 #'

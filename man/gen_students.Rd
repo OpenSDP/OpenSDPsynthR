@@ -19,3 +19,7 @@ a data.frame
 \description{
 Generate student-level attributes
 }
+\details{
+The default is to generate students in racial groups and male/female
+in proportion to the U.S. population.
+}

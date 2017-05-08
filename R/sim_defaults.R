@@ -13,29 +13,18 @@
 #' @importFrom wakefield sex
 #' @importFrom wakefield dob
 #' @importFrom wakefield race
+#' @details The default is to generate students in racial groups and male/female
+#' in proportion to the U.S. population.
 #' @return a data.frame
 #' @export
 gen_students <- function(nstu, seed, control = sim_control()){
   set.seed(seed)
-  if(is.null(control$race_groups)){
-    # use is.null because sim_control passes null values
-    control$race_groups <- xwalk$CEDS_name[xwalk$category == "Demographic"]
-    control$race_groups <- control$race_groups[!control$race_groups %in%
-                                                 c("Sex", "","Birthdate")]
-  }
-  if(is.null(control$race_prob)){
-    control$race_prob <- c(0.637, 0.047, 0.007, 0.122, 0.163, 0.021, 0.0015)
-  }
   if(!is.null(control$minyear)){
     tmp <- paste0(control$minyear, "-01-01")
     start <- as.integer(Sys.Date() - as.Date(tmp))
     start <- start + (365 * 6) # trying to not generate PK data
   }
-  if(is.null(control$n_cohorts)){
-    K <- 365L * 8L # Need to test these integers
-  } else{
-    K <- 365L * control$n_cohorts
-  }
+  K <- 365L * control$n_cohorts
   demog_master <- data.frame(
     sid = wakefield::id(nstu, random = TRUE),
     "Sex" = wakefield::sex(nstu),
@@ -45,7 +34,7 @@ gen_students <- function(nstu, seed, control = sim_control()){
   )
   demog_master$Race <- factor(demog_master$Race)
   demog_master %<>% make_inds("Race")
-  # What does this line do?
+  # Recode race into binary indicators
   demog_master %<>% mutate_at(5:ncol(demog_master),
                               funs(recode(., `0` = "No", `1` = "Yes")))
   demog_master <- as.data.frame(demog_master)

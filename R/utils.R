@@ -432,3 +432,13 @@ validate_sim_parameter <- function(list){
   return(TRUE)
 }
 
+
+#' Simple error assertions
+#'
+#' @param expr logical expression
+#' @param error character, error message
+#'
+#' @return An error message, or nothing
+assert <- function (expr, error) {
+  if (! expr) stop(error, call. = FALSE)
+}

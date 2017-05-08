@@ -5,10 +5,10 @@
 \title{Set control parameters for simulated data}
 \usage{
 sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
-  ses_list = NULL, minyear = 2002, maxyear = 2017, n_cohorts = NULL,
+  ses_list = NULL, minyear = 2002, maxyear = 2017, n_cohorts = 8L,
   gifted_list = NULL, iep_list = NULL, ell_list = NULL,
   ps_transfer_list = NULL, grade_levels = NULL, school_means = NULL,
-  school_cov_mat = NULL, school_names = NULL, postsec_names,
+  school_cov_mat = NULL, school_names = NULL, postsec_names = NULL,
   gpa_sim_parameters = NULL, grad_sim_parameters = NULL,
   ps_sim_parameters = NULL, assess_sim_par = NULL,
   assessment_adjustment = NULL, grad_adjustment = NULL,
@@ -28,7 +28,7 @@ socioeconomic status, see Details}
 
 \item{maxyear}{integer - the last year student records are observed}
 
-\item{n_cohorts}{integer - the number of graduation/grade-level cohorts to produce}
+\item{n_cohorts}{integer - the number of birth-year cohorts to produce}
 
 \item{gifted_list}{a probability list defining the probability of being in
 a gifted and talented program}

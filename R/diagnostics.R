@@ -1,7 +1,7 @@
-# # # Simulation diagnostics
+# # # # # Simulation diagnostics
+# # # #
+# # # # # Ever FRL percentage
 # #
-# # # Ever FRL percentage
-#
 # simouts$stu_year %>% group_by(sid) %>%
 #   summarize(everFRL = ifelse(any(frpl == "1"), 1, 0)) %>%
 #   select(everFRL) %>% unlist %>% table
@@ -20,3 +20,4 @@
 #   select(everGifted) %>% unlist %>% table
 #
 # table(simouts$stu_year$enrollment_status)
+# table(simouts$stu_year$grade_advance)

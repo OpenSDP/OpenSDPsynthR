@@ -97,7 +97,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   # IEP
   if(is.null(iep_list)){
     tm_iep_f <- matrix(
-      c(650, 15, 15, 900),
+      c(750, 7, 7, 1100),
       nrow = 2,
       byrow = TRUE,
       dimnames = list(c("1", "0"), c("1", "0"))
@@ -132,7 +132,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   }
   # Grade Levels
   if(is.null(grade_levels)){
-    tm <- grade_transitions(ngrades = 15L, diag_limit = 0.985)
+    tm <- grade_transitions(ngrades = 15L, diag_limit = 0.9875)
     grade_levels <- list(
       "ALL" = list(f = make_markov_series,
                    pars = list(tm = tm)),
@@ -147,20 +147,20 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       list(
         White = structure(
           c(
-            0.91859191329348,
-            0.112994957427461,
-            0.0814080867065204,
-            0.887005042572539
+            0.94859191329348,
+            0.142994957427461,
+            0.0614080867065204,
+            0.847005042572539
           ),
           .Dim = c(2L, 2L),
           .Dimnames = ses_dim
         ),
         `African American` = structure(
           c(
-            0.810682926054717,
-            0.0835755631319266,
-            0.189317073945283,
-            0.916424436868073
+            0.840682926054717,
+            0.0635755631319266,
+            0.149317073945283,
+            0.926424436868073
           ),
           .Dim = c(2L, 2L),
           .Dimnames = ses_dim
@@ -197,10 +197,10 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         ),
         Other = structure(
           c(
-            0.835443037974684,
-            0.0836363636363636,
-            0.164556962025316,
-            0.916363636363636
+            0.935443037974684,
+            0.1536363636363636,
+            0.064556962025316,
+            0.846363636363636
           ),
           .Dim = c(2L, 2L),
           .Dimnames = ses_dim
@@ -218,21 +218,21 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
 
     ses_list <- list(
       "White" = list(f = make_markov_series,
-                     pars = list(tm = race_ses_tm[["White"]])),
+                     pars = list(tm = tm_convert(race_ses_tm[["White"]]))),
       "Hispanic or Latino Ethnicity" = list(f = make_markov_series,
-                                            pars = list(tm = race_ses_tm[["White"]])),
+                                            pars = list(tm = tm_convert(race_ses_tm[["Other"]]))),
       "Black or African American" = list(f = make_markov_series,
-                                         pars = list(tm = race_ses_tm[["African American"]])),
+                                         pars = list(tm = tm_convert(race_ses_tm[["African American"]]))),
       "Asian" = list(f = make_markov_series,
                      pars = list(tm = race_ses_tm[["Asian American"]])),
       "Demographic Race Two or More Races" = list(f = make_markov_series,
                                                   pars = list(tm = race_ses_tm[["Multiple"]])),
       "American Indian or Alaska Native" = list(f = make_markov_series,
-                                                pars = list(tm = race_ses_tm[["American Indian"]])),
+                                                pars = list(tm = tm_convert(race_ses_tm[["American Indian"]]))),
       "Other" = list(f = make_markov_series,
                      pars = list(tm = race_ses_tm[["Other"]])),
       "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series,
-                                                         pars = list(tm = race_ses_tm[["American Indian"]])),
+                                                         pars = list(tm = tm_convert(race_ses_tm[["American Indian"]]))),
       "GROUPVARS" = c("Race")
     )
   }

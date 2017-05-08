@@ -10,12 +10,14 @@
 }
 }
 \usage{
-make_markov_series(n, tm, ...)
+make_markov_series(n, tm, burnin = NULL, ...)
 }
 \arguments{
 \item{n}{an integer representing the length of the series}
 
 \item{tm}{a Transition Matrix that describes the transition matrix}
+
+\item{burnin}{integer, number of values to simulate before drawing from the series}
 
 \item{...}{additional arguments to apss to \code{\link{markovchainSequence}}}
 }

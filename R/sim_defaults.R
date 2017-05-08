@@ -220,14 +220,14 @@ gen_annual_status <- function(data, control = sim_control()){
   stopifnot(all(reqdVars %in% names(data)))
   idvar <- names(data)[which(names(data) %in% c("ID", "id", "sid"))]
   data <- data %>% group_by_(idvar) %>% arrange(year) %>%
-    mutate(iep = markov_cond_list(Sex[1], n = n()-1, control$iep_list,
+    mutate(iep = markov_cond_list(Sex[1], n = n()-1, lst = control$iep_list,
                                   t0 = iep[1], include.t0 = TRUE),
-           gifted = markov_cond_list(Sex[1], n = n(), control$gifted_list),
-           ell = markov_cond_list("ALL", n = n() - 1, control$ell_list,
+           gifted = markov_cond_list(Sex[1], n = n(), lst = control$gifted_list),
+           ell = markov_cond_list("ALL", n = n() - 1, lst = control$ell_list,
                                   t0 = ell[1], include.t0 = TRUE),
-           frpl = markov_cond_list(Race[1], n = n()-1, control$ses_list,
+           frpl = markov_cond_list(Race[1], n = n()-1, lst = control$ses_list,
                                   t0 = frpl[1], include.t0 = TRUE),
-           grade = markov_cond_list("ALL", n = n() - 1, control$grade_levels,
+           grade = markov_cond_list("ALL", n = n() - 1, lst = control$grade_levels,
                                   t0 = grade[1], include.t0 = TRUE))
   return(data)
 }

@@ -2,6 +2,7 @@
 #'
 #' @param n an integer representing the length of the series
 #' @param tm a Transition Matrix that describes the transition matrix
+#' @param burnin integer, number of values to simulate before drawing from the series
 #' @param ... additional arguments to apss to \code{\link{markovchainSequence}}
 #' @return a vector of length \code{n} with a random series of 0 and 1 generated
 #' from the \code{tm}
@@ -21,7 +22,7 @@
 #' @export
 #' @examples
 #' make_markov_series(10, matrix(c(0.6,0.4,0.9,0.1), nrow=2, byrow=TRUE))
-make_markov_series <- function(n, tm, ...){
+make_markov_series <- function(n, tm, burnin = NULL, ...){
   stopifnot(is.matrix(tm))
   stopifnot(n > 0)
   if(any(tm > 1)){
@@ -29,7 +30,12 @@ make_markov_series <- function(n, tm, ...){
     tm <- tm / rowSums(tm)
   }
   mc <- new("markovchain", transitionMatrix = tm)
-  series <- markovchainSequence(n, mc, ...)
+  if(!is.null(burnin)){
+    series <- markovchainSequence(n+burnin, mc, ...)
+    series <- series[burnin:(n+burnin)]
+  } else{
+    series <- markovchainSequence(n, mc, ...)
+  }
   return(series)
 }
 

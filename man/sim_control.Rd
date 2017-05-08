@@ -11,7 +11,7 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
   school_cov_mat = NULL, school_names = NULL, postsec_names,
   gpa_sim_parameters = NULL, grad_sim_parameters = NULL,
   ps_sim_parameters = NULL, assess_sim_par = NULL,
-  assessment_adjustment = NULL)
+  assessment_adjustment = NULL, grad_adjustment = NULL)
 }
 \arguments{
 \item{nschls}{integer- number of schools to create, default is 2}
@@ -61,6 +61,9 @@ names from}
 \item{assess_sim_par}{list - parameters to pass to \code{gen_outcome_model}}
 
 \item{assessment_adjustment}{list - parameters to adjust assessment scores by
+for bias}
+
+\item{grad_adjustment}{list - paramters to adjust graduation probabilities by
 for bias}
 }
 \value{

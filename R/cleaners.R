@@ -396,6 +396,7 @@ sdp_cleaner <- function(simouts){
   final_data$race_ethnicity <- factor(final_data$race_ethnicity,
                                       levels = c("Black", "Asian", "Hispanic",
                                                  "Native American", "White", "Multiple/Other"))
+  final_data$ontrack_sample <- 1
   return(final_data)
 }
 

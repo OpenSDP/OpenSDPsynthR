@@ -912,14 +912,14 @@ onTrackBar$n[onTrackBar$ot_10 == "Dropout/Disappear"] <-
 ```{r B2plot}
 ggplot(onTrackBar, aes(x = reorder(ot, n/count), 
                          y = n/count, group = ot_10)) + 
-  geom_bar(aes(fill = ot_10), stat = 'identity') + 
+  geom_bar(aes(fill = ot_10), stat = 'identity', color = I("black")) + 
   geom_text(aes(label = round(100* n/count, 1)), 
             position = position_stack(vjust=0.3)) + 
   theme_bw() + 
   scale_y_continuous(limits = c(-1, 1), label = percent, 
       name = "Percent of Tenth Grade Students \n by Ninth Grade Status") + 
   scale_fill_brewer(name = "End of Tenth Grade \n On-Track Status", 
-                    type = "div", palette = 5) + 
+                    type = "qual", palette = 3) + 
   theme(axis.text.x = element_text(color = "black"), 
         legend.position = c(0.15, 0.825)) +
   labs(title = "Proportion of Students On-Track to Graduate by School", 
@@ -1021,7 +1021,7 @@ schoolLevel$outcome[schoolLevel$outcome == "late_grad"] <- "Graduate in 4+ Years
 #  // Step 5: Plot
 ggplot(schoolLevel, aes(x = reorder(first_hs_name, measure), y = measure, 
                         group = first_hs_name, fill = outcome)) + 
-  geom_bar(aes(fill = outcome), stat = 'identity') + 
+  geom_bar(aes(fill = outcome), stat = 'identity', color = I("black")) + 
   geom_text(aes(label = round(100 * measure, 0)), 
             position = position_stack(vjust = 0.8)) + 
   theme_bw() + theme(panel.grid = element_blank(), axis.ticks.x = element_blank()) +

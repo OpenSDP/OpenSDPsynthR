@@ -316,6 +316,23 @@ zeroNA <- function(x){
   return(x)
 }
 
+#' Clip a vector to be between a minimum and a maximum
+#'
+#' @param x a numeric vector
+#' @param min numeric, a floor
+#' @param max numeric, a ceiling
+#'
+#' @return x, truncated to be between min and max
+#' @export
+num_clip <- function(x, min, max){
+  # TODO Rcpp::cppFunction('NumericVector num_clip( NumericVector x, double a, double b){
+  # return clamp( a, x, b ) ;
+   #  }')
+  x <- ifelse(x > max, max, x)
+  x <- ifelse(x < min, min, x)
+  return(x)
+}
+
 #' Validate probability list formatting and structure
 #'
 #' @param list list that is to be passed as a probability list to simulation functions

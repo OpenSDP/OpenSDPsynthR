@@ -27,6 +27,8 @@
 #' @param assess_sim_par list - parameters to pass to \code{gen_outcome_model}
 #' @param assessment_adjustment list - parameters to adjust assessment scores by
 #' for bias
+#' @param grad_adjustment list - paramters to adjust graduation probabilities by
+#' for bias
 #' @details This function has a full set of default values that are designed to
 #' produce realistic data. These defaults can be overridden by specifying any
 #' of the arguments to be overridden as an option to the function call.
@@ -55,7 +57,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         grad_sim_parameters=NULL,
                         ps_sim_parameters = NULL,
                         assess_sim_par = NULL,
-                        assessment_adjustment = NULL){
+                        assessment_adjustment = NULL,
+                        grad_adjustment = NULL){
   nschls <- nschls
 
   # temporarily hardcoding these values here for testing
@@ -401,6 +404,35 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     }
   )
 
+  grad_adjustment <- list(
+    race_list = list(
+      "White" = 0.1,
+      "Black or African American" = -0.2,
+      "Asian" = 0.05,
+      "Hispanic or Latino Ethnicity" = -0.2,
+      "Demographic Race Two or More Races" = -0.05,
+      "American Indian or Alaska Native" = -0.25,
+      "Native Hawaiian or Other Pacific Islander" = -0.05
+    ),
+    perturb_race = function(x, race,race_par = race_list){
+      val_mean <- race_par[[which(race == names(race_par))]]
+      y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.4, 0.2)
+      y <- num_clip(y, 0, 1)
+      y <- ifelse(y <= 0, 0.025, y) #failsafes to prevent negative probabilities
+      y <- ifelse(y >= 1, 0.985, y) #failsafes to prevent negative probabilities
+      return(y)
+    },
+    frl_list = list("0" = 0.01, "1" = -0.5),
+    perturb_frl = function(x, frl, sd, frl_par = frl_list){
+      val_mean <- frl_par[[which(frl == names(frl_par))]]
+      y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.4, 0.2)
+      y <- num_clip(y, 0, 1)
+      y <- ifelse(y <= 0, 0.05, y) #failsafes to prevent negative probabilities
+      y <- ifelse(y >= 1, 0.95, y) #failsafes to prevent negative probabilities
+      return(y)
+    }
+  )
+
 
   school_names <- sch_names
   postsec_names <- ps_names
@@ -426,7 +458,8 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     grad_sim_parameters,
     ps_sim_parameters,
     assess_sim_par,
-    assessment_adjustment))
+    assessment_adjustment,
+    grad_adjustment))
 
 }
 

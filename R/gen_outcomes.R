@@ -148,28 +148,21 @@ gen_grad <- function(data, control = sim_control()){
   # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
   zed <- simulate(grad_sim$sim_model, nsim = 500, newdata = data,
                   family = "binomial")
-  out_prob <- apply(zed, 1, mean)
-  out_binom <- sapply(out_prob, function(x) rbinom(1, 1, x))
+  data$out_prob <- apply(zed, 1, mean)
+  # TODO: test to ensure these values are vectorized and redrawn per observation
   # TODO: Perturb graduation by race
   # Perturb the test scores to reduce correlation and induce bias
   # FRPL bias is underestimated because of the time component so need to add it in
   # Racial bias is entirely absent
-  # data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
-  #                        data$math_ss, data$frpl, data$math_sd,
-  #                        MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
-  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_frl,
-  #                       data$rdg_ss, data$frpl, data$rdg_sd,
-  #                       MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
-  # data$math_ss <- mapply(control$assessment_adjustment$perturb_race,
-  #                        data$math_ss, data$Race, data$math_sd,
-  #                        MoreArgs = list(race_par = control$assessment_adjustment$race_list))
-  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
-  #                       data$rdg_ss, data$Race, data$rdg_sd,
-  #                       MoreArgs = list(race_par = control$assessment_adjustment$race_list))
-  # # Perturb to reduce test correlation
-
+  data$out_prob <- mapply(control$grad_adjustment$perturb_frl,
+                          data$out_prob, data$frpl,
+                          MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+  data$out_prob <- mapply(control$grad_adjustment$perturb_race,
+                         data$out_prob, data$Race,
+                         MoreArgs = list(race_par = control$grad_adjustment$race_list))
+  data$out_binom <- sapply(data$out_prob, function(x) rbinom(1, 1, x))
   # Export
-  out <- data.frame(grad_prob = out_prob, grad = out_binom)
+  out <- data.frame(grad_prob = data$out_prob, grad = data$out_binom)
   return(out)
 }
 

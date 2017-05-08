@@ -150,10 +150,6 @@ gen_grad <- function(data, control = sim_control()){
                   family = "binomial")
   data$out_prob <- apply(zed, 1, mean)
   # TODO: test to ensure these values are vectorized and redrawn per observation
-  # TODO: Perturb graduation by race
-  # Perturb the test scores to reduce correlation and induce bias
-  # FRPL bias is underestimated because of the time component so need to add it in
-  # Racial bias is entirely absent
   data$out_prob <- mapply(control$grad_adjustment$perturb_frl,
                           data$out_prob, data$frpl,
                           MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
@@ -204,10 +200,16 @@ gen_ps <- function(data, control = sim_control()){
   # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
   zed <- simulate(ps_sim$sim_model, nsim = 500, newdata = data,
                   family = "binomial")
-  out_prob <- apply(zed, 1, mean)
-  out_binom <- sapply(out_prob, function(x) rbinom(1, 1, x))
-  # Export
-  out <- data.frame(ps_prob = out_prob, ps = out_binom)
+  data$out_prob <- apply(zed, 1, mean)
+  # TODO: test to ensure these values are vectorized and redrawn per observation
+  data$out_prob <- mapply(control$ps_adjustment$perturb_frl,
+                          data$out_prob, data$frpl,
+                          MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+  data$out_prob <- mapply(control$ps_adjustment$perturb_race,
+                          data$out_prob, data$Race,
+                          MoreArgs = list(race_par = control$ps_adjustment$race_list))
+  data$out_binom <- sapply(data$out_prob, function(x) rbinom(1, 1, x))
+  out <- data.frame(ps_prob = data$out_prob, ps = data$out_binom)
   return(out)
 }
 
@@ -222,8 +224,6 @@ gen_ps <- function(data, control = sim_control()){
 gen_assess <- function(data, control = sim_control()){
   data <- as.data.frame(data)
   df <- do.call(sim_reg, control$assess_sim_par, quote = TRUE)
-  # mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1|clustID) + (1|clust3ID)"),
-  #             data = df)
   mod <- lmer(update(control$assess_sim_par$fixed, "sim_data ~ . + (1+time|clustID) +
                      (1+time|clust3ID)"),
               data = df)
@@ -243,7 +243,6 @@ gen_assess <- function(data, control = sim_control()){
   math <- apply(zed, 1, function(x) sample(x[150:350], 1))
   rdg <- apply(zed, 1, function(x) sample(x[75:425], 1))
   # No need to run simulation code twice, it is expensive
-  #
   # zed <- simulate(mod, nsim = 500, newdata = data, allow.new.levels = TRUE)
   # rdg <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
   data$math_ss <- math
@@ -267,13 +266,12 @@ gen_assess <- function(data, control = sim_control()){
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
                         data$rdg_ss, data$Race, data$rdg_sd,
                         MoreArgs = list(race_par = control$assessment_adjustment$race_list))
-  # Perturb to reduce test correlation
+  # Perturb to reduce test correlation between reading and math
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_base,
                         data$rdg_ss, data$rdg_sd)
   out <- data.frame(math_ss = data$math_ss, rdg_ss = data$rdg_ss)
   return(out)
 }
-
 
 # ggplot(assess, aes(x = math_ss, y = math_ssb, group = frpl, color = frpl)) +
 #   geom_point(alpha = I(0.3)) + geom_smooth(se = FALSE) +

@@ -251,7 +251,8 @@ plotdf$second_year_persisters = as.numeric(plotdf$enrl_1oct_ninth_yr1_any == 1 &
 
 agencyData <- plotdf %>%  
   summarize(grad = mean(grad), 
-            seamless_transitioners_any = mean(seamless_transitioners_any, na.rm=TRUE), 
+            seamless_transitioners_any = mean(seamless_transitioners_any,
+                                              na.rm=TRUE), 
             second_year_persisters = mean(second_year_persisters, na.rm=TRUE), 
             N = n())
 

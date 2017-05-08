@@ -27,8 +27,11 @@
 #' @param assess_sim_par list - parameters to pass to \code{gen_outcome_model}
 #' @param assessment_adjustment list - parameters to adjust assessment scores by
 #' for bias
-#' @param grad_adjustment list - paramters to adjust graduation probabilities by
+#' @param grad_adjustment list - parameters to adjust graduation probabilities by
 #' for bias
+#' @param grad_adjustment list - parameters to adjust postsecondary enrollment
+#' probabilities by for bias
+#' @param assess_grades character - grade levels to generate assessment scores for
 #' @details This function has a full set of default values that are designed to
 #' produce realistic data. These defaults can be overridden by specifying any
 #' of the arguments to be overridden as an option to the function call.
@@ -58,169 +61,185 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         ps_sim_parameters = NULL,
                         assess_sim_par = NULL,
                         assessment_adjustment = NULL,
-                        grad_adjustment = NULL){
+                        grad_adjustment = NULL,
+                        ps_adjustment = NULL,
+                        assess_grades = NULL){
+
   nschls <- nschls
-
-  # temporarily hardcoding these values here for testing
-  tm_gifted_f <- matrix(
-    c(500, 1, 2, 500),
-    nrow = 2,
-    byrow = TRUE,
-    dimnames = list(c("1", "0"), c("1", "0"))
-  )
-  tm_gifted_m <- tm_gifted_f
-  tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
-  tm_gifted_m <- tm_convert(tm_gifted_m)
-  tm_gifted_f <- tm_convert(tm_gifted_f)
-
-  gifted_list <- list(
-    "Male" = list(f = make_markov_series,
-                  pars = list(tm = tm_gifted_m,
-                              # Use quote so for each call in the loop sample is redrawn
-                              t0 = quote(
-                                sample(c("1", "0"), 1, prob = c(10, 90))
-                              ))),
-    "Female" = list(f = make_markov_series,
-                    pars = list(tm = tm_gifted_f,
-                                t0 = quote(
-                                  sample(c("1", "0"), 1, prob = c(8, 92))
-                                ))),
-    "GROUPVARS" = c("Sex")
-  )
-
-  # IEP
-  tm_iep_f <- matrix(
-    c(650, 50, 15, 900),
-    nrow = 2,
-    byrow = TRUE,
-    dimnames = list(c("1", "0"), c("1", "0"))
-  )
-  tm_iep_m <- tm_iep_f
-  tm_iep_m[, 1] <- tm_iep_m[, 1] + 50
-  tm_iep_m <- tm_convert(tm_iep_m)
-  tm_iep_f <- tm_convert(tm_iep_f)
-
-  iep_list <- list(
-    "Male" = list(f = make_markov_series,
-                  pars = list(tm = tm_iep_m)),
-    "Female" = list(f = make_markov_series,
-                    pars = list(tm = tm_iep_f)),
-    "GROUPVARS" = c("Sex")
-  )
-
-  tm <- matrix(
-    c(800, 20, 5, 800),
-    nrow = 2,
-    byrow = TRUE,
-    dimnames = list(c("1", "0"), c("1", "0"))
-  )
-  tm <- tm_convert(tm)
-  ell_list <- list(
-    "ALL" = list(f = make_markov_series,
-                 pars = list(tm = tm)),
-    "GROUPVARS" = c("ell")
-  )
-
-  tm <- grade_transitions(ngrades = 15L, diag_limit = 0.95)
-  grade_levels <- list(
-    "ALL" = list(f = make_markov_series,
-                 pars = list(tm = tm)),
-    "GROUPVARS" = c("grade")
-  )
-
-  ses_dim <- list(c("0", "1"), c("0", "1"))
-  race_ses_tm <- structure(
-    list(
-      White = structure(
-        c(
-          0.91859191329348,
-          0.112994957427461,
-          0.0814080867065204,
-          0.887005042572539
-        ),
-        .Dim = c(2L, 2L),
-        .Dimnames = ses_dim
-      ),
-      `African American` = structure(
-        c(
-          0.810682926054717,
-          0.0835755631319266,
-          0.189317073945283,
-          0.916424436868073
-        ),
-        .Dim = c(2L, 2L),
-        .Dimnames = ses_dim
-      ),
-      `Asian American` = structure(
-        c(
-          0.935574229691877,
-          0.156600974782793,
-          0.0644257703081232,
-          0.843399025217207
-        ),
-        .Dim = c(2L, 2L),
-        .Dimnames = ses_dim
-      ),
-      `American Indian` = structure(
-        c(
-          0.788359788359788,
-          0.0721177038109021,
-          0.211640211640212,
-          0.927882296189098
-        ),
-        .Dim = c(2L, 2L),
-        .Dimnames = ses_dim
-      ),
-      Multiple = structure(
-        c(
-          0.891008962127783,
-          0.0926444387884958,
-          0.108991037872217,
-          0.907355561211504
-        ),
-        .Dim = c(2L, 2L),
-        .Dimnames = ses_dim
-      ),
-      Other = structure(
-        c(
-          0.835443037974684,
-          0.0836363636363636,
-          0.164556962025316,
-          0.916363636363636
-        ),
-        .Dim = c(2L, 2L),
-        .Dimnames = ses_dim
-      )
-    ),
-    .Names = c(
-      "White",
-      "African American",
-      "Asian American",
-      "American Indian",
-      "Multiple",
-      "Other"
+  # TODO: Are these parameters still used?
+  if(is.null(gifted_list)){
+    # temporarily hardcoding these values here for testing
+    tm_gifted_f <- matrix(
+      c(500, 1, 2, 500),
+      nrow = 2,
+      byrow = TRUE,
+      dimnames = list(c("1", "0"), c("1", "0"))
     )
-  )
+    tm_gifted_m <- tm_gifted_f
+    tm_gifted_m[1, 1] <- tm_gifted_m[1, 1] + 25
+    tm_gifted_m <- tm_convert(tm_gifted_m)
+    tm_gifted_f <- tm_convert(tm_gifted_f)
+    gifted_list <- list(
+      "Male" = list(f = make_markov_series,
+                    pars = list(tm = tm_gifted_m,
+                                # Use quote so for each call in the loop sample is redrawn
+                                t0 = quote(
+                                  sample(c("1", "0"), 1, prob = c(10, 90))
+                                ))),
+      "Female" = list(f = make_markov_series,
+                      pars = list(tm = tm_gifted_f,
+                                  t0 = quote(
+                                    sample(c("1", "0"), 1, prob = c(8, 92))
+                                  ))),
+      "GROUPVARS" = c("Sex")
+    )
+  }
+  # IEP
+  if(is.null(iep_list)){
+    tm_iep_f <- matrix(
+      c(650, 15, 15, 900),
+      nrow = 2,
+      byrow = TRUE,
+      dimnames = list(c("1", "0"), c("1", "0"))
+    )
+    tm_iep_m <- tm_iep_f
+    tm_iep_m[, 1] <- tm_iep_m[, 1] + 25
+    tm_iep_m <- tm_convert(tm_iep_m)
+    tm_iep_f <- tm_convert(tm_iep_f)
 
-  ses_list <- list(
-    "White" = list(f = make_markov_series,
-                   pars = list(tm = race_ses_tm[["White"]])),
-    "Hispanic or Latino Ethnicity" = list(f = make_markov_series,
-                                          pars = list(tm = race_ses_tm[["White"]])),
-    "Black or African American" = list(f = make_markov_series,
-                                       pars = list(tm = race_ses_tm[["African American"]])),
-    "Asian" = list(f = make_markov_series,
-                   pars = list(tm = race_ses_tm[["Asian American"]])),
-    "Demographic Race Two or More Races" = list(f = make_markov_series,
-                                                pars = list(tm = race_ses_tm[["Multiple"]])),
-    "American Indian or Alaska Native" = list(f = make_markov_series,
-                                              pars = list(tm = race_ses_tm[["American Indian"]])),
-    "Other" = list(f = make_markov_series,
-                   pars = list(tm = race_ses_tm[["Other"]])),
-    "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series,
-                                                       pars = list(tm = race_ses_tm[["American Indian"]])),
-    "GROUPVARS" = c("Race")
-  )
+    iep_list <- list(
+      "Male" = list(f = make_markov_series,
+                    pars = list(tm = tm_iep_m)),
+      "Female" = list(f = make_markov_series,
+                      pars = list(tm = tm_iep_f)),
+      "GROUPVARS" = c("Sex")
+    )
+  }
+  # ELL list
+  if(is.null(ell_list)){
+    tm <- matrix(
+      c(800, 20, 5, 800),
+      nrow = 2,
+      byrow = TRUE,
+      dimnames = list(c("1", "0"), c("1", "0"))
+    )
+    tm <- tm_convert(tm)
+    ell_list <- list(
+      "ALL" = list(f = make_markov_series,
+                   pars = list(tm = tm)),
+      "GROUPVARS" = c("ell")
+    )
+  }
+  # Grade Levels
+  if(is.null(grade_levels)){
+    tm <- grade_transitions(ngrades = 15L, diag_limit = 0.985)
+    grade_levels <- list(
+      "ALL" = list(f = make_markov_series,
+                   pars = list(tm = tm)),
+      "GROUPVARS" = c("grade")
+    )
+  }
+  # SES
+  if(is.null(ses_list)){
+
+    ses_dim <- list(c("0", "1"), c("0", "1"))
+    race_ses_tm <- structure(
+      list(
+        White = structure(
+          c(
+            0.91859191329348,
+            0.112994957427461,
+            0.0814080867065204,
+            0.887005042572539
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        `African American` = structure(
+          c(
+            0.810682926054717,
+            0.0835755631319266,
+            0.189317073945283,
+            0.916424436868073
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        `Asian American` = structure(
+          c(
+            0.935574229691877,
+            0.156600974782793,
+            0.0644257703081232,
+            0.843399025217207
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        `American Indian` = structure(
+          c(
+            0.788359788359788,
+            0.0721177038109021,
+            0.211640211640212,
+            0.927882296189098
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        Multiple = structure(
+          c(
+            0.891008962127783,
+            0.0926444387884958,
+            0.108991037872217,
+            0.907355561211504
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        ),
+        Other = structure(
+          c(
+            0.835443037974684,
+            0.0836363636363636,
+            0.164556962025316,
+            0.916363636363636
+          ),
+          .Dim = c(2L, 2L),
+          .Dimnames = ses_dim
+        )
+      ),
+      .Names = c(
+        "White",
+        "African American",
+        "Asian American",
+        "American Indian",
+        "Multiple",
+        "Other"
+      )
+    )
+
+    ses_list <- list(
+      "White" = list(f = make_markov_series,
+                     pars = list(tm = race_ses_tm[["White"]])),
+      "Hispanic or Latino Ethnicity" = list(f = make_markov_series,
+                                            pars = list(tm = race_ses_tm[["White"]])),
+      "Black or African American" = list(f = make_markov_series,
+                                         pars = list(tm = race_ses_tm[["African American"]])),
+      "Asian" = list(f = make_markov_series,
+                     pars = list(tm = race_ses_tm[["Asian American"]])),
+      "Demographic Race Two or More Races" = list(f = make_markov_series,
+                                                  pars = list(tm = race_ses_tm[["Multiple"]])),
+      "American Indian or Alaska Native" = list(f = make_markov_series,
+                                                pars = list(tm = race_ses_tm[["American Indian"]])),
+      "Other" = list(f = make_markov_series,
+                     pars = list(tm = race_ses_tm[["Other"]])),
+      "Native Hawaiian or Other Pacific Islander" = list(f = make_markov_series,
+                                                         pars = list(tm = race_ses_tm[["American Indian"]])),
+      "GROUPVARS" = c("Race")
+    )
+  }
+  #
+
+
+
 
   school_means <-  structure(
     c(0.513956976686301, 0.618015258420426, 0.111746668239179,
@@ -432,6 +451,13 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       return(y)
     }
   )
+  if(is.null(ps_adjustment)){
+    ps_adjustment <- grad_adjustment
+  }
+  if(is.null(assess_grades)){
+    assess_grades <- c("3", "4", "5", "6", "7", "8", "9", "11")
+  }
+
 
 
   school_names <- sch_names
@@ -459,7 +485,9 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     ps_sim_parameters,
     assess_sim_par,
     assessment_adjustment,
-    grad_adjustment))
+    grad_adjustment,
+    ps_adjustment,
+    assess_grades))
 
 }
 

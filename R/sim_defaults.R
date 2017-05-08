@@ -121,6 +121,7 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year <- stu_year %>% arrange_(idvar, "year")
   message("Cleaning up...")
   stu_year$age <- round(stu_year$age, 0)
+  stu_year <- stu_year %>% filter(age < 22)
   ## TODO: Add attendance here
   stu_year$ndays_possible <- 180
   stu_year$ndays_attend <- rpois(nrow(stu_year), 180)
@@ -137,6 +138,7 @@ simpop <- function(nstu, seed, control = sim_control()){
                                    "ell", "iep", "gifted", "schid")],
                       demog_master[, 1:4])
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
+  assess %<>% filter(grade %in% control$assess_grades)
   zz <- gen_assess(data = assess, control = control)
   assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
   assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
@@ -169,11 +171,12 @@ simpop <- function(nstu, seed, control = sim_control()){
                           by = c(idvar, "grade", "year"))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
-  # TODO
+  # TODO: chrt_grad should never be infinite
+  # TODO: students should not
   hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
-  # TODO: Fix hardcoding of postsec
+  # TODO: Fix hardcoding of postsec - insert scorecard data here
   nsc_postsec <- gen_nsc(n = 35, names = control$postsec_names)
   message("Simulating postsecondary outcomes... be patient...")
   ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec,

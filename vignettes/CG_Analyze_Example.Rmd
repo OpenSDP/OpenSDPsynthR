@@ -31,11 +31,10 @@ library(tidyr)
 library(scales)
 library(magrittr)
 
-simouts <- simpop(nstu = 300, seed = 488234, 
-                  control = sim_control(nschls = 12L, minyear=1990, 
+simouts <- simpop(nstu = 3000, seed = 488234, 
+                  control = sim_control(nschls = 7L, minyear=1990, 
                                         maxyear=2010)) 
 cgdata <- sdp_cleaner(simouts)
-# sdp_cleaner is duplicating things
 
 dupes <- cg_data %>% group_by(sid) %>% mutate(dupes = n()) %>% filter(dupes > 1)
 

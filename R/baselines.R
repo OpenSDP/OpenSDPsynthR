@@ -203,9 +203,11 @@ grade_transitions <- function(ngrades=15L, diag_limit = 0.975){
   stopifnot(class(ngrades) %in% c("numeric", "integer"))
   stopifnot(diag_limit > 0 & diag_limit < 1)
   empty <- matrix(rep(0, ngrades^2), nrow = ngrades, ncol = ngrades)
-  diag(empty) <- 1
-  for(i in 1:ngrades){
-    diag(empty)[i] <- runif(1, diag_limit, 1)
+  pool <- sort(runif(ngrades, diag_limit, 1))
+  if(ngrades > 9){
+    diag(empty) <- pool[c(1:3, 8:(ngrades-1), 4, 5, 6, 7, ngrades)]
+  } else{
+    diag(empty) <- pool
   }
   empty <- diag_offset(empty, 1L)
   for(g in 1:ngrades){

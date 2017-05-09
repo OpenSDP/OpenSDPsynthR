@@ -217,13 +217,13 @@ chrt_ninth_end_grad_late = 2006
 
 # High school graduation cohorts you can observe enrolling in college the 
 # fall after graduation
-chrt_grad_begin = 2008
-chrt_grad_end = 2010
+chrt_grad_begin = 2007
+chrt_grad_end = 2009
 
 # High school graduation cohorts you can observe enrolling in college 
 # two years after hs graduation
-chrt_grad_begin_delayed = 2008
-chrt_grad_end_delayed = 2010
+chrt_grad_begin_delayed = 2007
+chrt_grad_end_delayed = 2009
 
 # In RStudio these variables will appear in the Environment pane under "Values"
 ```
@@ -3078,14 +3078,14 @@ chart2year <- bind_rows(plotdf %>% group_by(first_college_name_2yr) %>%
 chart4year %>% arrange(-enrolled) %>% 
   select(first_college_name_4yr, enrolled, perEnroll, persisted, perPersist) %>%
   head(num_inst) %>%
-    kable(., col.names = c("Name", "Number Enrolled", 
+   knitr::kable(., col.names = c("Name", "Number Enrolled", 
                          "% Enrolled", "Number Persisted", 
                          "% Persisted"))
 
 chart2year %>% arrange(-enrolled) %>% 
   select(first_college_name_2yr, enrolled, perEnroll, persisted, perPersist) %>%
   head(num_inst) %>%
-  kable(., col.names = c("Name", "Number Enrolled", 
+  knitr::kable(., col.names = c("Name", "Number Enrolled", 
                          "% Enrolled", "Number Persisted", 
                          "% Persisted"))
 

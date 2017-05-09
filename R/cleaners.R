@@ -408,6 +408,7 @@ sdp_cleaner <- function(simouts){
   final_data$status_after_yr4[final_data$hs_status == "early"] <- "Graduated On-Time"
   final_data$status_after_yr4[final_data$hs_status == "ontime"] <- "Graduated On-Time"
   final_data$status_after_yr4[final_data$hs_status == "dropout"] <- "Dropped Out"
+  final_data$status_after_yr4[final_data$hs_status == "transferout"] <- "Disappeared"
   final_data$status_after_yr4[final_data$hs_status == "disappear"] <- "Disappeared"
   final_data$status_after_yr4[final_data$hs_status == "late"] <- "Still Enrolled"
   final_data$status_after_yr4[final_data$status_after_yr4 %in%

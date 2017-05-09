@@ -104,6 +104,7 @@ gen_gpa <- function(data, control=sim_control()){
   # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
   zed <- simulate(gpa_sim$sim_model, nsim = 500, newdata = data)
   out <- apply(zed, 1, function(x) sample(x, 1))
+  # TODO: Perturb GPA
   # Perturb the gpa
   # FRPL bias is underestimated because of the time component so need to add it in
   # Racial bias is entirely absent
@@ -254,6 +255,7 @@ gen_assess <- function(data, control = sim_control()){
   # Perturb the test scores to reduce correlation and induce bias
   # FRPL bias is underestimated because of the time component so need to add it in
   # Racial bias is entirely absent
+  # TODO add bias by school
   data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
                          data$math_ss, data$frpl, data$math_sd,
                          MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
@@ -272,14 +274,6 @@ gen_assess <- function(data, control = sim_control()){
   out <- data.frame(math_ss = data$math_ss, rdg_ss = data$rdg_ss)
   return(out)
 }
-
-# ggplot(assess, aes(x = math_ss, y = math_ssb, group = frpl, color = frpl)) +
-#   geom_point(alpha = I(0.3)) + geom_smooth(se = FALSE) +
-#   geom_abline(slope = 1, intercept= 0)
-# ggplot(assess, aes(x = math_ssb, group = frpl, color = frpl)) +
-#   geom_density(alpha = I(0.3)) + facet_wrap(~age)
-# assess$math_ssc <- mapply(perturb_race, assess$math_ssb, assess$Race, assess$math_sd)
-
 
 
 # TODO generalize these two functions to some generic fuzzmatch/generate rmvnorm data
@@ -567,14 +561,17 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
 #' @return a table of enrollments
 #' @export
 gen_ps_enrollment <- function(hs_outcomes, nsc, control){
+  # TODO: Fix cohort here
   ps_pool <- hs_outcomes[hs_outcomes$ps == 1,
                                  c("sid", "ps_prob", "grad", "gpa", "ps",
                                    "chrt_grad")]
-
+  ps_pool$late <- sapply(ps_pool$ps_prob, function(x) rbinom(1, 1, prob = 1-x))
   big <- tidyr::crossing(sid = as.character(unique(ps_pool$sid)), year = 1:4,
                   term = c("fall", "spring"))
   ps_pool <- left_join(big, ps_pool, by = "sid")
-  ps_pool$yr_seq <- ps_pool$year
+  # Add a random chance be a late enroller here
+  ps_pool$yr_seq <- ps_pool$year + ps_pool$late
+  ps_pool$late <- NULL
   ps_pool$year <- ps_pool$chrt_grad + ps_pool$year # for fall part of school year
   ps_pool$chrt_grad <- NULL
   ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term)

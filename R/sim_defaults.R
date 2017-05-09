@@ -370,7 +370,9 @@ assign_schools <- function(student, schools, method = NULL){
     "GROUPVARS" = c("ALL")
   )
   idvar <- names(student)[which(names(student) %in% c("ID", "id", "sid"))]
-
+  # TODO
+  # t0 should be a function of student race, using the demographic method
+  # t0 should be a function of performance using a non-demographic method
   student <- student %>% group_by_(idvar) %>% arrange(year) %>%
     mutate(schid = markov_cond_list("ALL", n = n()-1, school_t_list,
                                     t0 = sample(schools$schid, 1, prob = schools$enroll),

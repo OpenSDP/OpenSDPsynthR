@@ -224,7 +224,7 @@ chrt_grad_end = 2009
 # two years after hs graduation
 chrt_grad_begin_delayed = 2008
 chrt_grad_end_delayed = 2008
-─
+
 # In RStudio these variables will appear in the Environment pane under "Values"
 ```
 
@@ -1739,6 +1739,7 @@ plotdf <- cgdata %>% filter(chrt_grad >= chrt_grad_begin &
 
 ```{r D2reshapeAndRecode}
 # // Step 2: Create binary outcomes for late enrollers
+# NA now means that there is no postsec
 plotdf$late_any <- ifelse(plotdf$enrl_1oct_grad_yr1_any == 0 & 
                             plotdf$enrl_ever_w2_grad_any == 1, 1, 0)
 plotdf$late_4yr <- ifelse(plotdf$enrl_1oct_grad_yr1_any == 0 & 
@@ -2248,8 +2249,7 @@ ggplot(chartData, aes(x = reorder(label, total_count), y = measure,
   geom_hline(yintercept = 0) + 
   geom_text(aes(label = round(measure * 100, 0)), 
             position=position_stack(vjust = 0.85)) +
-  scale_y_continuous(limits = c(-.25, 1), breaks = seq(-.25, 1, 0.2), 
-                     label = percent) +
+  scale_y_continuous(label = percent) +
   theme_classic() + 
   guides(fill = guide_legend(nrow=1, title = "", keywidth = 2)) +
   scale_fill_brewer(type = "qual", palette = 2, direction = -1) + 

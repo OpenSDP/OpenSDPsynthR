@@ -20,6 +20,7 @@ sdp_cleaner <- function(simouts){
       chrt_ninth = min(year[grade == "9"]),
       nyears = n()
     )
+  hs_summary <- filter(hs_summary, is.finite(chrt_ninth))
   schools <- as.data.frame(simouts$schools)
   attributes(schools$schid) <- NULL
   hs_summary <- inner_join(hs_summary, schools[, c("schid", "name")],
@@ -132,6 +133,7 @@ sdp_cleaner <- function(simouts){
   chrt_data <- left_join(chrt_data,
                          simouts$stu_year %>% group_by(sid) %>%
                            summarize(chrt_ninth = min(year[grade == "9"])))
+  chrt_data <- chrt_data %>% filter(is.finite(chrt_grad))
   chrt_data$chrt_ninth <- chrt_data$chrt_ninth + 3
 
   simouts$ps_enroll <- left_join(simouts$ps_enroll, chrt_data)
@@ -147,7 +149,7 @@ sdp_cleaner <- function(simouts){
                                       1, 0)) %>%
     tidyr::gather(variable, value, -(sid:yr_seq)) %>%
     tidyr::unite(temp, yr_seq, variable) %>%
-    tidyr::spread(temp, value) %>%
+    tidyr::spread(temp, value, fill = 0) %>%
     rename(
       enrl_1oct_grad_yr1_any = `1_enrl_1oct_grad`,
       enrl_1oct_grad_yr2_any = `2_enrl_1oct_grad`,
@@ -192,7 +194,7 @@ sdp_cleaner <- function(simouts){
            enrl_ever_w2_grad = zeroNA(enrl_ever_w2_grad)) %>%
     tidyr::gather(variable, value, -(sid:ps_type)) %>%
     tidyr::unite(temp, ps_type, yr_seq, variable) %>%
-    tidyr::spread(temp, value)
+    tidyr::spread(temp, value, fill = 0)
 
   tmp <- zzz %>% select(sid, contains("enrl_ever_w2"))
   tmp$enrl_ever_w2_grad_2yr <- tmp$`2yr_1_enrl_ever_w2_grad` + tmp$`2yr_2_enrl_ever_w2_grad` +
@@ -272,11 +274,10 @@ sdp_cleaner <- function(simouts){
     filter(ps_type != "other") %>%
     select(-observed)
   ps_career %<>% gather(key = "persist", value = "obs", all4, persist)
-# TODO: Fix this where 1 is getting filled in for all possible values
   ps_career <- ps_career %>% gather(variable, value, -(sid:persist)) %>%
     tidyr::unite(temp, chrt, ps_type, persist, variable) %>%
-    tidyr::spread(temp, value)
-  ps_career[, 2:ncol(ps_career)] <- apply(ps_career[, 2:ncol(ps_career)], 2, zeroNA)
+    tidyr::spread(temp, value, fill = 0)
+  # ps_career[, 2:ncol(ps_career)] <- apply(ps_career[, 2:ncol(ps_career)], 2, zeroNA)
 
   sdp_ps <- left_join(sdp_ps, ps_wide, by = "sid")
   sdp_ps <- left_join(sdp_ps, ps_career, by = "sid")
@@ -378,11 +379,17 @@ sdp_cleaner <- function(simouts){
                                           final_data$ontrack_endyr4 == 1,
                                         "Enrolled, On-Track", "Enrolled, Off-Track")
 
+
+
   final_data$status_after_yr3[final_data$hs_status == "early"] <- "Graduated"
   final_data$status_after_yr4[final_data$hs_status == "ontime"] <- "Graduated On-Time"
   final_data$status_after_yr4[final_data$hs_status == "dropout"] <- "Dropped Out"
-  final_data$status_after_yr4[final_data$hs_status == "disappear"] <- "Disappear"
+  final_data$status_after_yr4[final_data$hs_status == "disappear"] <- "Disappeared"
   final_data$status_after_yr4[final_data$hs_status == "late"] <- "Still Enrolled"
+  final_data$status_after_yr4[final_data$status_after_yr4 %in%
+                                c("Enrolled, On-Track", "Enrolled, Off-Track")] <- "Still Enrolled"
+  # Modify for chart
+  final_data$status_after_yr4[final_data$status_after_yr4 == "Still Enrolled"] <- "Enrolled, Not Graduated"
   # Recodes
   final_data$race_ethnicity <- as.character(final_data$race_ethnicity)
   final_data$race_ethnicity[final_data$race_ethnicity == "Black or African American"] <- "Black"

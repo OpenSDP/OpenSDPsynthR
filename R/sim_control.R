@@ -290,7 +290,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   if(is.null(gpa_sim_parameters)){
     gpa_sim_parameters <- list(
       fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
-      random_var = 0.02173,
+      random_var = 0.2173,
       cov_param = list(dist_fun = c("rnorm", rep("rbinom", 5)),
                        var_type = rep("lvl1", 6),
                        opts = list(
@@ -373,7 +373,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         -0.0029
       ),
       fixed_param = c(
-        0.0921, 0.20401, 1.125067, 0.11834, -0.561429,
+        -0.3921, 0.50401, 1.125067, 0.11834, -0.561429,
         -0.31560,-0.126704, -0.03387
       ),
       ngrps = nschls + 5,
@@ -393,8 +393,10 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       fixed_param = c(-0.250245, 0.75, 0.10, -0.161388, -0.075, -0.056, 0.007),
       fact_vars = NULL,
       # intercept + any slopes in length
-      random_param = list(random_var = c(0.2, 0.1), cor_vars = c(-0.4), rand_gen = 'rnorm'),
-      random_param3 = list(random_var = c(0.3, 0.025), cor_vars = c(-0.4), rand_gen = 'rnorm'), # intercept + any slopes in length
+      # Between student
+      random_param = list(random_var = c(0.4, 0.125), cor_vars = c(-0.4), rand_gen = 'rnorm'),
+      # Between school
+      random_param3 = list(random_var = c(0.3, 0.1), cor_vars = c(-0.4), rand_gen = 'rnorm'), # intercept + any slopes in length
       cov_param = list(
         dist_fun = c("rbinom", "rbinom", "rbinom", "rbinom", "rbinom"),
         var_type = rep("lvl1", 5),
@@ -499,7 +501,34 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     )
   }
   if(is.null(ps_adjustment)){
-    ps_adjustment <- grad_adjustment
+    ps_adjustment <-  list(
+      race_list = list(
+        "White" = 0.1,
+        "Black or African American" = 0.05,
+        "Asian" = 0.075,
+        "Hispanic or Latino Ethnicity" = 0.05,
+        "Demographic Race Two or More Races" = 0.05,
+        "American Indian or Alaska Native" = 0.0,
+        "Native Hawaiian or Other Pacific Islander" = 0.0
+      ),
+      perturb_race = function(x, race,race_par = race_list){
+        val_mean <- race_par[[which(race == names(race_par))]]
+        y <- x + num_clip(rnorm(1, val_mean, sd = 0.025), -0.1, 0.25)
+        y <- num_clip(y, 0, 1)
+        y <- ifelse(y <= 0, 0.025, y) #failsafes to prevent negative probabilities
+        y <- ifelse(y >= 1, 0.985, y) #failsafes to prevent negative probabilities
+        return(y)
+      },
+      frl_list = list("0" = 0.01, "1" = -0.5),
+      perturb_frl = function(x, frl, sd, frl_par = frl_list){
+        val_mean <- frl_par[[which(frl == names(frl_par))]]
+        y <- x + num_clip(rnorm(1, val_mean, sd = 0.025), -0.1, 0.25)
+        y <- num_clip(y, 0, 1)
+        y <- ifelse(y <= 0, 0.05, y) #failsafes to prevent negative probabilities
+        y <- ifelse(y >= 1, 0.95, y) #failsafes to prevent negative probabilities
+        return(y)
+      }
+    )
   }
   if(is.null(assess_grades)){
     assess_grades <- c("3", "4", "5", "6", "7", "8", "9", "11")

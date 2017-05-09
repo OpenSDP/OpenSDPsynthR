@@ -35,6 +35,8 @@ sdp_cleaner <- function(simouts){
 
 
 
+
+
   demog_clean <- simouts$demog_master %>%
     group_by(sid) %>%
     summarize(
@@ -83,6 +85,9 @@ sdp_cleaner <- function(simouts){
                           idvar = "sid",
                           direction = "wide")
   rm(credits_long)
+
+  status_vars <- as.data.frame(simouts$hs_annual) %>% select(sid, yr_seq, status_after) %>%
+    reshape(timevar = "yr_seq", sep = "_yr", idvar = "sid", direction = "wide")
 
   # simouts$hs_outcomes$grad_cohort == cohort_grad
 
@@ -285,6 +290,7 @@ sdp_cleaner <- function(simouts){
   sdp_ps <- left_join(sdp_ps, ps_career, by = "sid")
 
   final_data <- left_join(demog_clean, hs_summary, by = "sid")
+  final_data <- left_join(final_data, status_vars, by = "sid")
   final_data <- left_join(final_data, outcomes_wide, by = "sid")
   final_data <- left_join(final_data, outcomes_clean, by = "sid")
   final_data <- left_join(final_data, sdp_ps, by = "sid")
@@ -374,22 +380,32 @@ sdp_cleaner <- function(simouts){
   final_data$hs_diploma_date[is.na(final_data$chrt_grad)] <- NA
   final_data$highly_qualified <- sapply(final_data$ps_prob - 0.2, rbinom, n=1, size=1)
   final_data$highly_qualified[is.na(final_data$highly_qualified)] <- 0
-  final_data$status_after_yr1 <- ifelse(!is.na(final_data$ontrack_endyr1) &
+  final_data$status_after_yr1 <- ifelse(final_data$status_after_yr1 == "still_enroll" &
                                           final_data$ontrack_endyr1 == 1,
-                                        "Enrolled, On-Track", "Enrolled, Off-Track")
-  final_data$status_after_yr2 <- ifelse(!is.na(final_data$ontrack_endyr2) &
+                                        "Enrolled, On-Track",
+                                        ifelse(final_data$status_after_yr1 == "still_enroll" &
+                                                 final_data$ontrack_endyr1 == 0,
+                                               "Enrolled, Off-Track", final_data$status_after_yr1))
+  final_data$status_after_yr2 <- ifelse(final_data$status_after_yr2 == "still_enroll" &
                                           final_data$ontrack_endyr2 == 1,
-                                        "Enrolled, On-Track", "Enrolled, Off-Track")
-  final_data$status_after_yr3 <- ifelse(!is.na(final_data$ontrack_endyr3) &
+                                        "Enrolled, On-Track",
+                                        ifelse(final_data$status_after_yr2 == "still_enroll" &
+                                                 final_data$ontrack_endyr2 == 0,
+                                               "Enrolled, Off-Track", final_data$status_after_yr2))
+  final_data$status_after_yr3 <- ifelse(final_data$status_after_yr3 == "still_enroll" &
                                           final_data$ontrack_endyr3 == 1,
-                                        "Enrolled, On-Track", "Enrolled, Off-Track")
-  final_data$status_after_yr4 <- ifelse(!is.na(final_data$ontrack_endyr4) &
+                                        "Enrolled, On-Track",
+                                        ifelse(final_data$status_after_yr3 == "still_enroll" &
+                                                 final_data$ontrack_endyr3 == 0,
+                                               "Enrolled, Off-Track", final_data$status_after_yr3))
+  final_data$status_after_yr4 <- ifelse(final_data$status_after_yr4 == "still_enroll" &
                                           final_data$ontrack_endyr4 == 1,
-                                        "Enrolled, On-Track", "Enrolled, Off-Track")
-
-
-
-  final_data$status_after_yr3[final_data$hs_status == "early"] <- "Graduated"
+                                        "Enrolled, On-Track",
+                                        ifelse(final_data$status_after_yr4 == "still_enroll" &
+                                                 final_data$ontrack_endyr4 == 0,
+                                           "Enrolled, Off-Track", final_data$status_after_yr4))
+  final_data$status_after_yr3[final_data$hs_status == "early"] <- "Graduated On-Time"
+  final_data$status_after_yr4[final_data$hs_status == "early"] <- "Graduated On-Time"
   final_data$status_after_yr4[final_data$hs_status == "ontime"] <- "Graduated On-Time"
   final_data$status_after_yr4[final_data$hs_status == "dropout"] <- "Dropped Out"
   final_data$status_after_yr4[final_data$hs_status == "disappear"] <- "Disappeared"

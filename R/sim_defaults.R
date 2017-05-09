@@ -121,7 +121,7 @@ simpop <- function(nstu, seed, control = sim_control()){
                         sigma = control$school_cov_mat,
                         names = control$school_names)
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
-  stu_year <- assign_schools(student = stu_year, schools = school)
+  stu_year <- assign_schools(student = stu_year, schools = school, method = "demographic")
   message("Simulating assessment table... be patient...")
   assess <- left_join(stu_year[, c("sid", "year", "age", "grade", "frpl",
                                    "ell", "iep", "gifted", "schid")],
@@ -156,11 +156,12 @@ simpop <- function(nstu, seed, control = sim_control()){
   # TODO: Students who repeat grade 12 have two rows in this dataframe
   g12_cohort <- na.omit(g12_cohort)
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
-  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss", "year")] %>%
+  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "year","math_ss")] %>%
                             filter(grade == "8") %>%
                             group_by(sid) %>%
                             mutate(math_ss = math_ss[year == min(year)]) %>%
-                            distinct(sid, .keep_all=TRUE),
+                            select(-grade, - year) %>%
+                            distinct(sid, math_ss, .keep_all=TRUE),
                           by = c(idvar))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
@@ -348,6 +349,14 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
                      replace=TRUE, prob = c(0.9, 0.05, 0.05))
   out$poverty_desig <- sample(c("HighQuartile", "LowQuartile", "Neither"),
                               nrow(out), replace = TRUE, prob = c(0.25, 0.25, 0.5))
+  if(nrow(out) > 3){
+    if(length(out$poverty_desig[out$poverty_desig == "HighQuartile"]) == 0){
+      out$poverty_desig[[1]] <- "HighQuartile"
+    }
+    if(length(out$poverty_desig[out$poverty_desig == "LowQuartile"]) == 0){
+      out$poverty_desig[[2]] <- "LowQuartile"
+    }
+  }
   return(out)
 }
 
@@ -366,21 +375,37 @@ assign_schools <- function(student, schools, method = NULL){
   # Assignment techniques -- purely ignorant weighting technique
   # Non-ignorant, weighted technique
   # Model based technique
-
+  idvar <- names(student)[which(names(student) %in% c("ID", "id", "sid"))]
   school_t_list <- list(
     "ALL" = list(f = make_markov_series,
                  pars = list(tm = school_transitions(nschls = nrow(schools),
                                                      diag_limit = 0.96))),
     "GROUPVARS" = c("ALL")
   )
-  idvar <- names(student)[which(names(student) %in% c("ID", "id", "sid"))]
-  # TODO
-  # t0 should be a function of student race, using the demographic method
+  # t0 should be a function of poverty, using the demographic method
   # t0 should be a function of performance using a non-demographic method
-  student <- student %>% group_by_(idvar) %>% arrange(year) %>%
-    mutate(schid = markov_cond_list("ALL", n = n()-1, school_t_list,
-                                    t0 = sample(schools$schid, 1, prob = schools$enroll),
-                                    include.t0 = TRUE))
+  if(is.null(method)){
+    student <- student %>% group_by_(idvar) %>% arrange(year) %>%
+      mutate(schid = markov_cond_list("ALL", n = n()-1, school_t_list,
+                                      t0 = sample(schools$schid, 1, prob = schools$enroll),
+                                      include.t0 = TRUE))
+  } else if(method == "demographic"){
+    schools$frpl_prob <- ifelse(schools$poverty_desig == "LowQuartile", 0.1,
+                                ifelse(schools$poverty_desig == "HighQuartile",
+                                       0.7, 0.2))
+    schools$base_prob <- ifelse(schools$poverty_desig == "LowQuartile", 0.55,
+                                ifelse(schools$poverty_desig == "HighQuartile",
+                                       0.05, 0.4))
+    student <- student %>% group_by(sid) %>% arrange(year) %>%
+      mutate(initschid = ifelse(frpl == "1",
+                                sample(schools$schid, 1, prob = schools$frpl_prob),
+                                sample(schools$schid, 1, prob = schools$base_prob))) %>%
+      mutate(schid = markov_cond_list("ALL", n = n()-1, school_t_list,
+                                      t0 = initschid[[1]],
+                                      include.t0 =TRUE)) %>%
+      select(-initschid)
+
+  }
   return(student)
 }
 

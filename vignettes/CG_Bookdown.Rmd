@@ -204,16 +204,16 @@ close(con) # close the connection to the zip file, keeps data in memory
 
 # Step 2: Read in global variables if you have not already done so
 # Ninth grade cohorts you can observe persisting to the second year of college
-chrt_ninth_begin_persist_yr2 = 2005
-chrt_ninth_end_persist_yr2 = 2005
+chrt_ninth_begin_persist_yr2 = 2004
+chrt_ninth_end_persist_yr2 = 2006
 
 # Ninth grade cohorts you can observe graduating high school on time
-chrt_ninth_begin_grad = 2005
+chrt_ninth_begin_grad = 2004
 chrt_ninth_end_grad = 2006
 
 # Ninth grade cohorts you can observe graduating high school one year late
-chrt_ninth_begin_grad_late = 2005
-chrt_ninth_end_grad_late = 2005
+chrt_ninth_begin_grad_late = 2004
+chrt_ninth_end_grad_late = 2006
 
 # High school graduation cohorts you can observe enrolling in college the 
 # fall after graduation

@@ -31,7 +31,7 @@ library(tidyr)
 library(scales)
 library(magrittr)
 
-simouts <- simpop(nstu = 35000, seed = 488234, 
+simouts <- simpop(nstu = 3500, seed = 488234, 
                   control = sim_control(nschls = 12L, minyear=1996, 
                                         n_cohorts = 3,
                                         maxyear=2017)) 

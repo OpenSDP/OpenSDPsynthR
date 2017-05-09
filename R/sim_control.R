@@ -29,8 +29,9 @@
 #' for bias
 #' @param grad_adjustment list - parameters to adjust graduation probabilities by
 #' for bias
-#' @param grad_adjustment list - parameters to adjust postsecondary enrollment
+#' @param ps_adjustment list - parameters to adjust postsecondary enrollment
 #' probabilities by for bias
+#' @param gpa_adjustment list - parameters to adjust gpa for bias
 #' @param assess_grades character - grade levels to generate assessment scores for
 #' @details This function has a full set of default values that are designed to
 #' produce realistic data. These defaults can be overridden by specifying any
@@ -63,6 +64,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         assessment_adjustment = NULL,
                         grad_adjustment = NULL,
                         ps_adjustment = NULL,
+                        gpa_adjustment = NULL,
                         assess_grades = NULL){
 
   nschls <- nschls
@@ -396,7 +398,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       # Between student
       random_param = list(random_var = c(0.4, 0.125), cor_vars = c(-0.4), rand_gen = 'rnorm'),
       # Between school
-      random_param3 = list(random_var = c(0.3, 0.1), cor_vars = c(-0.4), rand_gen = 'rnorm'), # intercept + any slopes in length
+      random_param3 = list(random_var = c(0.6, 0.2), cor_vars = c(-0.4), rand_gen = 'rnorm'), # intercept + any slopes in length
       cov_param = list(
         dist_fun = c("rbinom", "rbinom", "rbinom", "rbinom", "rbinom"),
         var_type = rep("lvl1", 5),
@@ -543,13 +545,13 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       ),
       perturb_race = function(x, race,race_par = race_list){
         val_mean <- race_par[[which(race == names(race_par))]]
-        y <- x + num_clip(rnorm(1, val_mean, sd = 0.05))
+        y <- x + rnorm(1, val_mean, sd = 0.05)
         return(y)
       },
       frl_list = list("0" = 0.05, "1" = -0.15),
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         val_mean <- frl_par[[which(frl == names(frl_par))]]
-        y <- x + num_clip(rnorm(1, val_mean, sd = 0.075))
+        y <- x + rnorm(1, val_mean, sd = 0.075)
         return(y)
       }
     )
@@ -587,6 +589,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
     assessment_adjustment,
     grad_adjustment,
     ps_adjustment,
+    gpa_adjustment,
     assess_grades))
 
 }

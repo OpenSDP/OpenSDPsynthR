@@ -163,7 +163,7 @@ gen_grad <- function(data, control = sim_control()){
 rescale_gpa <- function(x){
   # Rescale to be on GPA scale
   x <- unscale(x, mean = 2.4266, sd = 0.85406)
-  x <- num_clip(x, min = 0.25, max =)
+  x <- num_clip(x, min = 0.25, max = 4)
   x <- round(x, 1)
   return(x)
 }
@@ -539,6 +539,37 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
     mutate(cum_credits_attempted = cumsum(credits_attempted)) %>%
     mutate(expected_grad_hs = min(year[grade == "9"]) + 4,
            grad_cohort_ind = ifelse("9" %in% grade, "Yes", "No"))
+
+  tmp_grads <- gpa_ontrack %>% filter(grad == 1) %>% group_by(sid) %>%
+    mutate(status_after = ifelse(hs_status == "ontime" & yr_seq < 4, "still_enroll",
+                                 NA),
+           status_after = ifelse(hs_status == "ontime" & yr_seq == 4, "ontime",
+                                 status_after),
+           status_after = ifelse(hs_status == "early" & yr_seq < 3, "still_enroll",
+                                 status_after),
+           status_after = ifelse(hs_status == "early" & yr_seq >= 3, "early",
+                                 status_after),
+           status_after = ifelse(hs_status == "late" & yr_seq <= 4, "still_enroll",
+                                 status_after),
+           status_after = ifelse(hs_status == "late" & yr_seq > 4, "late",
+                                 status_after))
+  eventPool <- list(c(0, 0, 0, 1), c(0, 1, 1, 1), c(0, 0, 1, 1), c(1, 1, 1, 1))
+
+  tmp_nongrads <- gpa_ontrack %>% filter(grad == 0) %>% arrange(sid, year) %>%
+    group_by(sid) %>%
+    mutate(event = ifelse(hs_status == "transferout", sample(eventPool, 1)[[1]],
+                          NA),
+           event = ifelse(hs_status == "dropout",
+                          sample(eventPool, 1, prob = c(0.1, 0.3, 0.2, 0.4))[[1]],
+                          event),
+           event = ifelse(hs_status == "disappear", sample(eventPool, 1)[[1]],
+                          event),
+           event = ifelse(hs_status == "still_enroll", c(0, 0, 0, 0),
+                          event)) %>%
+    mutate(status_after = ifelse(event == 1, hs_status, "still_enroll"),
+           chrt_grad = NA) %>%
+    select(-event)
+  gpa_ontrack <- bind_rows(tmp_grads, tmp_nongrads)
   return(gpa_ontrack)
 }
 

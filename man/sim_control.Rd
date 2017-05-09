@@ -12,7 +12,7 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
   gpa_sim_parameters = NULL, grad_sim_parameters = NULL,
   ps_sim_parameters = NULL, assess_sim_par = NULL,
   assessment_adjustment = NULL, grad_adjustment = NULL,
-  ps_adjustment = NULL, assess_grades = NULL)
+  ps_adjustment = NULL, gpa_adjustment = NULL, assess_grades = NULL)
 }
 \arguments{
 \item{nschls}{integer- number of schools to create, default is 2}
@@ -67,10 +67,12 @@ for bias}
 \item{grad_adjustment}{list - parameters to adjust graduation probabilities by
 for bias}
 
-\item{assess_grades}{character - grade levels to generate assessment scores for}
-
-\item{grad_adjustment}{list - parameters to adjust postsecondary enrollment
+\item{ps_adjustment}{list - parameters to adjust postsecondary enrollment
 probabilities by for bias}
+
+\item{gpa_adjustment}{list - parameters to adjust gpa for bias}
+
+\item{assess_grades}{character - grade levels to generate assessment scores for}
 }
 \value{
 a named list

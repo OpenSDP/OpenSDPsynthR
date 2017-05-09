@@ -155,10 +155,12 @@ sdp_cleaner <- function(simouts){
       enrl_1oct_grad_yr2_any = `2_enrl_1oct_grad`,
       enrl_1oct_grad_yr3_any = `3_enrl_1oct_grad`,
       enrl_1oct_grad_yr4_any = `4_enrl_1oct_grad`,
+      enrl_1oct_grad_yr5_any = `5_enrl_1oct_grad`,
       enrl_1oct_ninth_yr1_any = `1_enrl_1oct_ninth`,
       enrl_1oct_ninth_yr2_any = `2_enrl_1oct_ninth`,
       enrl_1oct_ninth_yr3_any = `3_enrl_1oct_ninth`,
-      enrl_1oct_ninth_yr4_any = `4_enrl_1oct_ninth`
+      enrl_1oct_ninth_yr4_any = `4_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr5_any = `5_enrl_1oct_ninth`
     )
   # enrl_ever_w2_grad_any
 
@@ -318,6 +320,8 @@ sdp_cleaner <- function(simouts){
                   "2yr_3_enrl_1oct_ninth" = "enrl_1oct_ninth_yr3_2yr",
                   "2yr_4_enrl_1oct_grad" = "enrl_1oct_grad_yr4_2yr",
                   "2yr_4_enrl_1oct_ninth" = "enrl_1oct_ninth_yr4_2yr",
+                  "2yr_5_enrl_1oct_grad" = "enrl_1oct_grad_yr5_2yr",
+                  "2yr_5_enrl_1oct_ninth" = "enrl_1oct_ninth_yr5_2yr",
                   "4yr_1_enrl_1oct_grad" = "enrl_1oct_grad_yr1_4yr",
                   "4yr_1_enrl_1oct_ninth" = "enrl_1oct_ninth_yr1_4yr",
                   "4yr_2_enrl_1oct_grad" = "enrl_1oct_grad_yr2_4yr",
@@ -326,6 +330,8 @@ sdp_cleaner <- function(simouts){
                   "4yr_3_enrl_1oct_ninth" = "enrl_1oct_ninth_yr3_4yr",
                   "4yr_4_enrl_1oct_grad" = "enrl_1oct_grad_yr4_4yr",
                   "4yr_4_enrl_1oct_ninth" = "enrl_1oct_ninth_yr4_4yr",
+                  "4yr_5_enrl_1oct_grad" = "enrl_1oct_grad_yr5_4yr",
+                  "4yr_5_enrl_1oct_ninth" = "enrl_1oct_ninth_yr5_4yr",
                   "other_1_enrl_1oct_grad" = "enrl_1oct_grad_yr1_other",
                   "other_1_enrl_1oct_ninth" = "enrl_1oct_ninth_yr1_other",
                   "other_2_enrl_1oct_grad" = "enrl_1oct_grad_yr2_other",
@@ -334,6 +340,8 @@ sdp_cleaner <- function(simouts){
                   "other_3_enrl_1oct_ninth" = "enrl_1oct_ninth_yr3_other",
                   "other_4_enrl_1oct_grad" = "enrl_1oct_grad_yr4_other",
                   "other_4_enrl_1oct_ninth" = "enrl_1oct_ninth_yr4_other",
+                  "other_5_enrl_1oct_grad" = "enrl_1oct_grad_yr5_other",
+                  "other_5_enrl_1oct_ninth" = "enrl_1oct_ninth_yr5_other",
                   "chrt_grad_4yr_persist_obs" = "enrl_grad_persist_4yr",
                   "chrt_grad_2yr_persist_obs" = "enrl_grad_persist_2yr",
                   "chrt_grad_any_persist_obs" = "enrl_grad_persist_any",

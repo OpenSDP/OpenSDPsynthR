@@ -31,7 +31,7 @@ library(tidyr)
 library(scales)
 library(magrittr)
 
-simouts <- simpop(nstu = 30000, seed = 488234, 
+simouts <- simpop(nstu = 35000, seed = 488234, 
                   control = sim_control(nschls = 12L, minyear=1990, 
                                         maxyear=2010)) 
 cgdata <- sdp_cleaner(simouts)

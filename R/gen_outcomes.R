@@ -231,8 +231,8 @@ gen_assess <- function(data, control = sim_control()){
   # sort each row, then sample from sorted rows, since sort is expensive
   zed <- t(apply(zed, 1, sort))
   # math <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)
-  math <- apply(zed, 1, function(x) sample(x[150:350], 1))
-  rdg <- apply(zed, 1, function(x) sample(x[75:425], 1))
+  math <- apply(zed, 1, function(x) sample(x[225:275], 1))
+  rdg <- apply(zed, 1, function(x) sample(x[200:300], 1))
   # No need to run simulation code twice, it is expensive
   # zed <- simulate(mod, nsim = 500, newdata = data, allow.new.levels = TRUE)
   # rdg <- apply(zed, 1, function(x) (sample(x, 1) + mean(x)) / 2)

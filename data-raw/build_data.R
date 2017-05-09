@@ -111,6 +111,27 @@ sch_names <- c("Jackson", "Wallaby", "Kendrick", "Willow Creek", "Cypress",
                     "Sylvan", "Sandy Beach", "Hathaway", "Mandalay", "Deer Corner",
                     "Clearview", "Corcoran", "Cabot", "Lookout Point")
 
+# ps_list <- ps_list %>% select(ope8_id, city, state, name,
+#                               degrees_awarded_predominant,
+#                               size, online_only, avg_net_price_pub, pell_grant_rate,
+#                               retention_four_year_full_time, operating,
+#                               part_time_share, act_25th_pctl_cumulative,
+#                               act_75th_pctl_cumulative, sat_average_all,
+#                               sat_25th_pctl_math, sat_75th_pctl_math,
+#                               sat_25th_pctl_reading, sat_75th_pctl_reading,
+#                               sat_25th_pctl_writing, sat_75th_pctl_writing,
+#                               race_ethn_white, race_ethn_black, race_ethn_hispanic,
+#                               race_ethn_asian, race_ethn_two_or_more)
+# ps_list <- zap_formats(ps_list)
+# ps_list <- as_factor(ps_list)
+# ps_list <- ps_list %>% filter(!degrees_awarded_predominant %in% c("Not Classified",
+#                                                                  "Entirely graduate-degree granting"))
+# ps_list <- ps_list %>% filter(size > 0) %>% filter(size < 100000)
+# ps_list <- ps_list %>% filter(operating == 1) %>% select(-operating)
+
+college_scorecard <- read.csv("data-raw/college_scorecard_2013.csv")
+
+
 ps_names <- c("COMMUNITY COLLEGE 400", "DEF COMMUNITY COLLEGE", "D COMMUNITY COLLEGE",
               "UVW COMMUNITY COLLEGE", "COMMUNITY COLLEGE C", "A COMMUNITY COLLEGE",
               "COMMUNITY COLLEGE 4", "E COMMUNITY COLLEGE", "COMMUNITY COLLEGE 500",
@@ -148,5 +169,6 @@ ps_names <- c("COMMUNITY COLLEGE 400", "DEF COMMUNITY COLLEGE", "D COMMUNITY COL
 
 # saveRDS(xwalk, "data/sdp_ceds_map.rds")
 devtools::use_data(ell, xwalk, ses, prog_baseline, age_grade, sch_names,
+                   college_scorecard,
                    ps_names,
                    internal = TRUE, overwrite = TRUE)

@@ -218,12 +218,12 @@ chrt_ninth_end_grad_late = 2006
 # High school graduation cohorts you can observe enrolling in college the 
 # fall after graduation
 chrt_grad_begin = 2008
-chrt_grad_end = 2009
+chrt_grad_end = 2010
 
 # High school graduation cohorts you can observe enrolling in college 
 # two years after hs graduation
 chrt_grad_begin_delayed = 2008
-chrt_grad_end_delayed = 2008
+chrt_grad_end_delayed = 2010
 
 # In RStudio these variables will appear in the Environment pane under "Values"
 ```

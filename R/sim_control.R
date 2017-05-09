@@ -458,7 +458,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         return(y)
       },
 
-      frl_list = list("0" = 0.01, "1" = -0.5),
+      frl_list = list("0" = 0.1, "1" = -0.5),
 
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         dist_mean <- frl_par[[which(frl == names(frl_par))]] * sd
@@ -491,7 +491,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         y <- ifelse(y >= 1, 0.985, y) #failsafes to prevent negative probabilities
         return(y)
       },
-      frl_list = list("0" = 0.01, "1" = -0.5),
+      frl_list = list("0" = 0.1, "1" = -0.5),
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         val_mean <- frl_par[[which(frl == names(frl_par))]]
         y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.4, 0.2)
@@ -521,7 +521,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         y <- ifelse(y >= 1, 0.985, y) #failsafes to prevent negative probabilities
         return(y)
       },
-      frl_list = list("0" = 0.01, "1" = -0.5),
+      frl_list = list("0" = 0.05, "1" = -0.65),
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         val_mean <- frl_par[[which(frl == names(frl_par))]]
         y <- x + num_clip(rnorm(1, val_mean, sd = 0.025), -0.1, 0.25)
@@ -548,7 +548,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         y <- x + rnorm(1, val_mean, sd = 0.05)
         return(y)
       },
-      frl_list = list("0" = 0.05, "1" = -0.15),
+      frl_list = list("0" = 0.07, "1" = -0.175),
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         val_mean <- frl_par[[which(frl == names(frl_par))]]
         y <- x + rnorm(1, val_mean, sd = 0.075)

@@ -483,7 +483,7 @@ assign_hs_outcomes <- function(data, control = sim_control()){
 gen_nsc <- function(n, names = NULL){
   ids <- wakefield::id(n)
   enroll <- rnbinom(n, size = 1.4087, mu = 74.62) # starting values from existing district
-  if(missing(names)){
+  if(is.null(names)){
     names <- c(LETTERS, letters)
   }
   if(length(n) > length(names)){

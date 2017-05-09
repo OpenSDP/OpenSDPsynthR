@@ -13,7 +13,9 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 NumericVector num_clip_cpp(NumericVector x, double a, double b){
+
   return clamp( a, x, b ) ;
+
  }
 
 

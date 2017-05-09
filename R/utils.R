@@ -323,7 +323,8 @@ zeroNA <- function(x){
 #' @param max numeric, a ceiling
 #'
 #' @return x, truncated to be between min and max
-#' @import Rcpp
+#' @importFrom Rcpp sourceCpp
+#' @useDynLib OpenSDP.data
 #' @export
 num_clip <- function(x, min, max){
   # TODO Rcpp::cppFunction('NumericVector num_clip( NumericVector x, double a, double b){

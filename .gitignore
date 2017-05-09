@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 inst/doc
+*.dll
+src/OpenSDP.data.dll

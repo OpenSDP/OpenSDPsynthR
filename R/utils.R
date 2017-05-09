@@ -265,9 +265,7 @@ rescale <- function(x){
 #' @return a vector, length of x, with truncated values
 #' @export
 recode_credits <- function(x, top = 6){
-  y <- x
-  y[y < 0] <- 0 #base code
-  y[y > top] <- top # top code
+  y <- num_clip(x, min = 0, max = top)
   return(y)
 }
 

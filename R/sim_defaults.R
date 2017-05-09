@@ -156,8 +156,12 @@ simpop <- function(nstu, seed, control = sim_control()){
   # TODO: Students who repeat grade 12 have two rows in this dataframe
   g12_cohort <- na.omit(g12_cohort)
   g12_cohort <- left_join(g12_cohort, demog_master[, 1:4], by = idvar)
-  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss", "year")],
-                          by = c(idvar, "grade", "year"))
+  g12_cohort <- left_join(g12_cohort, assess[, c("sid", "grade", "math_ss", "year")] %>%
+                            filter(grade == "8") %>%
+                            group_by(sid) %>%
+                            mutate(math_ss = math_ss[year == min(year)]) %>%
+                            distinct(sid, .keep_all=TRUE),
+                          by = c(idvar))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
   # TODO: chrt_grad should never be infinite

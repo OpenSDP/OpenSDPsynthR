@@ -29,19 +29,20 @@
 # #   geom_density(alpha = I(0.3)) + facet_wrap(~age)
 # # assess$math_ssc <- mapply(perturb_race, assess$math_ssb, assess$Race, assess$math_sd)
 #
-#
+# #
 # simoutsA <- simpop(nstu = 1000L, seed = 488234,
 #                    control = sim_control(nschls = 3L, minyear=1990,
 #                                          maxyear=2010))
 #
+# # Document that these race codes need to be replace din perturb functions and the like
 # simoutsB <- simpop(nstu = 1000L, seed = 488234,
 #                    control = sim_control(nschls = 3L, race_groups = c("Black", "White", "Hispanic"),
 #                                          race_prob = c(0.3, 0.6, 0.1)))
 #
 #
 # simoutsC <- simpop(nstu = 1000L, seed = 488234,
-#                    control = sim_control(nschls = 3L, sim_cohorts = 5L))
-#
+#                    control = sim_control(nschls = 3L, n_cohorts = 5L))
+
 # tm <- matrix(
 #   c(800, 20, 5, 800),
 #   nrow = 2,

@@ -303,7 +303,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       ),
       cor_vars = c(0.453, -0.276, -0.309, -0.046, -0.033, -0.135, -0.210, -0.030, -0.029,
                    0.143, -0.003, 0.127, 0.060, 0.007, 0.001),
-      fixed_param = c(0.2799, 0.577892, 0.108458, 0.042588580,
+      fixed_param = c(0.0799, 0.577892, 0.108458, 0.042588580,
                       -0.289399599, -0.007401886, -0.374127),
       ngrps = nschls + 5, unbalanceRange = c(100, 1500), type = "linear"
     )
@@ -493,9 +493,9 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         val_mean <- frl_par[[which(frl == names(frl_par))]]
         y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.4, 0.2)
-        y <- num_clip(y, 0, 1)
         y <- ifelse(y <= 0, 0.05, y) #failsafes to prevent negative probabilities
         y <- ifelse(y >= 1, 0.95, y) #failsafes to prevent negative probabilities
+        y <- num_clip(y, 0, 1)
         return(y)
       }
     )
@@ -526,6 +526,30 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         y <- num_clip(y, 0, 1)
         y <- ifelse(y <= 0, 0.05, y) #failsafes to prevent negative probabilities
         y <- ifelse(y >= 1, 0.95, y) #failsafes to prevent negative probabilities
+        return(y)
+      }
+    )
+  }
+  if(is.null(gpa_adjustment)){
+    gpa_adjustment <-  list(
+      race_list = list(
+        "White" = -0.1,
+        "Black or African American" = -0.15,
+        "Asian" = -0.075,
+        "Hispanic or Latino Ethnicity" = -0.15,
+        "Demographic Race Two or More Races" = -0.05,
+        "American Indian or Alaska Native" = -0.0,
+        "Native Hawaiian or Other Pacific Islander" = -0.0
+      ),
+      perturb_race = function(x, race,race_par = race_list){
+        val_mean <- race_par[[which(race == names(race_par))]]
+        y <- x + num_clip(rnorm(1, val_mean, sd = 0.05))
+        return(y)
+      },
+      frl_list = list("0" = 0.05, "1" = -0.15),
+      perturb_frl = function(x, frl, sd, frl_par = frl_list){
+        val_mean <- frl_par[[which(frl == names(frl_par))]]
+        y <- x + num_clip(rnorm(1, val_mean, sd = 0.075))
         return(y)
       }
     )

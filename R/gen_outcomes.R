@@ -103,27 +103,18 @@ gen_gpa <- function(data, control=sim_control()){
   data$clustID <- as.numeric(data[, idvar])
   # g12_cohort$gpa <- predict(gpa_mod, newdata = g12_cohort)
   zed <- simulate(gpa_sim$sim_model, nsim = 500, newdata = data)
-  out <- apply(zed, 1, function(x) sample(x, 1))
-  # TODO: Perturb GPA
+  data$out <- apply(zed, 1, mean)
   # Perturb the gpa
   # FRPL bias is underestimated because of the time component so need to add it in
-  # Racial bias is entirely absent
-  # data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
-  #                        data$math_ss, data$frpl, data$math_sd,
-  #                        MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
-  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_frl,
-  #                       data$rdg_ss, data$frpl, data$rdg_sd,
-  #                       MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
-  # data$math_ss <- mapply(control$assessment_adjustment$perturb_race,
-  #                        data$math_ss, data$Race, data$math_sd,
-  #                        MoreArgs = list(race_par = control$assessment_adjustment$race_list))
-  # data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
-  #                       data$rdg_ss, data$Race, data$rdg_sd,
-  #                       MoreArgs = list(race_par = control$assessment_adjustment$race_list))
-  # # Perturb to reduce test correlation
-
-  # Export
-  return(out)
+  # Racial bias is entirely absent gpa_adjustment
+  # TODO: test to ensure these values are vectorized and redrawn per observation
+  data$out <- mapply(control$gpa_adjustment$perturb_frl,
+                          data$out, data$frpl,
+                          MoreArgs = list(frl_par = control$gpa_adjustment$frl_list))
+  data$out <- mapply(control$gpa_adjustment$perturb_race,
+                          data$out, data$Race,
+                          MoreArgs = list(race_par = control$gpa_adjustment$race_list))
+  return(data$out)
 }
 
 #' Generate a high school graduation for students
@@ -153,7 +144,7 @@ gen_grad <- function(data, control = sim_control()){
   # TODO: test to ensure these values are vectorized and redrawn per observation
   data$out_prob <- mapply(control$grad_adjustment$perturb_frl,
                           data$out_prob, data$frpl,
-                          MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+                          MoreArgs = list(frl_par = control$grad_adjustment$frl_list))
   data$out_prob <- mapply(control$grad_adjustment$perturb_race,
                          data$out_prob, data$Race,
                          MoreArgs = list(race_par = control$grad_adjustment$race_list))
@@ -172,8 +163,7 @@ gen_grad <- function(data, control = sim_control()){
 rescale_gpa <- function(x){
   # Rescale to be on GPA scale
   x <- unscale(x, mean = 2.4266, sd = 0.85406)
-  x <- ifelse(x < 0, 0.25, x)
-  x <- ifelse(x > 4, 4, x)
+  x <- num_clip(x, min = 0.25, max =)
   x <- round(x, 1)
   return(x)
 }
@@ -205,7 +195,7 @@ gen_ps <- function(data, control = sim_control()){
   # TODO: test to ensure these values are vectorized and redrawn per observation
   data$out_prob <- mapply(control$ps_adjustment$perturb_frl,
                           data$out_prob, data$frpl,
-                          MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+                          MoreArgs = list(frl_par = control$ps_adjustment$frl_list))
   data$out_prob <- mapply(control$ps_adjustment$perturb_race,
                           data$out_prob, data$Race,
                           MoreArgs = list(race_par = control$ps_adjustment$race_list))

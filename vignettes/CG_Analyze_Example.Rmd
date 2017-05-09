@@ -32,11 +32,32 @@ library(scales)
 library(magrittr)
 
 simouts <- simpop(nstu = 35000, seed = 488234, 
-                  control = sim_control(nschls = 12L, minyear=1990, 
-                                        maxyear=2010)) 
+                  control = sim_control(nschls = 12L, minyear=1996, 
+                                        n_cohorts = 3,
+                                        maxyear=2017)) 
 cgdata <- sdp_cleaner(simouts)
 
 dupes <- cg_data %>% group_by(sid) %>% mutate(dupes = n()) %>% filter(dupes > 1)
+# 
+# // Ninth grade cohorts you can observe persisting to the second year of college
+# global chrt_ninth_begin_persist_yr2 = 2008
+# global chrt_ninth_end_persist_yr2 = 2010
+#  
+# // Ninth grade cohorts you can observe graduating high school on time
+# global chrt_ninth_begin_grad = 2013
+# global chrt_ninth_end_grad = 2015
+#  
+# // Ninth grade cohorts you can observe graduating high school one year late
+# global chrt_ninth_begin_grad_late = 2012
+# global chrt_ninth_end_grad_late = 2014
+#  
+# // High school graduation cohorts you can observe enrolling in college the fall after graduation
+# global chrt_grad_begin = 2009
+# global chrt_grad_end = 2011
+#  
+# // High school graduation cohorts you can observe enrolling in college two years after hs graduation
+# global chrt_grad_begin_delayed = 2008
+# global chrt_grad_end_delayed = 2010
 
 ```
 

@@ -15,15 +15,12 @@ Imports: lubridate,
   mvtnorm,
   simglm,
   tidyr,
-  Rcpp,
   stringr
 Suggests: testthat,
     knitr,
     rmarkdown,
     ggplot2
 Remotes: lebebr01/simglm
-LinkingTo: Rcpp
-NeedsCompilation: yes
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false

@@ -4,12 +4,14 @@
 \alias{gen_nsc}
 \title{Generate postsecondary institutions}
 \usage{
-gen_nsc(n, names = NULL)
+gen_nsc(n, names = NULL, method = NULL)
 }
 \arguments{
 \item{n}{number of institutions to generate}
 
 \item{names}{names to use for schools}
+
+\item{method}{default NULL, can be set to "scorecard" to use college scorecard data}
 }
 \value{
 a data.frame of names, IDs, and enrollment weights

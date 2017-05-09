@@ -165,13 +165,12 @@ simpop <- function(nstu, seed, control = sim_control()){
                           by = c(idvar))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
-  # TODO: chrt_grad should never be infinite
-  # TODO: students should not
   hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   # TODO: Fix hardcoding of postsec - insert scorecard data here
-  nsc_postsec <- gen_nsc(n = 35, names = control$postsec_names)
+  # Fix this so user can control method
+  nsc_postsec <- gen_nsc(n = 35, method = "scorecard")
   message("Simulating postsecondary outcomes... be patient...")
   ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec,
                                  control = control)
@@ -477,32 +476,48 @@ assign_hs_outcomes <- function(data, control = sim_control()){
 #'
 #' @param n number of institutions to generate
 #' @param names names to use for schools
+#' @param method default NULL, can be set to "scorecard" to use college scorecard data
 #' @importFrom stringr str_trunc
 #' @return a data.frame of names, IDs, and enrollment weights
 #' @export
-gen_nsc <- function(n, names = NULL){
-  ids <- wakefield::id(n)
-  enroll <- rnbinom(n, size = 1.4087, mu = 74.62) # starting values from existing district
-  if(is.null(names)){
-    names <- c(LETTERS, letters)
+gen_nsc <- function(n, names = NULL, method = NULL){
+  if(is.null(method)){
+    ids <- wakefield::id(n)
+    enroll <- rnbinom(n, size = 1.4087, mu = 74.62) # starting values from existing district
+    if(is.null(names)){
+      names <- c(LETTERS, letters)
+    }
+    if(length(n) > length(names)){
+      stop("Please add more names or select a smaller n to generate unique names")
+    }
+    names <- sample(names, size = n, replace = FALSE)
+    # attribs <- mvtnorm::rmvnorm(n, mean = mean_vec, sigma = cov_mat)
+    # attribs[attribs < 0] <- 0
+    # attribs[attribs >=1] <- 0.99
+    K <- length(enroll[enroll == 0])
+    enroll[enroll == 0] <- sample(1:25, K, replace = FALSE)
+    out <- data.frame(opeid = ids, name = names, enroll = enroll,
+                      stringsAsFactors = FALSE)
+    out$short_name <- stringr::str_trunc(out$name, 20, "right")
+    out$type <- NA
+    out$type[grepl("COMMUNITY", out$name)] <- "2yr"
+    out$type[grepl("UNIVERSITY", out$name)] <- "4yr"
+    out$type[grepl("PRIVATE", out$name)] <- "4yr"
+    out$type[grepl("COLLEGE OF", out$name)] <- "other"
+    # out <- cbind(out, attribs)
   }
-  if(length(n) > length(names)){
-    stop("Please add more names or select a smaller n to generate unique names")
+  if(method == "scorecard"){
+    out <- college_scorecard[sample(row.names(college_scorecard), n),]
+    out$opeid <- out$ope8_id; out$ope8_id <- NULL
+    out$short_name <- stringr::str_trunc(out$name, 35, "right")
+    out$enroll <- out$size
+    out$size <- NULL
+    out$type <- NA
+    out$type[grepl("associate", out$degrees_awarded_predominant)] <- "2yr"
+    out$type[grepl("bachelor", out$degrees_awarded_predominant)] <- "4yr"
+    out$type[grepl("certificate", out$degrees_awarded_predominant)] <- "other"
+    out$degrees_awarded_predominant <- NULL
   }
-  names <- sample(names, size = n, replace = FALSE)
-  # attribs <- mvtnorm::rmvnorm(n, mean = mean_vec, sigma = cov_mat)
-  # attribs[attribs < 0] <- 0
-  # attribs[attribs >=1] <- 0.99
-  K <- length(enroll[enroll == 0])
-  enroll[enroll == 0] <- sample(1:25, K, replace = FALSE)
-  out <- data.frame(opeid = ids, name = names, enroll = enroll,
-                    stringsAsFactors = FALSE)
-  out$short_name <- stringr::str_trunc(out$name, 20, "right")
-  out$type <- NA
-  out$type[grepl("COMMUNITY", out$name)] <- "2yr"
-  out$type[grepl("UNIVERSITY", out$name)] <- "4yr"
-  out$type[grepl("PRIVATE", out$name)] <- "4yr"
-  out$type[grepl("COLLEGE OF", out$name)] <- "other"
-  # out <- cbind(out, attribs)
+
   return(out)
 }

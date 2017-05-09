@@ -129,7 +129,8 @@ sch_names <- c("Jackson", "Wallaby", "Kendrick", "Willow Creek", "Cypress",
 # ps_list <- ps_list %>% filter(size > 0) %>% filter(size < 100000)
 # ps_list <- ps_list %>% filter(operating == 1) %>% select(-operating)
 
-college_scorecard <- read.csv("data-raw/college_scorecard_2013.csv")
+college_scorecard <- read.csv("data-raw/college_scorecard_2013.csv",
+                              stringsAsFactors = FALSE)
 
 
 ps_names <- c("COMMUNITY COLLEGE 400", "DEF COMMUNITY COLLEGE", "D COMMUNITY COLLEGE",

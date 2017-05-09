@@ -38,7 +38,10 @@
 # simoutsB <- simpop(nstu = 1000L, seed = 488234,
 #                    control = sim_control(nschls = 3L, race_groups = c("Black", "White", "Hispanic"),
 #                                          race_prob = c(0.3, 0.6, 0.1)))
-#
+
+# mod_sim <- do.call(gen_outcome_model, sim_control()$ps_sim_parameters)
+# mod_sim$sim_model@resp$family$linkinv(unlist(ranef(mod_sim$sim_model)$clustID))
+
 #
 # simoutsC <- simpop(nstu = 1000L, seed = 488234,
 #                    control = sim_control(nschls = 3L, n_cohorts = 5L))

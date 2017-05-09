@@ -316,7 +316,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   if(is.null(grad_sim_parameters)){
     grad_sim_parameters <- list(
       fixed = ~ 1 + math_ss + scale_gpa + gifted + iep + frpl + ell + male,
-      random_var = 0.09948,
+      random_var = 0.16948,
       cov_param = list(
         dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
         var_type = rep("lvl1", 7),
@@ -352,7 +352,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   if(is.null(ps_sim_parameters)){
     ps_sim_parameters <- list(
       fixed = ~ 1 +  math_ss + scale_gpa + gifted + iep + frpl + ell + male,
-      random_var = 0.03713,
+      random_var = 0.1713,
       cov_param = list(
         dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
         var_type = rep("lvl1", 7),
@@ -398,7 +398,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       # Between student
       random_param = list(random_var = c(0.4, 0.125), cor_vars = c(-0.4), rand_gen = 'rnorm'),
       # Between school
-      random_param3 = list(random_var = c(0.6, 0.2), cor_vars = c(-0.4), rand_gen = 'rnorm'), # intercept + any slopes in length
+      random_param3 = list(random_var = c(1.2, 0.4), cor_vars = c(-0.4), rand_gen = 'rnorm'), # intercept + any slopes in length
       cov_param = list(
         dist_fun = c("rbinom", "rbinom", "rbinom", "rbinom", "rbinom"),
         var_type = rep("lvl1", 5),

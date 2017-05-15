@@ -20,5 +20,7 @@ a list with simulated data
 Grand simulation
 }
 \examples{
+\dontrun{
 out <- simpop(nstu = 20, seed = 213)
+}
 }

@@ -55,7 +55,9 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' @importFrom tidyr gather
 #' @export
 #' @examples
+#' \dontrun{
 #' out <- simpop(nstu = 20, seed = 213)
+#' }
 simpop <- function(nstu, seed, control = sim_control()){
   ## Generate student-year data
   message("Preparing student identities for ", nstu, " students...")
@@ -85,7 +87,7 @@ simpop <- function(nstu, seed, control = sim_control()){
                         by = idvar)
   rm(stu_first)
   message("Assigning ", nstu, " students longitudinal status trajectories...")
-  cond_vars <- OpenSDP.data:::get_sim_groupvars(control)
+  cond_vars <- get_sim_groupvars(control)
   stu_year <- left_join(stu_year, demog_master[, c(idvar, cond_vars)],
                         by = idvar)
   stu_year <- gen_annual_status(stu_year, control = control)
@@ -167,7 +169,7 @@ simpop <- function(nstu, seed, control = sim_control()){
                           by = c(idvar))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
-  hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, control = control)
+  hs_outcomes <- OpenSDP.data::assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   # TODO: Fix hardcoding of postsec - insert scorecard data here
@@ -274,6 +276,12 @@ gen_student_years <- function(data, control=sim_control()){
 
 
 
+#' Get grouping variables
+#'
+#' @param control a control list produced by \code{\link{sim_control}}
+#'
+#' @return a character vector of grouping terms in control lists
+#' @export
 get_sim_groupvars <- function(control = sim_control()){
   # consider
   #https://stat.ethz.ch/R-manual/R-devel/library/base/html/rapply.html
@@ -434,10 +442,11 @@ assign_schools <- function(student, schools, method = NULL){
 
 #' Assign high school outcomes
 #'
-#' @param g12_cohort a dataframe with certain high school attributes
+#' @param data a dataframe with certain high school attributes
 #' @param control control parameters from the \code{sim_control()} function
 #'
 #' @return an outcome dataframe
+#' @export
 assign_hs_outcomes <- function(data, control = sim_control()){
   data$scale_gpa <- gen_gpa(data = data, control = control)
   # rescale GPA
@@ -479,7 +488,7 @@ assign_hs_outcomes <- function(data, control = sim_control()){
     # outcomes$grad_cohort <- outcomes$year
     outcomes$year <- NULL
 
-  outcomes$class_rank <- rank(outcomes$gpa, ties = "first")
+  outcomes$class_rank <- rank(outcomes$gpa, ties.method = "first")
   # Diploma codes
   diplomaCodes <- c("00806", "00807", "00808", "00809", "00810", "00811")
   nonDiplomaCodes <- c("00812", "00813", "00814",  "00815", "00816",

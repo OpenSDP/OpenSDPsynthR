@@ -7,9 +7,9 @@
 assign_hs_outcomes(data, control = sim_control())
 }
 \arguments{
-\item{control}{control parameters from the \code{sim_control()} function}
+\item{data}{a dataframe with certain high school attributes}
 
-\item{g12_cohort}{a dataframe with certain high school attributes}
+\item{control}{control parameters from the \code{sim_control()} function}
 }
 \value{
 an outcome dataframe

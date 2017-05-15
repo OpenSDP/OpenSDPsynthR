@@ -479,7 +479,8 @@ gen_ontrack <- function(gpa_ontrack){
 
 #' Generate annual HS outcomes
 #'
-#' @param hs_outcomes a table of final gpa, hs_status, and sid
+#' @param hs_outcomes a data frame with final gpa, hs_status, and sid
+#' @param stu_year a data frame with student enrollment
 #' @importFrom tidyr gather
 #' @return an expanded table with credits and gpa information
 #' @export

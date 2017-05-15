@@ -7,7 +7,9 @@
 gen_hs_annual(hs_outcomes, stu_year)
 }
 \arguments{
-\item{hs_outcomes}{a table of final gpa, hs_status, and sid}
+\item{hs_outcomes}{a data frame with final gpa, hs_status, and sid}
+
+\item{stu_year}{a data frame with student enrollment}
 }
 \value{
 an expanded table with credits and gpa information

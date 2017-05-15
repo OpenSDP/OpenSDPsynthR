@@ -1,5 +1,7 @@
 #' Set control parameters for simulated data
 #' @param nschls integer- number of schools to create, default is 2
+#' @param best_school character, format is a number, padded with a leading 0,
+#' indicates the school that will be the highest performing
 #' @param race_groups character - vector of labels for race groups
 #' @param race_prob numerics - same length as \code{race_groups}
 #' @param minyear integer - the first year student records are observed
@@ -52,7 +54,7 @@
 #' of the parameters are defined with valid values.
 #' @return a named list
 #' @export
-sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
+sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_prob=NULL,
                         ses_list=NULL, minyear=2002, maxyear=2017,
                         n_cohorts = 8L, gifted_list=NULL, iep_list=NULL,
                         ell_list=NULL, ps_transfer_list=NULL,
@@ -68,6 +70,12 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
                         assess_grades = NULL){
 
   nschls <- nschls
+  if(is.null(best_school)){
+    best_schl <- "01"
+  } else {
+    best_schl <- best_school
+  }
+
   if(is.null(race_groups)){
     race_groups <- xwalk$CEDS_name[xwalk$category == "Demographic"]
     race_groups <- race_groups[!race_groups %in% c("Sex", "","Birthdate")]
@@ -316,7 +324,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   if(is.null(grad_sim_parameters)){
     grad_sim_parameters <- list(
       fixed = ~ 1 + math_ss + scale_gpa + gifted + iep + frpl + ell + male,
-      random_var = 0.16948,
+      random_var = 0.8948,
       cov_param = list(
         dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
         var_type = rep("lvl1", 7),
@@ -339,7 +347,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         0.0009
       ),
       fixed_param = c(
-        1.7816, 0.10764, 1.05872, -0.07352, -0.07959,
+        1.6816, 0.30764, 1.05872, -0.07352, -0.07959,
         -0.331647,-0.22318254, 0.0590
       ),
       ngrps = nschls + 5,
@@ -443,9 +451,9 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   if(is.null(assessment_adjustment)){
     assessment_adjustment <- list(
       race_list = list(
-        "White" = 0.1,
+        "White" = 0.2,
         "Black or African American" = -0.4,
-        "Asian" = 0.1,
+        "Asian" = 0.2,
         "Hispanic or Latino Ethnicity" = -0.25,
         "Demographic Race Two or More Races" = -0.1,
         "American Indian or Alaska Native" = -0.25,
@@ -459,7 +467,6 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       },
 
       frl_list = list("0" = 0.1, "1" = -0.5),
-
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         dist_mean <- frl_par[[which(frl == names(frl_par))]] * sd
         dist_sd <- abs(sd * (dist_mean/sd))
@@ -469,15 +476,22 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       perturb_base = function(x, sd){
         y <- x + rnorm(1, 0, sd * 0.8)
         return(y)
+      },
+      school_list = best_schl,
+      perturb_school = function(x, schid, sd, schl_par = school_list){
+        val_mean <- ifelse(schid %in% schl_par, 0.25, 0)
+        val_mean_sd <- abs(sd * (val_mean/sd))
+        y <- x + rnorm(1, val_mean, sqrt(val_mean_sd))
+        return(y)
       }
     )
   }
   if(is.null(grad_adjustment)){
     grad_adjustment <- list(
       race_list = list(
-        "White" = 0.1,
+        "White" = 0.25,
         "Black or African American" = -0.2,
-        "Asian" = 0.05,
+        "Asian" = 0.15,
         "Hispanic or Latino Ethnicity" = -0.2,
         "Demographic Race Two or More Races" = -0.05,
         "American Indian or Alaska Native" = -0.25,
@@ -485,18 +499,25 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
       ),
       perturb_race = function(x, race,race_par = race_list){
         val_mean <- race_par[[which(race == names(race_par))]]
-        y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.4, 0.2)
+        y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.5, 0.3)
         y <- num_clip(y, 0, 1)
-        y <- ifelse(y <= 0, 0.025, y) #failsafes to prevent negative probabilities
+        y <- ifelse(y <= 0, 0.05, y) #failsafes to prevent negative probabilities
         y <- ifelse(y >= 1, 0.985, y) #failsafes to prevent negative probabilities
         return(y)
       },
-      frl_list = list("0" = 0.1, "1" = -0.5),
+      frl_list = list("0" = 0.25, "1" = -0.5),
       perturb_frl = function(x, frl, sd, frl_par = frl_list){
         val_mean <- frl_par[[which(frl == names(frl_par))]]
-        y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.4, 0.2)
-        y <- ifelse(y <= 0, 0.05, y) #failsafes to prevent negative probabilities
+        y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.5, 0.3)
+        y <- ifelse(y <= 0, 0.0125, y) #failsafes to prevent negative probabilities
         y <- ifelse(y >= 1, 0.95, y) #failsafes to prevent negative probabilities
+        y <- num_clip(y, 0, 1)
+        return(y)
+      },
+      school_list = best_schl,
+      perturb_school = function(x, schid, schl_par = school_list){
+        val_mean <- ifelse(schid %in% schl_par, 0.3, 0)
+        y <- x + rnorm(1, val_mean, sd = 0.05)
         y <- num_clip(y, 0, 1)
         return(y)
       }
@@ -505,13 +526,13 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   if(is.null(ps_adjustment)){
     ps_adjustment <-  list(
       race_list = list(
-        "White" = 0.1,
-        "Black or African American" = 0.05,
-        "Asian" = 0.075,
-        "Hispanic or Latino Ethnicity" = 0.05,
-        "Demographic Race Two or More Races" = 0.05,
-        "American Indian or Alaska Native" = 0.0,
-        "Native Hawaiian or Other Pacific Islander" = 0.0
+        "White" = 0.35,
+        "Black or African American" = 0.1,
+        "Asian" = 0.2,
+        "Hispanic or Latino Ethnicity" = 0.1,
+        "Demographic Race Two or More Races" = 0.1,
+        "American Indian or Alaska Native" = 0.1,
+        "Native Hawaiian or Other Pacific Islander" = 0.1
       ),
       perturb_race = function(x, race,race_par = race_list){
         val_mean <- race_par[[which(race == names(race_par))]]
@@ -529,16 +550,23 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
         y <- ifelse(y <= 0, 0.05, y) #failsafes to prevent negative probabilities
         y <- ifelse(y >= 1, 0.95, y) #failsafes to prevent negative probabilities
         return(y)
+      },
+      school_list = best_schl,
+      perturb_school = function(x, schid, schl_par = school_list){
+        val_mean <- ifelse(schid %in% schl_par, 0.25, 0)
+        y <- x + rnorm(1, val_mean, sd = 0.05)
+        y <- num_clip(y, 0, 1)
+        return(y)
       }
     )
   }
   if(is.null(gpa_adjustment)){
     gpa_adjustment <-  list(
       race_list = list(
-        "White" = -0.1,
-        "Black or African American" = -0.15,
-        "Asian" = -0.075,
-        "Hispanic or Latino Ethnicity" = -0.15,
+        "White" = 0.1,
+        "Black or African American" = -0.2,
+        "Asian" = 0.075,
+        "Hispanic or Latino Ethnicity" = -0.2,
         "Demographic Race Two or More Races" = -0.05,
         "American Indian or Alaska Native" = -0.0,
         "Native Hawaiian or Other Pacific Islander" = -0.0
@@ -567,6 +595,7 @@ sim_control <- function(nschls=2L, race_groups=NULL, race_prob=NULL,
   }
   structure(namedList(
     nschls,
+    best_schl,
     race_groups,
     race_prob,
     minyear,

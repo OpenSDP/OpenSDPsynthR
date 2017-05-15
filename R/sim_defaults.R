@@ -117,11 +117,13 @@ simpop <- function(nstu, seed, control = sim_control()){
   stu_year$ndays_attend <- ifelse(stu_year$ndays_attend > 180, 180, stu_year$ndays_attend)
   stu_year$att_rate <- stu_year$ndays_attend / stu_year$ndays_possible
   message("Creating ", control$nschls, " schools for you...")
-  school <- gen_schools(n = control$nschls, mean = control$school_means,
-                        sigma = control$school_cov_mat,
-                        names = control$school_names)
+  # TODO: Rewrite this so it takes control the argument
+  school <- gen_schools(control = control)
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
-  stu_year <- assign_schools(student = stu_year, schools = school, method = "demographic")
+  stu_year <- left_join(stu_year, demog_master[, c("sid", "White")])
+  stu_year <- assign_schools(student = stu_year, schools = school,
+                             method = "demographic")
+  stu_year$White <- NULL
   message("Simulating assessment table... be patient...")
   assess <- left_join(stu_year[, c("sid", "year", "age", "grade", "frpl",
                                    "ell", "iep", "gifted", "schid")],
@@ -284,15 +286,24 @@ get_sim_groupvars <- function(control = sim_control()){
 
 #' Generate a roster of schools to assign students to
 #'
-#' @param n number of schools
-#' @param mean a vector of means for the school attributes
-#' @param sigma a covariance matrix for the school attributes
-#' @param names vector to draw names from
+#' @param control simulation control parameters from \code{\link{sim_control}}
+#' @details Controls include:
 #'
+#' \describe{
+#' \item{n}{number of schools}
+#' \item{mean}{a vector of means for the school attributes}
+#' \item{sigma}{a covariance matrix for the school attributes}
+#' \item{names}{vector to draw names from}
+#' \item{best_schl}{a character value specifiying the ID of the best school}
+#' }
 #' @return a data.frame with schools and their attributes
 #' @importFrom mvtnorm rmvnorm
 #' @export
-gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
+gen_schools <- function(control){
+  n <- control$nschls
+  mean <- control$school_means
+  sigma <- control$school_cov_mat
+  names <- control$school_names
   if(missing(mean)){
     mean_vec <- structure(
       c(0, 0, 0, 0, 0),
@@ -348,7 +359,13 @@ gen_schools <- function(n, mean = NULL, sigma = NULL, names = NULL){
                      replace=TRUE, prob = c(0.9, 0.05, 0.05))
   out$poverty_desig <- sample(c("HighQuartile", "LowQuartile", "Neither"),
                               nrow(out), replace = TRUE, prob = c(0.25, 0.25, 0.5))
-  if(nrow(out) > 3){
+  hip <- sample(out$schid[!out$schid %in% control$best_schl], nrow(out) %/% 4)
+  # Add the high flier school to the low poverty school list
+  lop <- c(sample(out$schid[!out$schid %in% hip], nrow(out) %/% 4), control$best_schl)
+  out$poverty_desig <- "Neither"
+  out$poverty_desig[out$schid %in% hip] <- "HighQuartile"
+  out$poverty_desig[out$schid %in% lop] <- "LowQuartile"
+  if(nrow(out) < 4 & nrow(out) > 1){
     if(length(out$poverty_desig[out$poverty_desig == "HighQuartile"]) == 0){
       out$poverty_desig[[1]] <- "HighQuartile"
     }
@@ -395,10 +412,17 @@ assign_schools <- function(student, schools, method = NULL){
     schools$base_prob <- ifelse(schools$poverty_desig == "LowQuartile", 0.55,
                                 ifelse(schools$poverty_desig == "HighQuartile",
                                        0.05, 0.4))
+    # Create a school segregation parameter here
+    schools$race_prob <- schools$frpl_prob
+    schools$race_prob <- ifelse(schools$race_prob > 0.7, schools_race_prob + 0.2,
+                                schools$race_prob - 0.1)
     student <- student %>% group_by(sid) %>% arrange(year) %>%
       mutate(initschid = ifelse(frpl == "1",
                                 sample(schools$schid, 1, prob = schools$frpl_prob),
                                 sample(schools$schid, 1, prob = schools$base_prob))) %>%
+      mutate(initschid = ifelse(White == "No",
+                                sample(schools$schid, 1, prob = schools$race_prob),
+                                initschid)) %>%
       mutate(schid = markov_cond_list("ALL", n = n()-1, school_t_list,
                                       t0 = initschid[[1]],
                                       include.t0 =TRUE)) %>%

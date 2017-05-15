@@ -4,20 +4,25 @@
 \alias{gen_schools}
 \title{Generate a roster of schools to assign students to}
 \usage{
-gen_schools(n, mean = NULL, sigma = NULL, names = NULL)
+gen_schools(control)
 }
 \arguments{
-\item{n}{number of schools}
-
-\item{mean}{a vector of means for the school attributes}
-
-\item{sigma}{a covariance matrix for the school attributes}
-
-\item{names}{vector to draw names from}
+\item{control}{simulation control parameters from \code{\link{sim_control}}}
 }
 \value{
 a data.frame with schools and their attributes
 }
 \description{
 Generate a roster of schools to assign students to
+}
+\details{
+Controls include:
+
+\describe{
+\item{n}{number of schools}
+\item{mean}{a vector of means for the school attributes}
+\item{sigma}{a covariance matrix for the school attributes}
+\item{names}{vector to draw names from}
+\item{best_schl}{a character value specifiying the ID of the best school}
+}
 }

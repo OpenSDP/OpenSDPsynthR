@@ -148,6 +148,9 @@ gen_grad <- function(data, control = sim_control()){
   data$out_prob <- mapply(control$grad_adjustment$perturb_race,
                          data$out_prob, data$Race,
                          MoreArgs = list(race_par = control$grad_adjustment$race_list))
+  data$out_prob <- mapply(control$grad_adjustment$perturb_school,
+                          data$out_prob, data[, idvar],
+                          MoreArgs = list(schl_par = control$grad_adjustment$school_list))
   data$out_binom <- sapply(data$out_prob, function(x) rbinom(1, 1, x))
   # Export
   out <- data.frame(grad_prob = data$out_prob, grad = data$out_binom)
@@ -258,6 +261,12 @@ gen_assess <- function(data, control = sim_control()){
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
                         data$rdg_ss, data$Race, data$rdg_sd,
                         MoreArgs = list(race_par = control$assessment_adjustment$race_list))
+  data$math_ss <- mapply(control$assessment_adjustment$perturb_school,
+                         data$math_ss, data$schid, data$math_sd,
+                         MoreArgs = list(schl_par = control$assessment_adjustment$school_list))
+  data$rdg_ss <- mapply(control$assessment_adjustment$perturb_school,
+                        data$rdg_ss, data$schid, data$rdg_sd,
+                        MoreArgs = list(schl_par = control$assessment_adjustment$school_list))
   # Perturb to reduce test correlation between reading and math
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_base,
                         data$rdg_ss, data$rdg_sd)

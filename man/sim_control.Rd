@@ -4,9 +4,9 @@
 \alias{sim_control}
 \title{Set control parameters for simulated data}
 \usage{
-sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
-  ses_list = NULL, minyear = 2002, maxyear = 2017, n_cohorts = 8L,
-  gifted_list = NULL, iep_list = NULL, ell_list = NULL,
+sim_control(nschls = 2L, best_school = NULL, race_groups = NULL,
+  race_prob = NULL, ses_list = NULL, minyear = 2002, maxyear = 2017,
+  n_cohorts = 8L, gifted_list = NULL, iep_list = NULL, ell_list = NULL,
   ps_transfer_list = NULL, grade_levels = NULL, school_means = NULL,
   school_cov_mat = NULL, school_names = NULL, postsec_names = NULL,
   gpa_sim_parameters = NULL, grad_sim_parameters = NULL,
@@ -16,6 +16,9 @@ sim_control(nschls = 2L, race_groups = NULL, race_prob = NULL,
 }
 \arguments{
 \item{nschls}{integer- number of schools to create, default is 2}
+
+\item{best_school}{character, format is a number, padded with a leading 0,
+indicates the school that will be the highest performing}
 
 \item{race_groups}{character - vector of labels for race groups}
 

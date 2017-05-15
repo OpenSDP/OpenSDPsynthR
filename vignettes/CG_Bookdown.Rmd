@@ -235,7 +235,6 @@ chrt_grad_end_delayed = 2009
 
 plotdf <- filter(cgdata, chrt_ninth >= chrt_ninth_begin_persist_yr2 & 
                    chrt_ninth <= chrt_ninth_end_persist_yr2)
-
 # Step 4: Create variables for the outcomes "regular diploma recipients", 
 #  "seamless transitioners" and "second year persisters"
 
@@ -293,7 +292,7 @@ library(scales)
 
 schoolData$outcome[schoolData$outcome == "cohort"] <- "Ninth Graders"
 schoolData$outcome[schoolData$outcome == "grad"] <- "On-time Graduates"
-schoolData$outcome[schoolData$outcome == "seameless_transitioners_any"] <- 
+schoolData$outcome[schoolData$outcome == "seamless_transitioners_any"] <- 
   "Seamless College Transitioner"
 schoolData$outcome[schoolData$outcome == "second_year_persisters"] <- 
   "Second Year Persisters"
@@ -403,7 +402,7 @@ progressRace$race_ethnicity[progressRace$race_ethnicity == 3] <- "Hispanic"
 progressRace$race_ethnicity[progressRace$race_ethnicity == 4] <- "Native American"
 progressRace$race_ethnicity[progressRace$race_ethnicity == 5] <- "White"
 progressRace$race_ethnicity[progressRace$race_ethnicity == 6] <- "Multiple/Other"
-progressRace$race_ethnicity <- as.character(zap_labels(progressRace$race_ethnicity))
+
 ```
 
 
@@ -470,7 +469,7 @@ that progress to each step along the education pipeline.
 
 plotdf <- filter(cgdata, chrt_ninth >= chrt_ninth_begin_persist_yr2 & 
                    chrt_ninth <= chrt_ninth_end_persist_yr2) %>% 
-  filter(frpl_ever > 0)
+  filter(frpl_ever_hs > 0)
 
 # Step 2: Create variables for the outcomes "regular diploma recipients", 
 ## "seamless transitioners" and "second year persisters"
@@ -524,7 +523,7 @@ progressRaceFRL$race_ethnicity[progressRaceFRL$race_ethnicity == 3] <- "Hispanic
 progressRaceFRL$race_ethnicity[progressRaceFRL$race_ethnicity == 4] <- "Native American"
 progressRaceFRL$race_ethnicity[progressRaceFRL$race_ethnicity == 5] <- "White"
 progressRaceFRL$race_ethnicity[progressRaceFRL$race_ethnicity == 6] <- "Multiple/Other"
-progressRaceFRL$race_ethnicity <- as.character(zap_labels(progressRaceFRL$race_ethnicity))
+
 ```
 
 ```{r A3plot}

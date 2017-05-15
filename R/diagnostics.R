@@ -65,3 +65,39 @@
 #
 #
 #
+#
+# myGradSim <- list(
+#     fixed = ~ 1 + math_ss + scale_gpa + gifted + iep + frpl + ell + male,
+#     random_var = 0.8948,
+#     cov_param = list(
+#       dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
+#       var_type = rep("lvl1", 7),
+#       opts = list(
+#         list(mean = 0, sd = 1),
+#         list(mean = 0, sd = 1),
+#         list(size = 1, prob = 0.1),
+#         list(size = 1, prob = 0.2),
+#         list(size = 1, prob = 0.45),
+#         list(size = 1, prob = 0.1),
+#         list(size = 1, prob = 0.47)
+#       )
+#     ),
+#     cor_vars = c(
+#       0.5136, 0.453, -0.276, -0.309, -0.046, -0.033,
+#       0.2890, -0.1404, -0.2674, -0.0352,-0.1992,
+#       -0.1354, -0.2096, -0.0305, -0.0290,
+#       0.1433, -0.0031, 0.1269,
+#       0.0601, 0.0066,
+#       0.0009
+#     ),
+#     fixed_param = c(
+#       1.6816, 0.30764, 1.05872, -0.07352, -0.07959,
+#       -0.331647,-0.22318254, 0.0590
+#     ),
+#     ngrps = nschls + 5,
+#     unbalanceRange = c(100, 1500)
+# )
+#
+# simouts <- simpop(nstu = 4000L, seed = 53232,
+#                   control = sim_control(nschls = 12L,
+#                                         grad_sim_parameters = ))

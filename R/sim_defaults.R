@@ -99,6 +99,8 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
   stu_year <- stu_year %>% group_by(sid) %>% arrange(sid, year) %>%
     mutate(grade_diff = num_grade(grade) - num_grade(lag(grade))) %>%
     mutate(grade_advance = ifelse(grade_diff > 0, "Promotion", "Retention")) %>%
+    mutate(grade_advance = lag(grade_advance)) %>%
+    # so that promotion/retention unknown in final year
     select(-grade_diff) %>% ungroup()
   stu_year <- as.data.frame(stu_year)
   stu_year$year <- as.numeric(stu_year$year) # coerce to numeric to avoid user integer inputs

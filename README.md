@@ -57,23 +57,6 @@ library(OpenSDP.data)
 
 The main function of the package is `simpop` which generates a list of data elements corresponding to simulated educational careers, K-20, for a user specified number of students. In R, a list is a data structure that can contain multiple data elements of different structures. This can be used to emulate the multiple tables of a Student Information System (SIS).
 
-Data elements produced include:
-
--   **Student demographics:** age, race, and sex
--   **Student participation:** grade advancement, ELL status, IEP status, FRPL status, gifted and talented status, attendance
--   **Student enrollment status:** exit type, enrollment type, transfer, graduation, dropout, etc.
--   **School attributes:** name, school category, school size, Title I and Title III status, etc.
--   **Student assessment:** math assessment, reading assessment, grade level assessed
--   **High school outcomes:** graduation, cumulative GPA, graduation type, cohort, class rank, postsecondary enrollment
--   **High school progression:** annual class rank, cumulative credits earned, credits earned, credits by English Language Arts and by Mathematics, credits attempted, ontrack status
--   **Postsecondary enrollment:** year of enrollment, transfer indicator, name and ID of postsecondary institution, type of institution
--   \*\*Postsecondary institution <data:**> name, city, state, online only, average net price, Pell grant rate, retention four year full time, share of part time enrollment, enrollment by race, SAT and ACT score distribution for admitted students
-
-There are two tables of metadata about the assessment data above to be used in cases where multiple types of student assessment are analyzed together.
-
--   **Assessment information:** grade, subject, ID, type, and name of assessment
--   **Proficiency information:** mean score, error of score, number of students tested
-
 ``` r
 out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
 #> Preparing student identities for 500 students...
@@ -102,7 +85,22 @@ names(out)
 #>  [9] "assessments"  "proficiency"
 ```
 
-The table below shows the data elements available in each table:
+Data elements produced include:
+
+-   **Student demographics:** age, race, and sex
+-   **Student participation:** grade advancement, ELL status, IEP status, FRPL status, gifted and talented status, attendance
+-   **Student enrollment status:** exit type, enrollment type, transfer, graduation, dropout, etc.
+-   **School attributes:** name, school category, school size, Title I and Title III status, etc.
+-   **Student assessment:** math assessment, reading assessment, grade level assessed
+-   **High school outcomes:** graduation, cumulative GPA, graduation type, cohort, class rank, postsecondary enrollment
+-   **High school progression:** annual class rank, cumulative credits earned, credits earned, credits by English Language Arts and by Mathematics, credits attempted, ontrack status
+-   **Postsecondary enrollment:** year of enrollment, transfer indicator, name and ID of postsecondary institution, type of institution
+-   \*\*Postsecondary institution <data:**> name, city, state, online only, average net price, Pell grant rate, retention four year full time, share of part time enrollment, enrollment by race, SAT and ACT score distribution for admitted students
+
+There are two tables of metadata about the assessment data above to be used in cases where multiple types of student assessment are analyzed together.
+
+-   **Assessment information:** grade, subject, ID, type, and name of assessment
+-   **Proficiency information:** mean score, error of score, number of students tested
 
 ``` r
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
@@ -137,7 +135,7 @@ head(out$stu_year, 10)
 Parameters
 ----------
 
-Default parameters can be modified by the user:
+By default, you only need to specify the number of students to simulate to the `simpop` command. The package has default simulation parameters that will result in creating a small school district with two schools.
 
 ``` r
 names(sim_control())
@@ -154,63 +152,112 @@ names(sim_control())
 #> [21] "assess_sim_par"        "assessment_adjustment"
 #> [23] "grad_adjustment"       "ps_adjustment"        
 #> [25] "gpa_adjustment"        "assess_grades"
-sim_control()$ell_list
-#> $ALL
-#> $ALL$f
-#> function (n, tm, burnin = NULL, ...) 
-#> {
-#>     stopifnot(is.matrix(tm))
-#>     stopifnot(n > 0)
-#>     if (any(tm > 1)) {
-#>         warning("TM elements exceed 1, adjusting by dividing by rowSums")
-#>         tm <- tm/rowSums(tm)
-#>     }
-#>     mc <- new("markovchain", transitionMatrix = tm)
-#>     if (!is.null(burnin)) {
-#>         series <- markovchainSequence(n + burnin, mc, ...)
-#>         series <- series[burnin:(n + burnin)]
-#>     }
-#>     else {
-#>         series <- markovchainSequence(n, mc, ...)
-#>     }
-#>     return(series)
-#> }
-#> <environment: namespace:OpenSDP.data>
-#> 
-#> $ALL$pars
-#> $ALL$pars$tm
-#>            1          0
-#> 1 0.97560976 0.02439024
-#> 0 0.00621118 0.99378882
-#> 
-#> 
-#> 
-#> $GROUPVARS
-#> [1] "ell"
 ```
+
+These parameters can have complex structures to allow for conditional and random generation of data. Parameters fall into four categories:
+
+-   vectors: a single list of parameters like school names, category names, or school IDs
+-   conditional probability lists:
+-   outcome simulation parameters
+-   outcome adjustments:
+
+### Baselines
+
+Currently there are two special parameters that are set based on baseline data built into the package. These are the initial grade distribution of students, and the initial program participation of students in `ell`, `iep`, and `frpl` programs.
 
 These set some of the simulation requirements, but others are set using the `baseline` function family.
 
 ``` r
-get_baseline("ses")
+get_baseline("program")
 #> $data
-#>          race  prob
-#> 1       black 0.650
-#> 2       asian 0.375
-#> 3    hispanic 0.600
-#> 4     amerind 0.400
-#> 5       white 0.400
-#> 6       other 0.400
-#> 7 multiracial 0.400
-#> 8 hawaiian_pi 0.400
+#>   ell iep frpl count  prob
+#> 1   0   0    0 56838 55.00
+#> 2   0   0    1 46104 29.63
+#> 3   0   1    0  8178  4.44
+#> 4   0   1    1 11423  6.13
+#> 5   1   0    0  1089  0.64
+#> 6   1   0    1  4771  3.59
+#> 7   1   1    0   121  0.09
+#> 8   1   1    1   871  0.48
 #> 
 #> $keys
-#> [1] "race"
+#> NULL
+#> 
+#> $fun
+#> function () 
+#> {
+#>     prog_baseline[sample(rownames(prog_baseline), 1, prob = prog_baseline$prob), 
+#>         1:3]
+#> }
+#> <environment: 0x000000001065fcd0>
+get_baseline("grade")
+#> $data
+#>    age     g-1      g0      g1      g2      g3      g4      g5      g6
+#> 1    0 0.20000 0.60000 0.00000 0.00000 0.00000 0.00000 0.20000 0.00000
+#> 2    1 0.80000 0.10000 0.10000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 3    2 1.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 4    3 0.99647 0.00353 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 5    4 0.95125 0.04875 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 6    5 0.01327 0.97812 0.00850 0.00011 0.00000 0.00000 0.00000 0.00000
+#> 7    6 0.00000 0.11595 0.87473 0.00921 0.00010 0.00000 0.00000 0.00000
+#> 8    7 0.00000 0.00122 0.16272 0.82616 0.00990 0.00000 0.00000 0.00000
+#> 9    8 0.00000 0.00011 0.00368 0.19658 0.78788 0.01166 0.00011 0.00000
+#> 10   9 0.00000 0.00010 0.00021 0.00675 0.21692 0.76160 0.01443 0.00000
+#> 11  10 0.00000 0.00000 0.00000 0.00000 0.01061 0.22371 0.74987 0.01561
+#> 12  11 0.00000 0.00000 0.00000 0.00000 0.00000 0.01584 0.23237 0.73439
+#> 13  12 0.00000 0.00000 0.00000 0.00000 0.00010 0.00021 0.01651 0.24751
+#> 14  13 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00011 0.02236
+#> 15  14 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00062
+#> 16  15 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 17  16 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 18  17 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 19  18 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 20  19 0.00000 0.00000 0.00000 0.00207 0.00000 0.00000 0.00000 0.00000
+#> 21  20 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00606
+#> 22  21 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 23  22 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#>         g7      g8      g9     g10     g11     g12
+#> 1  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 2  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 3  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 4  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 5  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 6  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 7  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 8  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 9  0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 10 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 11 0.00020 0.00000 0.00000 0.00000 0.00000 0.00000
+#> 12 0.01719 0.00010 0.00000 0.00000 0.00000 0.00010
+#> 13 0.71242 0.02305 0.00010 0.00000 0.00000 0.00010
+#> 14 0.25146 0.69757 0.02829 0.00000 0.00000 0.00021
+#> 15 0.03221 0.24816 0.69531 0.02369 0.00000 0.00000
+#> 16 0.00051 0.03064 0.31636 0.62790 0.02388 0.00072
+#> 17 0.00000 0.00111 0.10026 0.27668 0.59653 0.02542
+#> 18 0.00000 0.00000 0.03076 0.08598 0.25533 0.62793
+#> 19 0.00000 0.00000 0.02625 0.07837 0.17745 0.71793
+#> 20 0.00000 0.00000 0.02490 0.06846 0.19295 0.71162
+#> 21 0.00000 0.00000 0.04242 0.07273 0.11515 0.76364
+#> 22 0.00000 0.00000 0.12000 0.04000 0.32000 0.52000
+#> 23 0.00000 0.00000 0.00000 0.00000 1.00000 0.00000
+#> 
+#> $keys
+#> [1] "age"
 #> 
 #> $fun
 #> function (x) 
-#> rbinom(1, 1, x)
-#> <environment: 0x0000000006047050>
+#> {
+#>     if (x %in% age_grade$age) {
+#>         probs <- age_grade[which(age_grade$age == x), ][-1]
+#>         out <- sample(names(age_grade)[-1], 1, prob = probs)
+#>         out <- convert_grade(out)
+#>         return(out)
+#>     }
+#>     else {
+#>         return(NA)
+#>     }
+#> }
+#> <environment: 0x000000001058a558>
 ```
 
 Package Dependencies
@@ -219,6 +266,7 @@ Package Dependencies
 -   `dplyr`
 -   `lubridate`
 -   [wakefield](https://www.github.com/trinker/wakefield)
+-   [simglm](https://www.github.com/lebebr01/simglm)
 
 OpenSDP
 -------

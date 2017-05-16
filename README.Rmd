@@ -71,6 +71,19 @@ specified number of students. In R, a list is a data structure that can contain
 multiple data elements of different structures. This can be used to emulate 
 the multiple tables of a Student Information System (SIS). 
 
+
+
+```{r, message=TRUE}
+out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
+```
+
+Currently ten tables are produced:
+
+```{r}
+names(out)
+```
+
+
 Data elements produced include:
 
 - **Student demographics:**  age, race, and sex
@@ -98,19 +111,7 @@ cases where multiple types of student assessment are analyzed together.
 - **Proficiency information:** mean score, error of score, number of students tested
 
 
-```{r, message=TRUE}
-out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
-```
-
-Currently ten tables are produced:
-
-```{r}
-names(out)
-```
-
-The table below shows the data elements available in each table:
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 table_names <- data.frame(table = NULL, column = NULL)
 for(i in seq_along(out)){
   table_name <- names(out)[[i]]
@@ -136,20 +137,39 @@ demog_master <- out$demog_master
 
 ## Parameters
 
-Default parameters can be modified by the user:
+By default, you only need to specify the number of students to simulate to the 
+`simpop` command. The package has default simulation parameters that will result 
+in creating a small school district with two schools. 
+
 
 ```{r demonstrateOptionList}
 names(sim_control())
-sim_control()$ell_list
 ```
+
+These parameters can have complex structures to allow for conditional and random 
+generation of data. Parameters fall into four categories:
+
+- vectors: a single list of parameters like school names, category names, or 
+school IDs
+- conditional probability lists: 
+- outcome simulation parameters
+- outcome adjustments:
+
+### Baselines
+
+Currently there are two special parameters that are set based on baseline data 
+built into the package. These are the initial grade distribution of students, 
+and the initial program participation of students in `ell`, `iep`, and `frpl` 
+programs. 
+
 
 These set some of the simulation requirements, but others are set using the 
 `baseline` function family.
 
 ```{r}
-get_baseline("ses")
+get_baseline("program")
+get_baseline("grade")
 ```
-
 
 
 ## Package Dependencies
@@ -157,7 +177,7 @@ get_baseline("ses")
 - `dplyr`
 - `lubridate`
 - [wakefield](https://www.github.com/trinker/wakefield)
-
+- [simglm](https://www.github.com/lebebr01/simglm)
 
 ## OpenSDP
 

@@ -7,7 +7,6 @@
 #' Generate student-level attributes
 #'
 #' @param nstu integer, number of students to simulate
-#' @param seed integer, random seed to use
 #' @param control a list, defined by \code{\link{sim_control}}
 #' @import dplyr
 #' @importFrom wakefield sex
@@ -17,8 +16,7 @@
 #' in proportion to the U.S. population.
 #' @return a data.frame
 #' @export
-gen_students <- function(nstu, seed, control = sim_control()){
-  set.seed(seed)
+gen_students <- function(nstu, control = sim_control()){
   if(!is.null(control$minyear)){
     tmp <- paste0(control$minyear, "-01-01")
     start <- as.integer(Sys.Date() - as.Date(tmp))
@@ -47,7 +45,8 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' Grand simulation
 #' @rdname simpop
 #' @param nstu integer, number of students to simulate
-#' @param seed integer, random seed to use
+#' @param seed integer, random seed to make simulation reproducible across
+#' sessions, optional
 #' @param control a list, defined by \code{\link{sim_control}}
 #' @return a list with simulated data
 #' @importFrom lubridate year
@@ -58,11 +57,16 @@ gen_students <- function(nstu, seed, control = sim_control()){
 #' \dontrun{
 #' out <- simpop(nstu = 20, seed = 213)
 #' }
-simpop <- function(nstu, seed, control = sim_control()){
+simpop <- function(nstu, seed=NULL, control = sim_control()){
   ## Generate student-year data
+  # Set seed
+  if (!is.null(seed))
+    set.seed(seed)
+  else if (!exists(".Random.seed", envir = .GlobalEnv))
+    runif(1)
   message("Preparing student identities for ", nstu, " students...")
   suppressMessages({
-    demog_master <- gen_students(nstu = nstu, seed = seed, control = control)
+    demog_master <- gen_students(nstu = nstu, control = control)
   })
   message("Creating annual enrollment for ", nstu, " students...")
   suppressMessages({
@@ -122,19 +126,20 @@ simpop <- function(nstu, seed, control = sim_control()){
   # TODO: Rewrite this so it takes control the argument
   school <- gen_schools(control = control)
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
-  stu_year <- left_join(stu_year, demog_master[, c("sid", "White")])
+  stu_year <- left_join(stu_year, demog_master[, c(idvar, "White")], by = idvar)
   stu_year <- assign_schools(student = stu_year, schools = school,
                              method = "demographic")
   stu_year$White <- NULL
   message("Simulating assessment table... be patient...")
-  assess <- left_join(stu_year[, c("sid", "year", "age", "grade", "frpl",
+  assess <- left_join(stu_year[, c(idvar, "year", "age", "grade", "frpl",
                                    "ell", "iep", "gifted", "schid")],
-                      demog_master[, 1:4])
+                      demog_master[, 1:4], by = c(idvar))
   assess$male <- ifelse(assess$Sex == "Male", 1, 0)
   assess %<>% filter(grade %in% control$assess_grades)
   zz <- gen_assess(data = assess, control = control)
   assess <- bind_cols(assess[, c(idvar, "schid", "year")], zz)
-  assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")])
+  assess <- left_join(assess, stu_year[, c(idvar, "schid", "year", "grade")],
+                      by = c(idvar, "schid", "year"))
   assess_long <- assess %>% tidyr::gather(key = "subject", value = "score", math_ss, rdg_ss)
   assess_long$subject[assess_long$subject == "math_ss"] <- "Mathematics"
   assess_long$subject[assess_long$subject == "rdg_ss"] <- "English Language Arts"
@@ -169,7 +174,7 @@ simpop <- function(nstu, seed, control = sim_control()){
                           by = c(idvar))
   g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
-  hs_outcomes <- OpenSDP.data::assign_hs_outcomes(g12_cohort, control = control)
+  hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
   hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   # TODO: Fix hardcoding of postsec - insert scorecard data here

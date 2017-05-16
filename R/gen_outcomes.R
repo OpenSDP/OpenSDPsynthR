@@ -522,9 +522,9 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
   gpa$yr <- as.numeric(gpa$yr)
 
   out <- inner_join(ot, cred, by = c("sid" = "sid", "yr" = "yr"))
-  out <- left_join(out, credela)
-  out <- left_join(out, credmath)
-  out <- left_join(out, gpa)
+  out <- left_join(out, credela, by = c("sid" = "sid", "yr" = "yr"))
+  out <- left_join(out, credmath, by = c("sid" = "sid", "yr" = "yr"))
+  out <- left_join(out, gpa, by = c("sid" = "sid", "yr" = "yr"))
   rm(ot, cred, credela, credmath, gpa, zzz, gpa_temp)
   out$yr_seq <- out$yr; out$yr <- NULL
   # Only take the first 4 years
@@ -534,11 +534,12 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
     mutate(yr_seq = (year-min(year)) + 1) %>%
     filter(yr_seq < 5) %>% select(-yr_seq) %>%
     select(sid, year , grade, schid)
-  gpa_ontrack <- left_join(hs_outcomes, clean_years)
+  gpa_ontrack <- left_join(hs_outcomes, clean_years, by = "sid")
 # TODO: check on the year sequence and merging here
   gpa_ontrack <- gpa_ontrack %>% group_by(sid) %>% arrange(sid, year) %>%
     mutate(yr_seq = (year - min(year))+1)
-  gpa_ontrack <- left_join(gpa_ontrack, out)
+  gpa_ontrack <- left_join(gpa_ontrack, out, by = c("sid" = "sid",
+                                                    "yr_seq" = "yr_seq"))
   gpa_ontrack <- gpa_ontrack %>% select(-scale_gpa, -gpa, -grad_prob,
                                         -ps_prob, -ps)
 
@@ -636,7 +637,7 @@ gen_ps_enrollment <- function(hs_outcomes, nsc, control){
     select(-ps_change_ind)
   attributes(ps_pool$opeid) <- NULL # Make join work by dropping attributes of IDs
   attributes(nsc$opeid) <- NULL
-  ps_pool <- left_join(ps_pool, nsc %>% select(opeid, short_name, type))
+  ps_pool <- left_join(ps_pool, nsc %>% select(opeid, short_name, type), by = "opeid")
   ps_pool %<>% rename(ps_short_name = short_name,
                       ps_type = type)
   ps_pool %<>% filter(!(yr_seq == 1 & term == "spring"))

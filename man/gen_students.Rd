@@ -4,12 +4,10 @@
 \alias{gen_students}
 \title{Generate student-level attributes}
 \usage{
-gen_students(nstu, seed, control = sim_control())
+gen_students(nstu, control = sim_control())
 }
 \arguments{
 \item{nstu}{integer, number of students to simulate}
-
-\item{seed}{integer, random seed to use}
 
 \item{control}{a list, defined by \code{\link{sim_control}}}
 }

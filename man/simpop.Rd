@@ -4,12 +4,13 @@
 \alias{simpop}
 \title{Grand simulation}
 \usage{
-simpop(nstu, seed, control = sim_control())
+simpop(nstu, seed = NULL, control = sim_control())
 }
 \arguments{
 \item{nstu}{integer, number of students to simulate}
 
-\item{seed}{integer, random seed to use}
+\item{seed}{integer, random seed to make simulation reproducible across
+sessions, optional}
 
 \item{control}{a list, defined by \code{\link{sim_control}}}
 }

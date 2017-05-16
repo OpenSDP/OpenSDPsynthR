@@ -29,11 +29,29 @@ process to produce data that resembles the patterns of data in their agency.
 3. The package should be modular and extendable allowing new data topics to be
 generated as needed so synthetic data coverage can grow.
 
+## Structure
+
+The package is organized into the following functions:
+
+- `simpop()` is the overall function that runs the simulation, this function calls 
+many subfunctions to simulate different elements of the student data
+- `cleaners` are functions which take the output from the `simpop` function and 
+reshape it into data formats for different analyses. Currently only two cleaners 
+are supported -- `CEDS` and `sdp_cleaner()` which prepare the data into a CEDS 
+like format and into the Strategic Data Project college-going analysis file 
+specification respectively. 
+- `sim_control()` -- a function that controls all of the parameters of the `simpop` 
+simulation. The details of this function are covered in the vignettes. 
+
 # Get Started
 
 To use `OpenSDP.data`, follow the instructions below:
 
 ## Install Package
+
+The development version of the package is able to be installed using the 
+`install_github()`. To use this command you will need to install the `devtools` 
+package. 
 
 ```{r eval=FALSE}
 devtools::install_github("strategicdataproject/OpenSDP.data")
@@ -41,13 +59,15 @@ devtools::install_github("strategicdataproject/OpenSDP.data")
 
 ## Make some data
 
-Ljoad the package
+Load the package
 
 ```{r, message=TRUE}
 library(OpenSDP.data)
 ```
 
-
+The main function of the package is `simpop` which generates a list of data 
+elements corresponding to simulated educational careers, K-20, for a user 
+specified number of students. 
 
 ```{r, message=TRUE}
 out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))

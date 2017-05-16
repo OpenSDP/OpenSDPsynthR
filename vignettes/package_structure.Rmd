@@ -28,3 +28,301 @@ A baseline is a way of specifying how a proportion should be distributed in the
 population. 
 
 ## Longitudinal Indicators
+
+
+
+### Diagnostics
+
+How do we know it worked? We can look at the patterns of ELL enrollment that 
+are observed and see what patterns are the most common. To do this, let's compute 
+the frequency of transition states observed per student. 
+
+```{r ellDiagnostic}
+library(ggplot2)
+library(tidyr)
+plotdf <- stu_year %>% arrange(sid, year) %>% group_by(sid) %>% 
+  do(tidy_sequence(.$ell, states = c(1, 0)))
+
+plotdf$total <- rowSums(plotdf[, -1])
+plotdf <- plotdf %>% gather(-sid, key = "Transition", value = "Count")
+
+# plotdf %>% group_by(Transition) %>% filter(Transition != "total") %>%
+#   summarize(sum(Count))
+
+plotdf <- plotdf %>% filter(Transition != "total")  %>% 
+  group_by(sid) %>% 
+  mutate(total = sum(Count)) %>% 
+  mutate(per = Count / total) %>% filter(Transition != "total")  %>% 
+  separate(Transition, into = c("From", "To"), sep = "-") 
+
+ggplot(plotdf, aes(Count)) + geom_histogram() + 
+  scale_x_continuous(breaks = c(0:25)) + 
+  facet_grid(From~To, labeller = label_both, switch = "y") + 
+  theme_bw() + 
+  labs(title = "Frequency of Transition States by Student - ELL", 
+       y = "Count", x = "Times per Student State Observed")
+
+```
+
+Looking at this chart we can see that most students went from the No state to 
+a No state -- as would be expected when there are few ELLs. 
+
+Through this process we've gained students in the ELL status who were not 
+initially ELL. Depending on our application this may not be desirable and we 
+may want to modify the transition matrix to avoid this. Otherwise, later, 
+this becomes an exercise in data cleaning. 
+
+Two other visual diagnostics are below. 
+
+```{r visualdiagnostics}
+# Other plots
+
+# ggplot(plotdf, aes(per)) + geom_density() + 
+#   facet_grid(From ~ To, labeller = label_both, switch = "y") + 
+#   theme_bw() + labs(title = "By Student Densities of Transitions")
+
+# Heatmap
+plotdf %>% group_by(From, To) %>% 
+  summarise(Count = sum(Count)) %>% 
+  ungroup %>% 
+  mutate(total = sum(Count)) %>%
+  mutate(per = Count/total) %>%
+ggplot(aes(x = From, y = To, fill = per)) + 
+  geom_tile(color= I("black")) + 
+  geom_text(aes(label = round(per, digits = 2))) + 
+  theme_minimal() +
+  coord_cartesian() + labs(title = "Heatmap of ELL Transition States")
+
+```
+
+
+We can also do a comparative diagnostic. Given the relatively short length of 
+our sequence per student, it will be hard to estimate fit from a short sequence. 
+
+
+```{r testbyStudent}
+# series <- stu_year$ell[stu_year$ID == "1705"]
+# series <- stu_year$ell[stu_year$ID == "0001"]
+
+test_fit <- function(series, expected){
+  if(dim(table(series)) == 1){
+    return(TRUE)
+  } else {
+  out <- fit_series(series, return = "fit", confidencelevel = 0.99, 
+                    possibleStates = rownames(expected))
+  low <- out$lowerEndpointMatrix < expected
+  hi <- out$upperEndpointMatrix > expected
+  return(all(low, hi))
+  }
+}
+
+defaultFit <- sim_control()$ell_list$ALL$pars$tm
+
+test_res <- stu_year %>% group_by(sid) %>% 
+  summarize(fit_ok = test_fit(ell, expected = defaultFit))
+
+table(test_res$fit_ok)
+```
+
+
+Let's look at co-occurrence of status over time. 
+
+```{r CrossTabs}
+# Look at by year patterns of relationships by student year
+table(FRL = stu_year$frpl, GIFTED = stu_year$gifted)
+table(FRL = stu_year$frpl, IEP = stu_year$iep)
+table(GIFTED = stu_year$gifted, IEP = stu_year$iep)
+
+```
+
+Let's check polychoric correlations:
+
+```{r}
+gamma_GK(stu_year$gifted, stu_year$iep)
+gamma_GK(stu_year$frpl, stu_year$iep)
+gamma_GK(stu_year$frpl, stu_year$ell)
+```
+
+
+Finally, let's see who winds up "ever" in each category
+
+```{r collapseEver}
+
+test_df <- stu_year %>% group_by(sid) %>% 
+  summarize(iep_ever = if_else(any(iep == 1), "Yes", "No"), 
+            ell_ever = if_else(any(ell == 1), "Yes", "No"), 
+            frpl_ever = if_else(any(frpl == 1), "Yes", "No"), 
+            gifted_ever = if_else(any(gifted == 1), "Yes", "No"))
+
+table(IEP_EVER = test_df$iep_ever)
+table(ELL_EVER = test_df$ell_ever)
+table(FRPL_EVER = test_df$frpl_ever)
+table(GIFTED_EVER = test_df$gifted_ever)
+
+```
+
+
+## Assigning Schools and Outcomes
+
+Students move through grades, schools, and outcomes. 
+
+```{r, include=FALSE, eval=FALSE}
+# Outcome assignment, outcomes are assigned in order
+## sat_act
+## ps_enroll
+
+# TODO: Consider including diploma attainment...
+
+out <- simpop(nstu = 1250, seed = 1241, sim_control(nschls = 9))
+final_data <- sdp_cleaner(out)
+
+ggplot(out$assessment, aes(x = age, y = math_ss, group = sid)) + 
+  geom_line(alpha = I(0.2)) + 
+  # geom_smooth(method = 'lm', se=FALSE, color = I("black"), alpha = I(0.2)) +
+  facet_wrap(~schid) 
+
+
+score_table <- assess %>% group_by(year, age) %>% 
+  summarize(read_mean = mean(rdg_ss), 
+            read_sd = sd(rdg_ss), 
+            math_mean = mean(math_ss), 
+            math_sd = sd(math_ss))
+
+assess <- left_join(assess, score_table)
+assess$math_std <- (assess$math_ss - assess$math_mean) / assess$math_sd
+assess$read_std <- (assess$rdg_ss - assess$read_mean) / assess$read_sd
+cor(assess$math_std, assess$read_std, use = "pairwise")
+
+ggplot(assess, aes(x = age, y = math_std, group = sid)) +
+  facet_wrap(~schid) + geom_line(alpha = I(0.2)) +
+  geom_smooth(aes(group=1), se = FALSE)
+
+
+
+ggplot(assess, aes(x = math_ss, y = rdg_ss)) + geom_point(alpha = I(0.2))
+ggplot(assess, aes(x = math_std, y = read_std)) + geom_point(alpha = I(0.2))
+
+idx <- sample(unique(assess$sid), 12)
+ggplot(assess[assess$sid %in% idx, ], aes(x = age, y = math_std)) + 
+  facet_wrap(~sid) + geom_line() + geom_smooth(method = 'lm', se=FALSE) + 
+  geom_hline(yintercept = 0, color = I("red")) + geom_point()
+
+ggplot(assess[assess$sid %in% idx, ], aes(x = age, y = math_ss)) + 
+  facet_wrap(~sid) + geom_line() + geom_smooth(se=FALSE) 
+
+
+
+
+g12_cohort <- out$stu_year[out$stu_year$grade == "12", ]
+g12_cohort <- na.omit(g12_cohort)
+g12_cohort <- left_join(g12_cohort, out$demog_master[, 1:4], by = "sid")
+g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
+hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, 
+                                                 control = sim_control())
+
+zzz <- out$hs_outcomes
+
+dddff <- do.call(gen_outcome_model, ps_sim_parameters)
+
+
+
+
+df <- sim_glm(fixed = fixed, random = random,
+                  fixed_param = fixed_param, random_param = random_param,
+                  random3 = NULL,
+                  random_param3 = NULL,
+                  cov_param = cov_param,
+                  fact_vars = fact_vars, k = NULL,
+                  n = ngrps, p = NULL,
+                  cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
+                  unbalCont = unbalanceRange)
+    mod <- glmer(update(fixed, "sim_data ~ . - math_ss + (1|clustID)"),
+                 data = df, family = "binomial")
+
+# out <- simpop(nstu = 400, seed = 32231, 
+#           control = sim_control(nschls = 3L))
+
+# Student	Student Year	Outcome
+# sid	assessment	hs_diploma
+# race_ethnicity	school_id	cum_gpa_final
+# sex	on_track	sat_act
+# frpl_ever	frpl	ps_enroll
+# ell_ever	ell	dropout
+# gifted_ever	gifted	transfer
+# iep_ever	iep	disappear
+# grade_level	still_enroll
+    random <- ~ 1
+  random_param <- list(random_var = random_var, rand_gen = "rnorm")
+
+ library(simglm)
+  
+assess_sim_par <- list(
+  fixed = ~ 1 + time + gifted + iep + frpl + ell + male,
+  random = ~ 1 + time,
+  random3 = ~ 1 + time,
+  cor_vars = c(-0.276, -0.309, -0.046, -0.033,
+              -0.03, -0.029, -0.003, 0.06, 0.007, 0.001),
+  fixed_param = c(0.0024, 0.75, 0.10, -0.161388, -0.075, -0.056, 0.007),
+  fact_vars = NULL,
+  # intercept + any slopes in length
+  random_param = list(random_var = c(0.2, 0.1), cor_vars = c(0.4), rand_gen = 'rnorm'),
+  random_param3 = list(random_var = c(0.3, 0.025), rand_gen = 'rnorm'), # intercept + any slopes in length
+  cov_param = list(
+                 dist_fun = c("rbinom", "rbinom", "rbinom", "rbinom", "rbinom"),
+                 var_type = rep("lvl1", 5), 
+                 opts = list(
+                   list(size = 1, prob = 0.1), 
+                   list(size = 1, prob = 0.2), 
+                   list(size = 1, prob = 0.45), 
+                   list(size = 1, prob = 0.1), 
+                   list(size = 1, prob = 0.52)
+                  )
+               ),
+  unbalCont = c(2, 16),
+  unbalCont3 = c(100, 800),
+  unbal = TRUE, 
+  # Total number of level 2 groups = k * n
+  k = 15, # level 3 groups
+  n = 200, # obs per group level 2 group
+  p = 400, # obs per group?
+  error_var = 1,
+  with_err_gen = 'rnorm',
+  lvl1_err_params = list(mean = 0, sd = 1),
+  data_str = "long"
+)
+  
+ assess_table <- do.call(sim_reg, assess_sim_par, quote = TRUE)
+ # needs to be the length of all correlations between predictors
+temp_three <- sim_reg(fixed = fixed, random = random, random3 = random3,
+                      fixed_param = fixed_param, random_param = random_param,
+                      random_param3 = random_param3, cov_param = cov_param,
+                      fact_vars = fact_vars, k = k,n = n, p = p,
+                      lvl1_err_params = lvl1_err_params,
+                      error_var= error_var, with_err_gen = with_err_gen,
+                      cor_vars = cor_vars, data_str = "long", unbal = TRUE,
+                      unbalCont = unbalCont, unbalCont3 = unbalCont3)
+ 
+
+library(ggplot2)
+ggplot(temp_three, aes(x = time, y = sim_data, group = clustID)) +
+  geom_line(alpha = I(0.2)) + facet_wrap(~clust3ID)
+
+names(temp_three)[1:6] <- c("intercept", "age", "gifted", "iep", "frpl",
+                       "ell")
+names(temp_three)[14] <- "math_ss"
+names(temp_three)[15:17] <- c("time", "sid", "schid")
+
+ggplot(temp_three, aes(x = age, y = math_ss, group = sid)) +
+  geom_line(alpha = I(0.2)) + facet_wrap(~schid)
+
+#witihnID = time, nested w/in level 2
+
+library(lme4)
+proof <- lmer(math_ss ~ 1 + age + gifted +
+                iep + frpl + ell +
+                (1 + age | sid) +
+                (1 | schid), data = temp_three)   
+
+```
+
+

@@ -57,6 +57,23 @@ library(OpenSDP.data)
 
 The main function of the package is `simpop` which generates a list of data elements corresponding to simulated educational careers, K-20, for a user specified number of students. In R, a list is a data structure that can contain multiple data elements of different structures. This can be used to emulate the multiple tables of a Student Information System (SIS).
 
+Data elements produced include:
+
+-   **Student demographics:** age, race, and sex
+-   **Student participation:** grade advancement, ELL status, IEP status, FRPL status, gifted and talented status, attendance
+-   **Student enrollment status:** exit type, enrollment type, transfer, graduation, dropout, etc.
+-   **School attributes:** name, school category, school size, Title I and Title III status, etc.
+-   **Student assessment:** math assessment, reading assessment, grade level assessed
+-   **High school outcomes:** graduation, cumulative GPA, graduation type, cohort, class rank, postsecondary enrollment
+-   **High school progression:** annual class rank, cumulative credits earned, credits earned, credits by English Language Arts and by Mathematics, credits attempted, ontrack status
+-   **Postsecondary enrollment:** year of enrollment, transfer indicator, name and ID of postsecondary institution, type of institution
+-   \*\*Postsecondary institution <data:**> name, city, state, online only, average net price, Pell grant rate, retention four year full time, share of part time enrollment, enrollment by race, SAT and ACT score distribution for admitted students
+
+There are two tables of metadata about the assessment data above to be used in cases where multiple types of student assessment are analyzed together.
+
+-   **Assessment information:** grade, subject, ID, type, and name of assessment
+-   **Proficiency information:** mean score, error of score, number of students tested
+
 ``` r
 out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
 #> Preparing student identities for 500 students...
@@ -87,10 +104,6 @@ names(out)
 
 The table below shows the data elements available in each table:
 
-<!--html_preserve-->
-
-<script type="application/json" data-for="htmlwidget-b7bfc5640e38922740fd">{"x":{"filter":"bottom","filterHTML":"<tr>\n  <td><\/td>\n  <td data-type=\"character\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"character\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n  <\/td>\n<\/tr>","caption":"<caption>Simulation Data Elements by Table<\/caption>","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132","133","134","135","136","137"],["demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","stu_assess","stu_assess","stu_assess","stu_assess","stu_assess","stu_assess","stu_assess","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","assessments","assessments","assessments","assessments","assessments","assessments","assessments","assessments","assessments","assessments","proficiency","proficiency","proficiency","proficiency","proficiency","proficiency","proficiency"],["sid","Sex","Birthdate","Race","White","Asian","American.Indian.or.Alaska.Native","Black.or.African.American","Hispanic.or.Latino.Ethnicity","Demographic.Race.Two.or.More.Races","Native.Hawaiian.or.Other.Pacific.Islander","id_type","sid","year","age","grade","frpl","ell","iep","gifted","grade_advance","cohort_year","cohort_grad_year","exit_type","enrollment_status","ndays_possible","ndays_attend","att_rate","schid","schid","name","enroll","male_per","frpl_per","sped_per","lep_per","gifted_per","lea_id","id_type","title1_status","title3_program_type","type","poverty_desig","sid","schid","year","grade","math_ss","rdg_ss","grade_enrolled","sid","scale_gpa","gpa","grad_prob","grad","hs_status","ps_prob","ps","chrt_grad","class_rank","diploma_type","sid","grad","hs_status","chrt_grad","class_rank","diploma_type","year","grade","schid","yr_seq","ontrack","cum_credits","cum_credits_ela","cum_credits_math","cum_gpa","credits_earned","credits_attempted","cum_credits_attempted","expected_grad_hs","grad_cohort_ind","status_after","city","state","name","online_only","avg_net_price_pub","pell_grant_rate","retention_four_year_full_time","part_time_share","act_25th_pctl_cumulative","act_75th_pctl_cumulative","sat_average_all","sat_25th_pctl_math","sat_75th_pctl_math","sat_25th_pctl_reading","sat_75th_pctl_reading","sat_25th_pctl_writing","sat_75th_pctl_writing","race_ethn_white","race_ethn_black","race_ethn_hispanic","race_ethn_asian","race_ethn_two_or_more","opeid","short_name","enroll","type","sid","year","term","ps_prob","grad","gpa","ps","yr_seq","ps_transfer","opeid","ps_short_name","ps_type","sid","schid","year","grade","subject","score","score_type","assess_id","assess_name","retest_ind","year","grade","subject","assess_id","score_mean","score_error","ntests"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>table<\/th>\n      <th>column<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":12,"autoWidth":true,"searching":true,"autoFill":true,"dom":"lrtp","order":[],"orderClasses":false,"columnDefs":[{"orderable":false,"targets":0}],"lengthMenu":[10,12,25,50,100]}},"evals":[],"jsHooks":[]}</script>
-<!--/html_preserve-->
 ``` r
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 #>   sid    Sex  Birthdate                         Race
@@ -197,192 +210,8 @@ get_baseline("ses")
 #> $fun
 #> function (x) 
 #> rbinom(1, 1, x)
-#> <environment: 0x000000000d6c46b8>
+#> <environment: 0x0000000006047050>
 ```
-
-### Diagnostics
-
-How do we know it worked? We can look at the patterns of ELL enrollment that are observed and see what patterns are the most common. To do this, let's compute the frequency of transition states observed per student.
-
-``` r
-library(ggplot2)
-library(tidyr)
-plotdf <- stu_year %>% arrange(sid, year) %>% group_by(sid) %>% 
-  do(tidy_sequence(.$ell, states = c(1, 0)))
-
-plotdf$total <- rowSums(plotdf[, -1])
-plotdf <- plotdf %>% gather(-sid, key = "Transition", value = "Count")
-
-# plotdf %>% group_by(Transition) %>% filter(Transition != "total") %>%
-#   summarize(sum(Count))
-
-plotdf <- plotdf %>% filter(Transition != "total")  %>% 
-  group_by(sid) %>% 
-  mutate(total = sum(Count)) %>% 
-  mutate(per = Count / total) %>% filter(Transition != "total")  %>% 
-  separate(Transition, into = c("From", "To"), sep = "-") 
-
-ggplot(plotdf, aes(Count)) + geom_histogram() + 
-  scale_x_continuous(breaks = c(0:25)) + 
-  facet_grid(From~To, labeller = label_both, switch = "y") + 
-  theme_bw() + 
-  labs(title = "Frequency of Transition States by Student - ELL", 
-       y = "Count", x = "Times per Student State Observed")
-```
-
-![](tools/figs/README-ellDiagnostic-1.png)
-
-Looking at this chart we can see that most students went from the No state to a No state -- as would be expected when there are few ELLs.
-
-Through this process we've gained students in the ELL status who were not initially ELL. Depending on our application this may not be desirable and we may want to modify the transition matrix to avoid this. Otherwise, later, this becomes an exercise in data cleaning.
-
-Two other visual diagnostics are below.
-
-``` r
-# Other plots
-
-# ggplot(plotdf, aes(per)) + geom_density() + 
-#   facet_grid(From ~ To, labeller = label_both, switch = "y") + 
-#   theme_bw() + labs(title = "By Student Densities of Transitions")
-
-# Heatmap
-plotdf %>% group_by(From, To) %>% 
-  summarise(Count = sum(Count)) %>% 
-  ungroup %>% 
-  mutate(total = sum(Count)) %>%
-  mutate(per = Count/total) %>%
-ggplot(aes(x = From, y = To, fill = per)) + 
-  geom_tile(color= I("black")) + 
-  geom_text(aes(label = round(per, digits = 2))) + 
-  theme_minimal() +
-  coord_cartesian() + labs(title = "Heatmap of ELL Transition States")
-```
-
-![](tools/figs/README-visualdiagnostics-1.png)
-
-We can also do a comparative diagnostic. Given the relatively short length of our sequence per student, it will be hard to estimate fit from a short sequence.
-
-``` r
-# series <- stu_year$ell[stu_year$ID == "1705"]
-# series <- stu_year$ell[stu_year$ID == "0001"]
-
-test_fit <- function(series, expected){
-  if(dim(table(series)) == 1){
-    return(TRUE)
-  } else {
-  out <- fit_series(series, return = "fit", confidencelevel = 0.99, 
-                    possibleStates = rownames(expected))
-  low <- out$lowerEndpointMatrix < expected
-  hi <- out$upperEndpointMatrix > expected
-  return(all(low, hi))
-  }
-}
-
-defaultFit <- sim_control()$ell_list$ALL$pars$tm
-
-test_res <- stu_year %>% group_by(sid) %>% 
-  summarize(fit_ok = test_fit(ell, expected = defaultFit))
-
-table(test_res$fit_ok)
-#> 
-#> FALSE  TRUE 
-#>    37   463
-```
-
-Let's look at co-occurrence of status over time.
-
-``` r
-# Look at by year patterns of relationships by student year
-table(FRL = stu_year$frpl, GIFTED = stu_year$gifted)
-#>    GIFTED
-#> FRL    0    1
-#>   0 3845  524
-#>   1 2299  278
-table(FRL = stu_year$frpl, IEP = stu_year$iep)
-#>    IEP
-#> FRL    0    1
-#>   0 3612  757
-#>   1 2054  523
-table(GIFTED = stu_year$gifted, IEP = stu_year$iep)
-#>       IEP
-#> GIFTED    0    1
-#>      0 5070 1074
-#>      1  596  206
-```
-
-Let's check polychoric correlations:
-
-``` r
-gamma_GK(stu_year$gifted, stu_year$iep)
-#> $gamma
-#> [1] 0.240018
-#> 
-#> $se
-#> [1] 0.06233679
-#> 
-#> $z
-#> [1] 3.850342
-#> 
-#> $sig
-#> [1] 0.0001179531
-gamma_GK(stu_year$frpl, stu_year$iep)
-#> $gamma
-#> [1] 0.09703904
-#> 
-#> $se
-#> [1] 0.0446976
-#> 
-#> $z
-#> [1] 2.171012
-#> 
-#> $sig
-#> [1] 0.02993025
-gamma_GK(stu_year$frpl, stu_year$ell)
-#> $gamma
-#> [1] 0.195661
-#> 
-#> $se
-#> [1] 0.06521843
-#> 
-#> $z
-#> [1] 3.000088
-#> 
-#> $sig
-#> [1] 0.002699016
-```
-
-Finally, let's see who winds up "ever" in each category
-
-``` r
-
-test_df <- stu_year %>% group_by(sid) %>% 
-  summarize(iep_ever = if_else(any(iep == 1), "Yes", "No"), 
-            ell_ever = if_else(any(ell == 1), "Yes", "No"), 
-            frpl_ever = if_else(any(frpl == 1), "Yes", "No"), 
-            gifted_ever = if_else(any(gifted == 1), "Yes", "No"))
-
-table(IEP_EVER = test_df$iep_ever)
-#> IEP_EVER
-#>  No Yes 
-#> 367 133
-table(ELL_EVER = test_df$ell_ever)
-#> ELL_EVER
-#>  No Yes 
-#> 441  59
-table(FRPL_EVER = test_df$frpl_ever)
-#> FRPL_EVER
-#>  No Yes 
-#> 128 372
-table(GIFTED_EVER = test_df$gifted_ever)
-#> GIFTED_EVER
-#>  No Yes 
-#> 426  74
-```
-
-Assigning Schools and Outcomes
-------------------------------
-
-Students move through grades, schools, and outcomes.
 
 Package Dependencies
 --------------------

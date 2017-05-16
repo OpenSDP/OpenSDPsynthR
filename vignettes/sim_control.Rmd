@@ -28,8 +28,120 @@ default_sim <- sim_control()
 ```
 
 ```{r}
-default_sim
+names(default_sim)
 ```
+
+There are over 25 user parameters that can be modified to control the simulation. 
+The goal of these parameters is to allow the simulated student population to 
+reflect a variety of possible educational environments ranging from small 
+rural communities to large urban school districts. 
+
+These parameters can have complex structures to allow for conditional and random 
+generation of data. Parameters fall into four categories:
+
+- **vectors:** a single list of parameters like school names, category names, or 
+school IDs
+- **conditional probability list:** an R list that contains a variable to group by, 
+a function to generate data with, and a list of parameters for that function for 
+each group in the grouping variable
+- **outcome simulation parameters:** an R list of arguments to pass to the `simglm` 
+function
+- **outcome adjustments:** an R list of lists, with functions that modify a variable 
+in an existing data set
+
+### Vectors
+
+The following vectors can be modified by the users:
+
+- `nschls`: integer, number of high schools to assign students to
+- `best_schl`: character, length 1, school ID for the highest performing school,
+e.g. ("01")
+- `race_groups`: character, length ?, names of racial subgroups to create in the 
+simulation, defaults to US Census Groups
+- `race_prob`: numeric, length = length(race_groups), proportion of population 
+in each racial group
+- `minyear`: integer, length 1, the first year of student data available
+- `maxyear`: integer, length 1, the last year of student data available
+- `n_cohorts`: integer, length 1, the number of graduation cohorts to create
+- `school_names`: character, length = `nschls`, names of schools
+- `assess_grades`: character, grade levels to simulate assessment scores for
+- `postsec_names`: character, length = `n_postsec`, names of postsecondary schools
+- `postsec_method`: character, length = 1, name of method to draw postsecondary 
+schools from 
+
+### Conditional Probability List
+
+A conditional probability list is a list of lists in R. The `GROUPVARS` element 
+specifies the grouping variable to conditionally assign probabilities. For 
+example, if students are assigned gifted and talented status differently based 
+on their sex, then this would specify `Sex`. The other elements of the list 
+will be a separate list for each valid value of `Sex` -- in this case `Male` 
+and `Female`. 
+
+`Male` and `Female` are both lists that have two elements: `f` and `pars`. `f`
+defines a function that is used to generate the variable, and `pars` contains 
+all of the parameters for that function. 
+
+```{r}
+str(default_sim$gifted_list)
+```
+
+- `gifted_list`: a list defining how students are assigned to gifted and talented 
+programs
+- `iep_list`: a list defining how students are assigned to special education 
+programs
+- `ses_list`: a list deifning how students are assigned to free and reduced 
+price lunch status
+- `ell_list`: a list defining how students are assigned to English Language 
+Learner status
+- `ps_transfer_list`: a list defining the likelihood a student transfers 
+postsecondary institutions
+
+
+### Outcome Simulation Controls
+
+Outcome simulation controls are lists with parameters to pass to the `simreg` 
+function in the `simglm` package, which simulates hierarchical data and 
+outcomes. 
+
+Each of these simulations requires the user to specify:
+
+- `fixed`: a RHS formula of the format `~ 1 + var1 + var2` defining the level 
+1 variables for the simulation
+- `random_var`: a numeric, length 1, specifying the variance in the second level 
+- `cov_param`: a list, length of variables in `fixed` + 1 for the intercept, 
+defines the function and parameters to generate the X values 
+- `cor_vars`: a matrix of the variance between the X variables in `fixed`
+- `fixed_param`: a vector of numerics, the lenth of `fixed` + 1, represent the 
+beta coefficients
+- `ngrps`: numeric, length of 1, number of second-level grouping terms
+- `unbalanceRange`: numeric, length of 2, representing the minimum and maximum 
+number of observations in each second-level cluster
+- `type`: character, either "linear" or NULL
+
+There are several of these parameters:
+
+- `gpa_sim_parameters`: simulation parameters for the GPA simulation
+- `grad_sim_parameters`: simulation parameters for high school graduation
+- `ps_sim_parameters`: simulation parameters for postsecondary enrollment
+- `assess_sim_par`: simulation parameters for student assessment data
+
+### Outcome Simulation Adjustments
+
+If we only rely on the simulation controls above, the data will be too predictable 
+to be realistic, and structural inequalities along economic, racial, and gender 
+lines will be underrepresented. To address this, it is possible to do post-simulation 
+adjustments to introduce more variance to the outcomes. 
+
+- `race_list`: 
+- `perturb_race`: function, 
+- `frl_list`: 
+- `perturb_frl`: function, 
+
+- `assessment_adjustment`: adjustments to the assessment score
+- `grad_adjustment`: adjustments to the graduation probability
+- `ps_adjustment`: adjustments to the postsecondary probability
+- `gpa_adjustment`: adjustments to the grade point average
 
 
 ### Baselines
@@ -47,7 +159,6 @@ get_baseline("program")
 get_baseline("grade")
 ```
 
-## Longitudinal Indicators
-
-
+Currently, baseline values cannot be modified by the user, but this will come in 
+a future release. 
 

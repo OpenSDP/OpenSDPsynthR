@@ -129,11 +129,6 @@ head(out$demog_master %>% arrange(sid) %>% select(1:4))
 head(out$stu_year, 10)
 ```
 
-```{r, include=FALSE}
-stu_year <- out$stu_year
-demog_master <- out$demog_master
-```
-
 
 ## Parameters
 
@@ -159,7 +154,12 @@ function
 - **outcome adjustments:** an R list of lists, with functions that modify a variable 
 in an existing data set
 
-For more details, see the simulation vignette. 
+For more details, see the simulation control vignette. 
+
+```{r, eval=FALSE}
+vignette("Controlling the Data Simulation", package = "OpenSDP.data")
+```
+
 
 ## Package Dependencies
 

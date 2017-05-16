@@ -12,6 +12,15 @@ Design Goals
 2.  Synthetic data should be able to be generated on-demand and responsive to inputs from the user. These inputs should allow the user to configure the process to produce data that resembles the patterns of data in their agency.
 3.  The package should be modular and extendable allowing new data topics to be generated as needed so synthetic data coverage can grow.
 
+Structure
+---------
+
+The package is organized into the following functions:
+
+-   `simpop()` is the overall function that runs the simulation, this function calls many subfunctions to simulate different elements of the student data
+-   `cleaners` are functions which take the output from the `simpop` function and reshape it into data formats for different analyses. Currently only two cleaners are supported -- `CEDS` and `sdp_cleaner()` which prepare the data into a CEDS like format and into the Strategic Data Project college-going analysis file specification respectively.
+-   `sim_control()` -- a function that controls all of the parameters of the `simpop` simulation. The details of this function are covered in the vignettes.
+
 Get Started
 ===========
 
@@ -46,6 +55,8 @@ library(OpenSDP.data)
 #> Loading required package: Matrix
 ```
 
+The main function of the package is `simpop` which generates a list of data elements corresponding to simulated educational careers, K-20, for a user specified number of students. In R, a list is a data structure that can contain multiple data elements of different structures. This can be used to emulate the multiple tables of a Student Information System (SIS).
+
 ``` r
 out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
 #> Preparing student identities for 500 students...
@@ -58,20 +69,29 @@ out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
 #> Cleaning up...
 #> Creating 3 schools for you...
 #> Assigning 6946 student-school enrollment spells...
-#> Joining, by = "sid"
 #> Simulating assessment table... be patient...
-#> Joining, by = "sid"
-#> Joining, by = c("sid", "schid", "year")
 #> Simulating high school outcomes... be patient...
 #> Simulating annual high school outcomes... be patient...
-#> Joining, by = c("sid", "yr")
-#> Joining, by = c("sid", "yr")
-#> Joining, by = c("sid", "yr")
-#> Joining, by = "sid"
-#> Joining, by = c("sid", "yr_seq")
 #> Simulating postsecondary outcomes... be patient...
-#> Joining, by = "opeid"
 #> Success! Returning you student and student-year data in a list.
+```
+
+Currently ten tables are produced:
+
+``` r
+names(out)
+#>  [1] "demog_master" "stu_year"     "schools"      "stu_assess"  
+#>  [5] "hs_outcomes"  "hs_annual"    "nsc"          "ps_enroll"   
+#>  [9] "assessments"  "proficiency"
+```
+
+The table below shows the data elements available in each table:
+
+<!--html_preserve-->
+
+<script type="application/json" data-for="htmlwidget-b7bfc5640e38922740fd">{"x":{"filter":"bottom","filterHTML":"<tr>\n  <td><\/td>\n  <td data-type=\"character\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"character\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n  <\/td>\n<\/tr>","caption":"<caption>Simulation Data Elements by Table<\/caption>","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132","133","134","135","136","137"],["demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","demog_master","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","stu_year","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","schools","stu_assess","stu_assess","stu_assess","stu_assess","stu_assess","stu_assess","stu_assess","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_outcomes","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","hs_annual","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","nsc","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","ps_enroll","assessments","assessments","assessments","assessments","assessments","assessments","assessments","assessments","assessments","assessments","proficiency","proficiency","proficiency","proficiency","proficiency","proficiency","proficiency"],["sid","Sex","Birthdate","Race","White","Asian","American.Indian.or.Alaska.Native","Black.or.African.American","Hispanic.or.Latino.Ethnicity","Demographic.Race.Two.or.More.Races","Native.Hawaiian.or.Other.Pacific.Islander","id_type","sid","year","age","grade","frpl","ell","iep","gifted","grade_advance","cohort_year","cohort_grad_year","exit_type","enrollment_status","ndays_possible","ndays_attend","att_rate","schid","schid","name","enroll","male_per","frpl_per","sped_per","lep_per","gifted_per","lea_id","id_type","title1_status","title3_program_type","type","poverty_desig","sid","schid","year","grade","math_ss","rdg_ss","grade_enrolled","sid","scale_gpa","gpa","grad_prob","grad","hs_status","ps_prob","ps","chrt_grad","class_rank","diploma_type","sid","grad","hs_status","chrt_grad","class_rank","diploma_type","year","grade","schid","yr_seq","ontrack","cum_credits","cum_credits_ela","cum_credits_math","cum_gpa","credits_earned","credits_attempted","cum_credits_attempted","expected_grad_hs","grad_cohort_ind","status_after","city","state","name","online_only","avg_net_price_pub","pell_grant_rate","retention_four_year_full_time","part_time_share","act_25th_pctl_cumulative","act_75th_pctl_cumulative","sat_average_all","sat_25th_pctl_math","sat_75th_pctl_math","sat_25th_pctl_reading","sat_75th_pctl_reading","sat_25th_pctl_writing","sat_75th_pctl_writing","race_ethn_white","race_ethn_black","race_ethn_hispanic","race_ethn_asian","race_ethn_two_or_more","opeid","short_name","enroll","type","sid","year","term","ps_prob","grad","gpa","ps","yr_seq","ps_transfer","opeid","ps_short_name","ps_type","sid","schid","year","grade","subject","score","score_type","assess_id","assess_name","retest_ind","year","grade","subject","assess_id","score_mean","score_error","ntests"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>table<\/th>\n      <th>column<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":12,"autoWidth":true,"searching":true,"autoFill":true,"dom":"lrtp","order":[],"orderClasses":false,"columnDefs":[{"orderable":false,"targets":0}],"lengthMenu":[10,12,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+<!--/html_preserve-->
+``` r
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 #>   sid    Sex  Birthdate                         Race
 #> 1 001   Male 2000-01-30                        White
@@ -177,7 +197,7 @@ get_baseline("ses")
 #> $fun
 #> function (x) 
 #> rbinom(1, 1, x)
-#> <environment: 0x0000000011f13890>
+#> <environment: 0x000000000d6c46b8>
 ```
 
 ### Diagnostics

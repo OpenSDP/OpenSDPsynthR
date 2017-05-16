@@ -1,5 +1,6 @@
 ---
 output: github_document
+always_allow_html: yes
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -67,10 +68,51 @@ library(OpenSDP.data)
 
 The main function of the package is `simpop` which generates a list of data 
 elements corresponding to simulated educational careers, K-20, for a user 
-specified number of students. 
+specified number of students. In R, a list is a data structure that can contain 
+multiple data elements of different structures. This can be used to emulate 
+the multiple tables of a Student Information System (SIS). 
+
+Data elements produced include:
+
+- Student demographic data like age, race, and sex
+- Studen
+
 
 ```{r, message=TRUE}
 out <- simpop(nstu = 500, seed = 213, control = sim_control(nschls = 3))
+```
+
+Currently ten tables are produced:
+
+```{r}
+names(out)
+```
+
+The table below shows the data elements available in each table:
+
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+table_names <- data.frame(table = NULL, column = NULL)
+for(i in seq_along(out)){
+  table_name <- names(out)[[i]]
+  columns <- names(out[[i]])
+  tmp <- data.frame(table = table_name, column = columns, 
+                    stringsAsFactors = FALSE)
+  table_names <- bind_rows(table_names, tmp)
+}
+
+library(DT)
+datatable(table_names, 
+          filter = "bottom", 
+                    options = list(pageLength = 12, autoWidth=TRUE, 
+                         searching = TRUE, autoFill = TRUE, 
+                         dom = 'lrtp'), 
+          caption = "Simulation Data Elements by Table")
+```
+
+
+```{r}
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 head(out$stu_year, 10)
 ```

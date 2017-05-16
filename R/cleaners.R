@@ -443,11 +443,58 @@ sdp_cleaner <- function(simouts){
   final_data$ell_ever <- as.numeric(final_data$ell_ever)
   final_data$ell_ever_hs <- as.numeric(final_data$ell_ever_hs)
   final_data$gifted_ever <- as.numeric(final_data$gifted_ever)
-  final_data$gifted_ever_hs <- as.numeric(final_data$gifted_ever_hs)
-
-
-
-
+  final_data$first_hs_code <- as.numeric(final_data$first_hs_code)
+  final_data$last_hs_code <- as.numeric(final_data$last_hs_code)
+  final_data$longest_hs_code <- as.numeric(final_data$longest_hs_code)
+  final_data$last_wd_group <- factor(final_data$last_wd_group,
+                                        levels = c("Graduated", "Transfer Out",
+                                                   "Drop Out", "Other"))
+  final_data$ontime_grad <- as.numeric(final_data$ontime_grad)
+  final_data$late_grad <- as.numeric(final_data$late_grad)
+  final_data$still_enrl <- as.numeric(final_data$still_enrl)
+  final_data$transferout <- as.numeric(final_data$transferout)
+  final_data$dropout <- as.numeric(final_data$dropout)
+  final_data$disappear <- as.numeric(final_data$disappear)
+  enrlVec <- names(final_data)[grepl("enrl", names(final_data))]
+  # Stata does not want missing data
+  final_data[, enrlVec] <- apply(final_data[, enrlVec], 2, as.numeric)
+  ontrackVec <- names(final_data)[grepl("ontrack", names(final_data))]
+  final_data[, ontrackVec] <- apply(final_data[, ontrackVec], 2, as.numeric)
+  final_data$status_after_yr1[final_data$status_after_yr1 == "dropout"] <- "Dropped Out"
+  final_data$status_after_yr1[final_data$status_after_yr1 == "transferout"] <- "Disappeared"
+  final_data$status_after_yr1[final_data$status_after_yr1 == "disappear"] <- "Disappeared"
+  final_data$status_after_yr2[final_data$status_after_yr2 == "dropout"] <- "Dropped Out"
+  final_data$status_after_yr2[final_data$status_after_yr2 == "transferout"] <- "Disappeared"
+  final_data$status_after_yr2[final_data$status_after_yr2 == "disappear"] <- "Disappeared"
+  final_data$status_after_yr3[final_data$status_after_yr3 == "dropout"] <- "Dropped Out"
+  final_data$status_after_yr3[final_data$status_after_yr3 == "transferout"] <- "Disappeared"
+  final_data$status_after_yr3[final_data$status_after_yr3 == "disappear"] <- "Disappeared"
+  final_data$status_after_yr1 <- factor(final_data$status_after_yr1,
+                                        levels = c("Enrolled, On-Track",
+                                                   "Enrolled, Off-Track",
+                                                   "Dropped Out",
+                                                   "Disappeared"))
+  final_data$status_after_yr2 <- factor(final_data$status_after_yr2,
+                                        levels = c("Enrolled, On-Track",
+                                                   "Enrolled, Off-Track",
+                                                   "Dropped Out",
+                                                   "Disappeared"))
+  final_data$status_after_yr3 <- factor(final_data$status_after_yr3,
+                                        levels = c("Enrolled, On-Track",
+                                                   "Enrolled, Off-Track",
+                                                   "Dropped Out",
+                                                   "Disappeared"))
+  final_data$status_after_yr4 <- factor(final_data$status_after_yr4,
+                                        levels = c("Graduated On-Time",
+                                                   "Enrolled, Not Graduated",
+                                                   "Dropped Out",
+                                                   "Disappeared"))
+  inSamp <- simouts$stu_year %>% filter(grade == "12") %>%
+    select(sid) %>% ungroup %>% mutate(sid = as.numeric(sid)) %>% unlist %>% unique()
+  # G12 Cohort students who made it to grade 12 only
+  final_data$ontrack_hsgrad_sample <- NA
+  final_data$ontrack_hsgrad_sample[final_data$sid %in% inSamp] <- 1
+  final_data$ontrack_hsgrad_sample <- as.numeric(final_data$ontrack_hsgrad_sample)
   return(final_data)
 }
 

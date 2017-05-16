@@ -187,13 +187,13 @@ sdp_cleaner <- function(simouts){
   zzz <- simouts$ps_enroll %>% group_by(sid, yr_seq, ps_type) %>%
     tidyr::complete(sid, yr_seq, ps_type) %>%
     group_by(sid, yr_seq, ps_type) %>%
-    summarize(enrl_1oct_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == 1),
+    summarize(enrl_1oct_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == yr_seq),
                                       1, 0),
-              enrl_1oct_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == 1),
+              enrl_1oct_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == yr_seq),
                                        1, 0),
-              enrl_ever_w2_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) >= 2),
+              enrl_ever_w2_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) <= (yr_seq + 1)),
                                      1, 0),
-              enrl_ever_w2_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) >= 2),
+              enrl_ever_w2_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) <= (yr_seq + 1)),
                                      1, 0)) %>%
     mutate(enrl_1oct_grad = zeroNA(enrl_1oct_grad),
            enrl_1oct_ninth = zeroNA(enrl_1oct_ninth),
@@ -430,6 +430,24 @@ sdp_cleaner <- function(simouts){
                                                  "Native American", "White", "Multiple/Other"))
   final_data$ontrack_sample <- 1
   final_data$ontrack_sample <- ifelse(is.na(final_data$ontrack_endyr1), 0, final_data$ontrack_sample)
+  # Type conversion
+  message("Converting data types")
+  final_data$sid <- as.numeric(final_data$sid)
+  final_data$male <- as.numeric(final_data$male)
+  # final_data$race_ethnicity <- labelled(final_data$race_ethnicity)
+  final_data$hs_diploma <- as.numeric(final_data$hs_diploma)
+  final_data$frpl_ever <- as.numeric(final_data$frpl_ever)
+  final_data$frpl_ever_hs <- as.numeric(final_data$frpl_ever_hs)
+  final_data$iep_ever <- as.numeric(final_data$iep_ever)
+  final_data$iep_ever_hs <- as.numeric(final_data$iep_ever_hs)
+  final_data$ell_ever <- as.numeric(final_data$ell_ever)
+  final_data$ell_ever_hs <- as.numeric(final_data$ell_ever_hs)
+  final_data$gifted_ever <- as.numeric(final_data$gifted_ever)
+  final_data$gifted_ever_hs <- as.numeric(final_data$gifted_ever_hs)
+
+
+
+
   return(final_data)
 }
 

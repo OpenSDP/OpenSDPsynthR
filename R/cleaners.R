@@ -429,109 +429,12 @@ sdp_cleaner <- function(simouts){
                                       levels = c("Black", "Asian", "Hispanic",
                                                  "Native American", "White", "Multiple/Other"))
   final_data$ontrack_sample <- 1
+  final_data$ontrack_sample <- ifelse(is.na(final_data$ontrack_endyr1), 0, final_data$ontrack_sample)
   return(final_data)
 }
 
 
 
-# TODO: Calculate status each year
-# TODO: ontrack_sample?
-
-
-
-
-
-# library(haven)
-# fileName <- "analysis/CG_Analysis.dta"
-# con <- unz(description = "../SDP-Toolkit-for-R/data/analysis.zip",
-#            filename = fileName, open = "rb")
-# con <- unz(description = "../SDPToolkitR/data/analysis.zip",
-#            filename = fileName, open = "rb")
-# cg_target <- read_stata(con)
-#
-# names(cg_target)[!names(cg_target) %in% names(cg_data)]
-
-#
-# c("hs_diploma", "hs_diploma_type", "hs_diploma_date", "frpl_ever",
-#   "iep_ever", "ell_ever", "gifted_ever", "longest_hs_code", "first_hs_name",
-#   "last_hs_name", "longest_hs_name", "last_wd_group", "ontime_grad",
-#   "late_grad", "still_enrl", "test_math_8", "test_ela_8", "first_college_opeid_any",
-#   "first_college_opeid_2yr", "first_college_opeid_4yr", "first_college_name_any",
-#   "first_college_name_2yr", "first_college_name_4yr", "enrl_1oct_grad_yr1_2yr",
-#   "enrl_1oct_grad_yr1_4yr", "enrl_1oct_grad_yr1_any", "enrl_1oct_grad_yr2_2yr",
-#   "enrl_1oct_grad_yr2_4yr", "enrl_1oct_grad_yr2_any", "enrl_1oct_grad_yr3_2yr",
-#   "enrl_1oct_grad_yr3_4yr", "enrl_1oct_grad_yr3_any", "enrl_1oct_grad_yr4_2yr",
-#   "enrl_1oct_grad_yr4_4yr", "enrl_1oct_grad_yr4_any", "enrl_ever_w2_grad_2yr",
-#   "enrl_ever_w2_grad_4yr", "enrl_ever_w2_grad_any", "enrl_grad_persist_4yr",
-#   "enrl_grad_persist_2yr", "enrl_grad_persist_any", "enrl_grad_all4_4yr",
-#   "enrl_grad_all4_2yr", "enrl_grad_all4_any", "enrl_1oct_ninth_yr1_2yr",
-#   "enrl_1oct_ninth_yr1_4yr", "enrl_1oct_ninth_yr1_any", "enrl_1oct_ninth_yr2_2yr",
-#   "enrl_1oct_ninth_yr2_4yr", "enrl_1oct_ninth_yr2_any", "enrl_1oct_ninth_yr3_2yr",
-#   "enrl_1oct_ninth_yr3_4yr", "enrl_1oct_ninth_yr3_any", "enrl_1oct_ninth_yr4_2yr",
-#   "enrl_1oct_ninth_yr4_4yr", "enrl_1oct_ninth_yr4_any", "enrl_ever_w2_ninth_2yr",
-#   "enrl_ever_w2_ninth_4yr", "enrl_ever_w2_ninth_any", "enrl_ninth_persist_4yr",
-#   "enrl_ninth_persist_2yr", "enrl_ninth_persist_any", "enrl_ninth_all4_4yr",
-#   "enrl_ninth_all4_2yr", "enrl_ninth_all4_any", "enrl_1oct_grad_yr5_2yr",
-#   "enrl_1oct_ninth_yr5_2yr", "enrl_1oct_grad_yr5_4yr", "enrl_1oct_ninth_yr5_4yr",
-#   "cum_credits_yr1_ela", "cum_credits_yr1_math", "cum_credits_yr2_ela",
-#   "cum_credits_yr2_math", "cum_credits_yr3_ela", "cum_credits_yr3_math",
-#   "cum_credits_yr4_ela", "cum_credits_yr4_math", "ontrack_endyr1",
-#   "ontrack_endyr2", "ontrack_endyr3", "ontrack_endyr4", "status_after_yr1",
-#   "status_after_yr2", "status_after_yr3", "status_after_yr4", "ontrack_hsgrad_sample",
-#   "cum_gpa_yr1", "cum_gpa_yr2", "cum_gpa_yr3", "cum_gpa_yr4", "cum_gpa_final",
-#   "sat_act_concordance", "highly_qualified", "ontrack_sample")
-
-## Postsecondary wide
-
-# TODO - check why ps and ps_yr1-ps_yr4 are not connected
-
-# Figure out status indicators
-
-#
-# stuOT %<>% group_by(sid, year_in_hs) %>%
-#   mutate(status_eoy = ifelse(ontrack_endyr == 1, 1, 2)) %>%
-#   mutate(status_eoy = ifelse(dropout == 1, 3, status_eoy)) %>%
-#   mutate(status_eoy = ifelse(disappear == 1, 4, status_eoy)) %>%
-#   ungroup()
-# sum(table(stuOT$status_eoy)) == nrow(stuOT)
-# [1] TRUE
-# 2.3b Now, define status after 4th year using diploma information.
-# tmp <- stuOT %>% filter(year_in_hs == 4) %>%
-#   group_by(sid) %>%
-#   mutate(status_eoy_yr4 = ifelse(ontime_grad == 1 & !is.na(chrt_grad), 1, 0)) %>%
-#   mutate(status_eoy_yr4 = ifelse(still_enrl == 1 | late_grad ==1, 2, status_eoy)) %>%
-#   SDP TOOLKIT FOR EFFECTIVE DATA USE | COLLEGE GOING | CONNECT 35
-# Step 3: Generate GPA and Test variables CONNECT: ON TRACK INDICATORS
-# mutate(status_eoy_yr4 = ifelse(is.na(hs_diploma_date) & is.na(status_eoy) &
-#                                  disappear == 1, 4, status_eoy)) %>%
-#   ungroup() %>%
-#   select(sid, status_eoy_yr4)
-# stuOT <- left_join(stuOT, tmp, by = "sid")
-
-
-
-
-# Highly qualified
-
-# cg_student$highly_qualified <- NA
-# cg_student$highly_qualified[!is.na(cg_student$chrt_grad) &
-#                               cg_student$cum_gpa_final >= 3.7 &
-#                               !is.na(cg_student$cum_gpa_final) &
-#                               cg_student$sat_act_concordance >= 1100 &
-#                               !is.na(cg_student$sat_act_concordance)] <- 1
-# cg_student$highly_qualified[!is.na(cg_student$chrt_grad) &
-#                               cg_student$cum_gpa_final >= 3.3 &
-#                               !is.na(cg_student$cum_gpa_final) &
-#                               cg_student$sat_act_concordance >= 1200 &
-#                               !is.na(cg_student$sat_act_concordance)] <- 1
-# cg_student$highly_qualified[!is.na(cg_student$chrt_grad) &
-#                               cg_student$cum_gpa_final >= 3.0 &
-#                               !is.na(cg_student$cum_gpa_final) &
-#                               cg_student$sat_act_concordance >= 1300 &
-#                               !is.na(cg_student$sat_act_concordance)] <- 1
-# cg_student$highly_qualified[!is.na(cg_student$chrt_grad) &
-#                               is.na(cg_student$highly_qualified)] <- 0
-# table(is.na(cg_student$highly_qualified[is.na(cg_student$chrt_grad)]))
 #########################
 ## CEDS
 ######################

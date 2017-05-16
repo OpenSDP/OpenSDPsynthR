@@ -552,7 +552,13 @@ gen_nsc <- function(n, names = NULL, method = NULL){
     # out <- cbind(out, attribs)
   }
   if(method == "scorecard"){
-    out <- college_scorecard[sample(row.names(college_scorecard), n),]
+    # TODO: set balance of 2yr and 4yr
+    out <- bind_rows(
+      college_scorecard[sample(row.names(college_scorecard[grepl("associate", college_scorecard$degrees_awarded_predominant),]), n*4),],
+      college_scorecard[sample(row.names(college_scorecard[grepl("bachelor", college_scorecard$degrees_awarded_predominant),]), n*2),],
+      college_scorecard[sample(row.names(college_scorecard[grepl("certificate", college_scorecard$degrees_awarded_predominant),]), n),]
+      )
+    out <- out[sample(row.names(out), n),]
     out$opeid <- out$ope8_id; out$ope8_id <- NULL
     out$short_name <- stringr::str_trunc(out$name, 35, "right")
     out$enroll <- out$size
@@ -562,6 +568,10 @@ gen_nsc <- function(n, names = NULL, method = NULL){
     out$type[grepl("bachelor", out$degrees_awarded_predominant)] <- "4yr"
     out$type[grepl("certificate", out$degrees_awarded_predominant)] <- "other"
     out$degrees_awarded_predominant <- NULL
+    out$rank <- as.numeric(cut(out$part_time_share,
+                           breaks = unique(quantile(out$part_time_share,
+                                                    probs = seq(0, 1, 0.25))),
+                           include.lowest=TRUE)) + 1
   }
 
   return(out)

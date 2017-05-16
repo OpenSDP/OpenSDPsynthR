@@ -35,6 +35,8 @@
 #' probabilities by for bias
 #' @param gpa_adjustment list - parameters to adjust gpa for bias
 #' @param assess_grades character - grade levels to generate assessment scores for
+#' @param n_postsec numeric - number of postsecondary schools to assign to
+#' @param postsec_method character - options "scorecard" or NULL
 #' @details This function has a full set of default values that are designed to
 #' produce realistic data. These defaults can be overridden by specifying any
 #' of the arguments to be overridden as an option to the function call.
@@ -67,7 +69,9 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
                         grad_adjustment = NULL,
                         ps_adjustment = NULL,
                         gpa_adjustment = NULL,
-                        assess_grades = NULL){
+                        assess_grades = NULL,
+                        n_postsec=35L,
+                        postsec_method = "scorecard"){
 
   nschls <- nschls
   if(is.null(best_school)){
@@ -619,7 +623,9 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
     grad_adjustment,
     ps_adjustment,
     gpa_adjustment,
-    assess_grades))
+    assess_grades,
+    n_postsec,
+    postsec_method))
 
 }
 

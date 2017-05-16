@@ -12,6 +12,7 @@
 #' @importFrom wakefield sex
 #' @importFrom wakefield dob
 #' @importFrom wakefield race
+#' @importFrom magrittr "%<>%"
 #' @details The default is to generate students in racial groups and male/female
 #' in proportion to the U.S. population.
 #' @return a data.frame
@@ -104,9 +105,11 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
     select(-grade_diff) %>% ungroup()
   stu_year <- as.data.frame(stu_year)
   stu_year$year <- as.numeric(stu_year$year) # coerce to numeric to avoid user integer inputs
-  stu_year <- stu_year %>% group_by(sid) %>%
-    mutate(cohort_year = min(year[grade == "9"])) %>%
-    mutate(cohort_grad_year = cohort_year + 3) %>% ungroup()
+  suppressWarnings({ # ignore warning about missing values where no grade 9 exists
+    stu_year <- stu_year %>% group_by(sid) %>%
+      mutate(cohort_year = min(year[grade == "9"])) %>%
+      mutate(cohort_grad_year = cohort_year + 3) %>% ungroup()
+  })
   stu_year$cohort_year[!is.finite(stu_year$cohort_year)] <- NA
   stu_year$cohort_grad_year[!is.finite(stu_year$cohort_grad_year)] <- NA
   # Create longitudinal ell and ses here
@@ -178,10 +181,12 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
   g12_cohort <- group_rescale(g12_cohort, var = "math_ss", group_var = "age")
   hs_outcomes <- assign_hs_outcomes(g12_cohort, control = control)
   message("Simulating annual high school outcomes... be patient...")
-  hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
+  suppressWarnings({
+    hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
+  })
   # TODO: Fix hardcoding of postsec - insert scorecard data here
   # Fix this so user can control method
-  nsc_postsec <- gen_nsc(n = 35, method = "scorecard")
+  nsc_postsec <- gen_nsc(n = control$n_postsec, method = control$postsec_method)
   message("Simulating postsecondary outcomes... be patient...")
   ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec,
                                  control = control)

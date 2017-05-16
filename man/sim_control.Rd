@@ -12,7 +12,8 @@ sim_control(nschls = 2L, best_school = NULL, race_groups = NULL,
   gpa_sim_parameters = NULL, grad_sim_parameters = NULL,
   ps_sim_parameters = NULL, assess_sim_par = NULL,
   assessment_adjustment = NULL, grad_adjustment = NULL,
-  ps_adjustment = NULL, gpa_adjustment = NULL, assess_grades = NULL)
+  ps_adjustment = NULL, gpa_adjustment = NULL, assess_grades = NULL,
+  n_postsec = 35L, postsec_method = "scorecard")
 }
 \arguments{
 \item{nschls}{integer- number of schools to create, default is 2}
@@ -76,6 +77,10 @@ probabilities by for bias}
 \item{gpa_adjustment}{list - parameters to adjust gpa for bias}
 
 \item{assess_grades}{character - grade levels to generate assessment scores for}
+
+\item{n_postsec}{numeric - number of postsecondary schools to assign to}
+
+\item{postsec_method}{character - options "scorecard" or NULL}
 }
 \value{
 a named list

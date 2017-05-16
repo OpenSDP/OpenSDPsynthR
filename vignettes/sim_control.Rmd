@@ -1,0 +1,53 @@
+---
+title: "Controlling the Simulation in OpenSDP.data"
+author: "Jared E. Knowles"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Controlling the Data Simulation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+
+The `OpenSDP.data` package provides a set of functions to allow users to 
+generate synthetic, but authentic, student-level data. Synthetic data is 
+intended to make it easy to collaborate with analysts across the country 
+tackling similar problems but using a shared vocabulary. The synthetic data 
+will allow users to collaborate directly on code and analyses and verify that 
+their analysis is working on synthetic data before translating it to live 
+local data. 
+
+This vignette explains how the package is structured so that it can be modified 
+to meet the needs of users. 
+
+```{r}
+library(OpenSDP.data)
+default_sim <- sim_control()
+```
+
+```{r}
+default_sim
+```
+
+
+### Baselines
+
+Currently there are two special parameters that are set based on baseline data 
+built into the package. These are the initial grade distribution of students, 
+and the initial program participation of students in `ell`, `iep`, and `frpl` 
+programs. 
+
+These set some of the simulation requirements, but others are set using the 
+`baseline` function family.
+
+```{r, eval=FALSE}
+get_baseline("program")
+get_baseline("grade")
+```
+
+## Longitudinal Indicators
+
+
+

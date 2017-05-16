@@ -149,28 +149,17 @@ names(sim_control())
 These parameters can have complex structures to allow for conditional and random 
 generation of data. Parameters fall into four categories:
 
-- vectors: a single list of parameters like school names, category names, or 
+- **vectors:** a single list of parameters like school names, category names, or 
 school IDs
-- conditional probability lists: 
-- outcome simulation parameters
-- outcome adjustments:
+- **conditional probability list:** an R list that contains a variable to group by, 
+a function to generate data with, and a list of parameters for that function for 
+each group in the grouping variable
+- **outcome simulation parameters:** an R list of arguments to pass to the `simglm` 
+function
+- **outcome adjustments:** an R list of lists, with functions that modify a variable 
+in an existing data set
 
-### Baselines
-
-Currently there are two special parameters that are set based on baseline data 
-built into the package. These are the initial grade distribution of students, 
-and the initial program participation of students in `ell`, `iep`, and `frpl` 
-programs. 
-
-
-These set some of the simulation requirements, but others are set using the 
-`baseline` function family.
-
-```{r}
-get_baseline("program")
-get_baseline("grade")
-```
-
+For more details, see the simulation vignette. 
 
 ## Package Dependencies
 

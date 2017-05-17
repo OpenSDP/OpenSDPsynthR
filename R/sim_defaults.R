@@ -568,10 +568,15 @@ gen_nsc <- function(n, names = NULL, method = NULL){
     out$type[grepl("bachelor", out$degrees_awarded_predominant)] <- "4yr"
     out$type[grepl("certificate", out$degrees_awarded_predominant)] <- "other"
     out$degrees_awarded_predominant <- NULL
-    out$rank <- as.numeric(cut(out$part_time_share,
-                           breaks = unique(quantile(out$part_time_share,
-                                                    probs = seq(0, 1, 0.25))),
-                           include.lowest=TRUE)) + 1
+    # Jitter 0s
+    # enforce positivity
+    out$cutVar <- out$part_time_share
+    out$cutVar[out$cutVar == 0] <- abs(jitter(out$cutVar[out$cutVar == 0]))
+    out$rank <- as.numeric(cut(out$cutVar,
+                           breaks = unique(quantile(out$cutVar,
+                                                    probs = seq(0, 1, 0.2))),
+                           include.lowest=TRUE))
+    out$cutVar <- NULL
   }
 
   return(out)

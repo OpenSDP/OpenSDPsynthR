@@ -495,6 +495,23 @@ sdp_cleaner <- function(simouts){
   final_data$ontrack_hsgrad_sample <- NA
   final_data$ontrack_hsgrad_sample[final_data$sid %in% inSamp] <- 1
   final_data$ontrack_hsgrad_sample <- as.numeric(final_data$ontrack_hsgrad_sample)
+  # selectivity
+  # // Step 2: Link the analysis file with the college selectivity table to obtain
+  # the selectivity level for each college. Use this selectivity information to
+  # create college enrollment indicator variables for each college selectivity
+  # level. This script assumes that there are 5 levels of selectivity, as in
+  # Barron’s College Rankings—Most Competitive (1), Highly Competitive (2),
+  # Very Competitive (3), Competitive (4), Least Competitive (5)—as well as a
+  # category for colleges without assigned selectivity (assumed to be not
+  # competitive).
+
+  # Merge on to subset from above
+  final_data <- left_join(final_data, simouts$nsc[, c("opeid", "rank")],
+                      by = c("first_college_opeid_4yr" = "opeid"))
+  final_data$rank <- factor(final_data$rank, levels = c(1, 2, 3, 4, 5, 6),
+               labels = c("Most Competitive", "Highly Competitive",
+                          "Very Competitive", "Competitive", "Least Competitive",
+                          "Other"))
   return(final_data)
 }
 

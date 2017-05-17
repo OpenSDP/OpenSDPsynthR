@@ -469,23 +469,46 @@ sdp_cleaner <- function(simouts){
   final_data$status_after_yr3[final_data$status_after_yr3 == "dropout"] <- "Dropped Out"
   final_data$status_after_yr3[final_data$status_after_yr3 == "transferout"] <- "Disappeared"
   final_data$status_after_yr3[final_data$status_after_yr3 == "disappear"] <- "Disappeared"
+  numLabel <- function(x){
+    x[x == "Enrolled, On-Track"] <- "1"
+    x[x == "Graduated On-Time"] <- "1"
+    x[x == "Enrolled, Off-Track"] <- "2"
+    x[x == "Dropped Out"] <- "3"
+    x[x == "Disappeared"] <- "4"
+    return(as.numeric(x))
+  }
+  statusVec <- names(final_data)[grepl("status_after", names(final_data))]
+  statusVec <- statusVec[1:3] # leave year 4 separate
+  final_data[, statusVec] <- apply(final_data[, statusVec], 2, numLabel)
+  numLabel <- function(x){
+    x[x == "Graduated On-Time"] <- "1"
+    x[x == "Enrolled, Not Graduated"] <- "2"
+    x[x == "Dropped Out"] <- "3"
+    x[x == "Disappeared"] <- "4"
+    return(as.numeric(x))
+  }
+  final_data$status_after_yr4 <- numLabel(final_data$status_after_yr4)
   final_data$status_after_yr1 <- factor(final_data$status_after_yr1,
-                                        levels = c("Enrolled, On-Track",
+                                        levels = c(1, 2, 3, 4),
+                                        labels = c("Enrolled, On-Track",
                                                    "Enrolled, Off-Track",
                                                    "Dropped Out",
                                                    "Disappeared"))
   final_data$status_after_yr2 <- factor(final_data$status_after_yr2,
-                                        levels = c("Enrolled, On-Track",
+                                        levels = c(1, 2, 3, 4),
+                                        labels = c("Enrolled, On-Track",
                                                    "Enrolled, Off-Track",
                                                    "Dropped Out",
                                                    "Disappeared"))
   final_data$status_after_yr3 <- factor(final_data$status_after_yr3,
-                                        levels = c("Enrolled, On-Track",
+                                        levels = c(1, 2, 3, 4),
+                                        labels = c("Enrolled, On-Track",
                                                    "Enrolled, Off-Track",
                                                    "Dropped Out",
                                                    "Disappeared"))
   final_data$status_after_yr4 <- factor(final_data$status_after_yr4,
-                                        levels = c("Graduated On-Time",
+                                        levels = c(1, 2, 3, 4),
+                                        labels = c("Graduated On-Time",
                                                    "Enrolled, Not Graduated",
                                                    "Dropped Out",
                                                    "Disappeared"))
@@ -516,8 +539,6 @@ sdp_cleaner <- function(simouts){
   # Very Competitive (3), Competitive (4), Least Competitive (5)—as well as a
   # category for colleges without assigned selectivity (assumed to be not
   # competitive).
-
-  # Merge on to subset from above
   final_data <- left_join(final_data, simouts$nsc[, c("opeid", "rank")],
                       by = c("first_college_opeid_4yr" = "opeid"))
   final_data$rank <- factor(final_data$rank, levels = c(1, 2, 3, 4, 5, 6),

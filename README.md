@@ -95,7 +95,7 @@ Data elements produced include:
 -   **High school outcomes:** graduation, cumulative GPA, graduation type, cohort, class rank, postsecondary enrollment
 -   **High school progression:** annual class rank, cumulative credits earned, credits earned, credits by English Language Arts and by Mathematics, credits attempted, ontrack status
 -   **Postsecondary enrollment:** year of enrollment, transfer indicator, name and ID of postsecondary institution, type of institution
--   \*\*Postsecondary institution <data:**> name, city, state, online only, average net price, Pell grant rate, retention four year full time, share of part time enrollment, enrollment by race, SAT and ACT score distribution for admitted students
+-   **Postsecondary institution:** name, city, state, online only, average net price, Pell grant rate, retention four year full time, share of part time enrollment, enrollment by race, SAT and ACT score distribution for admitted students
 
 There are two tables of metadata about the assessment data above to be used in cases where multiple types of student assessment are analyzed together.
 

@@ -14,9 +14,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-# OpenSDP Data
+# OpenSDPsynthR
 
-A project to generate realistic synthetic unit-level longitudinal education data. 
+![](tools/figs/open_sdp_logo_red.png)
+
+
+A project to generate realistic synthetic unit-level longitudinal education data 
+to empower collaboration in education analytics. 
 
 ## Design Goals
 
@@ -124,13 +128,25 @@ for(i in seq_along(out)){
 ```
 
 
-```{r}
+```{r, inclue=FALSE}
 head(out$demog_master %>% arrange(sid) %>% select(1:4))
 head(out$stu_year, 10)
 ```
 
+## Cleaners
 
-## Parameters
+You can reformat the synthetic data for use in specific types of projects. 
+Currently two functions exist to format the simulated data into an analysis 
+file matching the SDP College-going data specification and a CEDS-like 
+data specification. More of these functions are planned in the future.
+
+```{r eval=FALSE}
+cgdata <- sdp_cleaner(out)
+ceds <- ceds_cleaner(out)
+```
+
+
+## Control Parameters
 
 By default, you only need to specify the number of students to simulate to the 
 `simpop` command. The package has default simulation parameters that will result 

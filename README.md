@@ -1,9 +1,11 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-OpenSDP Data
-============
+OpenSDPsynthR
+=============
 
-A project to generate realistic synthetic unit-level longitudinal education data.
+![](tools/figs/open_sdp_logo_red.png)
+
+A project to generate realistic synthetic unit-level longitudinal education data to empower collaboration in education analytics.
 
 Design Goals
 ------------
@@ -115,25 +117,36 @@ head(out$stu_year, 10)
 #> Source: local data frame [10 x 17]
 #> Groups: sid [10]
 #> 
+#> # A tibble: 10 x 17
 #>       sid  year   age grade  frpl   ell   iep gifted grade_advance
 #>    <fctr> <dbl> <dbl> <chr> <chr> <chr> <chr>  <chr>         <chr>
-#> 1     002  2002     5    KG     0     0     0      0          <NA>
-#> 2     009  2002     6     1     1     0     0      1          <NA>
-#> 3     014  2002     5    KG     1     0     0      0          <NA>
-#> 4     017  2002     4    PK     0     0     0      0          <NA>
-#> 5     023  2002     5    KG     0     0     0      0          <NA>
-#> 6     024  2002     4    PK     0     0     0      0          <NA>
-#> 7     028  2002     5    KG     0     0     0      1          <NA>
-#> 8     030  2002     5    KG     0     0     0      0          <NA>
-#> 9     031  2002     6     1     1     0     0      0          <NA>
+#>  1    002  2002     5    KG     0     0     0      0          <NA>
+#>  2    009  2002     6     1     1     0     0      1          <NA>
+#>  3    014  2002     5    KG     1     0     0      0          <NA>
+#>  4    017  2002     4    PK     0     0     0      0          <NA>
+#>  5    023  2002     5    KG     0     0     0      0          <NA>
+#>  6    024  2002     4    PK     0     0     0      0          <NA>
+#>  7    028  2002     5    KG     0     0     0      1          <NA>
+#>  8    030  2002     5    KG     0     0     0      0          <NA>
+#>  9    031  2002     6     1     1     0     0      0          <NA>
 #> 10    034  2002     5    KG     1     0     0      0          <NA>
 #> # ... with 8 more variables: cohort_year <dbl>, cohort_grad_year <dbl>,
 #> #   exit_type <lgl>, enrollment_status <chr>, ndays_possible <dbl>,
 #> #   ndays_attend <dbl>, att_rate <dbl>, schid <chr>
 ```
 
-Parameters
-----------
+Cleaners
+--------
+
+You can reformat the synthetic data for use in specific types of projects. Currently two functions exist to format the simulated data into an analysis file matching the SDP College-going data specification and a CEDS-like data specification. More of these functions are planned in the future.
+
+``` r
+cgdata <- sdp_cleaner(out)
+ceds <- ceds_cleaner(out)
+```
+
+Control Parameters
+------------------
 
 By default, you only need to specify the number of students to simulate to the `simpop` command. The package has default simulation parameters that will result in creating a small school district with two schools.
 

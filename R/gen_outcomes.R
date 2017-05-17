@@ -50,8 +50,9 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
                   cov_param = cov_param,
                   fact_vars = fact_vars, k = NULL,
                   n = ngrps, p = NULL,
-                  cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
-                  unbalCont = unbalanceRange)
+                  cor_vars = cor_vars, data_str = "cross",
+                  unbal = list(level2 = TRUE),
+                  unbal_design = unbalanceRange)
     mod <- glmer(update(fixed, "sim_data ~ . + (1|clustID)"),
                  data = df, family = "binomial", nAGQ = 0, # boost speed
                  control=glmerControl(optimizer = "nloptwrap"))
@@ -69,8 +70,9 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
                   cov_param = cov_param,
                   fact_vars = fact_vars, k = NULL,
                   n = ngrps, p = NULL,
-                  cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
-                  unbalCont = unbalanceRange,
+                  cor_vars = cor_vars, data_str = "cross",
+                  unbal = list(level2 = TRUE),
+                  unbal_design = unbalanceRange,
                   error_var = error_var, with_err_gen = with_err_gen)
       mod <- lmer(update(fixed, "sim_data ~ . + (1|clustID)"),
                    data = df)

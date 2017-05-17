@@ -306,7 +306,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
       fixed = ~ 1 + math_ss + gifted + iep + frpl + ell + male,
       random_var = 0.2173,
       cov_param = list(dist_fun = c("rnorm", rep("rbinom", 5)),
-                       var_type = rep("lvl1", 6),
+                       var_type = rep("level1", 6),
                        opts = list(
                          list(mean = 0, sd = 1),
                          list(size = 1, prob =0.1),
@@ -319,7 +319,9 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
                    0.143, -0.003, 0.127, 0.060, 0.007, 0.001),
       fixed_param = c(0.0799, 0.577892, 0.108458, 0.042588580,
                       -0.289399599, -0.007401886, -0.374127),
-      ngrps = nschls + 5, unbalanceRange = c(100, 1500), type = "linear"
+      ngrps = nschls + 5,
+      unbalanceRange = list(level2 = list(min = 100, max = 1500)),
+                            type = "linear"
     )
   } else{
     assert(validate_sim_parameter(gpa_sim_parameters),
@@ -331,7 +333,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
       random_var = 0.8948,
       cov_param = list(
         dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
-        var_type = rep("lvl1", 7),
+        var_type = rep("level1", 7),
         opts = list(
           list(mean = 0, sd = 1),
           list(mean = 0, sd = 1),
@@ -355,7 +357,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
         -0.331647,-0.22318254, 0.0590
       ),
       ngrps = nschls + 5,
-      unbalanceRange = c(100, 1500)
+      unbalanceRange = list(level2 = list(min=100, max=1500))
     )
   } else{
     assert(validate_sim_parameter(grad_sim_parameters),
@@ -367,7 +369,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
       random_var = 0.1713,
       cov_param = list(
         dist_fun = c("rnorm", "rnorm", rep("rbinom", 5)),
-        var_type = rep("lvl1", 7),
+        var_type = rep("level1", 7),
         opts = list(
           list(mean = 0, sd = 1),
           list(mean = 0, sd = 1),
@@ -391,13 +393,14 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
         -0.31560,-0.126704, -0.03387
       ),
       ngrps = nschls + 5,
-      unbalanceRange = c(100, 1500)
+      unbalanceRange = list(level2 = list(min = 100, max = 1500))
     )
   } else{
     assert(validate_sim_parameter(ps_sim_parameters),
               "Invalid simulation parameters for postsecondary enrollment")
   }
   if(is.null(assess_sim_par)){
+
     assess_sim_par <- list(
       fixed = ~ 1 + time + gifted + iep + frpl + ell + male,
       random = ~ 1 + time,
@@ -413,7 +416,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
       random_param3 = list(random_var = c(1.2, 0.4), cor_vars = c(-0.4), rand_gen = 'rnorm'), # intercept + any slopes in length
       cov_param = list(
         dist_fun = c("rbinom", "rbinom", "rbinom", "rbinom", "rbinom"),
-        var_type = rep("lvl1", 5),
+        var_type = rep("level1", 5),
         opts = list(
           list(size = 1, prob = 0.1),
           list(size = 1, prob = 0.2),
@@ -422,9 +425,9 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
           list(size = 1, prob = 0.52)
         )
       ),
-      unbalCont = c(2, 16),
-      unbalCont3 = c(100, 800),
-      unbal = TRUE,
+      unbal = list(level2 = TRUE, level3 = TRUE),
+      unbal_design = list(level2 = list(min = 2, max = 16),
+                          level3 = list(min = 100, max = 800)),
       # Total number of level 2 groups = k * n
       k = nschls + 5, # level 3 groups
       n = 200, # obs per group level 2 group

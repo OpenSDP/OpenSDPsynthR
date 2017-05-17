@@ -490,13 +490,17 @@ sdp_cleaner <- function(simouts){
                                                    "Dropped Out",
                                                    "Disappeared"))
   final_data$ontrack_endyr1 <- factor(final_data$ontrack_endyr1,
-                                      levels = c("Off-Track", "Ont-Track"))
+                                      levels = c(0, 1),
+                                      labels = c("Off-Track", "On-Track"))
   final_data$ontrack_endyr2 <- factor(final_data$ontrack_endyr2,
-                                      levels = c("Off-Track", "Ont-Track"))
+                                      levels = c(0, 1),
+                                      labels = c("Off-Track", "On-Track"))
   final_data$ontrack_endyr3 <- factor(final_data$ontrack_endyr3,
-                                      levels = c("Off-Track", "Ont-Track"))
+                                      levels = c(0, 1),
+                                      labels = c("Off-Track", "On-Track"))
   final_data$ontrack_endyr4 <- factor(final_data$ontrack_endyr4,
-                                      levels = c("Off-Track", "Ont-Track"))
+                                      levels = c(0, 1),
+                                      labels = c("Off-Track", "On-Track"))
   inSamp <- simouts$stu_year %>% filter(grade == "12") %>%
     select(sid) %>% ungroup %>% mutate(sid = as.numeric(sid)) %>% unlist %>% unique()
   # G12 Cohort students who made it to grade 12 only

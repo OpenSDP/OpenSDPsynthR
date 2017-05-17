@@ -1,4 +1,4 @@
-Package: OpenSDP.data
+Package: OpenSDPsynthR
 Title: Package to generate synthetic data for the OpenSDP Project
 Version: 0.1.1.9000
 Authors@R: person("Jared", "Knowles", email = "jknowles@gmail.com", role = c("aut", "cre"))

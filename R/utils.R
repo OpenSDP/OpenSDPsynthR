@@ -283,7 +283,7 @@ group_rescale <- function(data, var, group_var, newvar=NULL){
   if(is.null(newvar)){
     newvar <- var
   }
-  varval <- lazyeval::interp(~ OpenSDP.data::rescale(z), z = as.name(var))
+  varval <- lazyeval::interp(~ OpenSDPsynthR::rescale(z), z = as.name(var))
   data <- data %>% group_by_(group_var) %>%
     mutate_(.dots = setNames(list(varval), newvar))
   return(data)

@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 First, we need to generate data suitable to conducting a college-going analysis. 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-library(OpenSDP.data)
+library(OpenSDPsynthR)
 library(ggplot2)
 library(tidyr)
 library(scales)

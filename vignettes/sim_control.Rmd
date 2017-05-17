@@ -1,5 +1,5 @@
 ---
-title: "Controlling the Simulation in OpenSDP.data"
+title: "Controlling the Simulation in OpenSDPsynthR"
 author: "Jared E. Knowles"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -11,7 +11,7 @@ vignette: >
 
 ## Introduction
 
-The `OpenSDP.data` package provides a set of functions to allow users to 
+The `OpenSDPsynthR` package provides a set of functions to allow users to 
 generate synthetic, but authentic, student-level data. Synthetic data is 
 intended to make it easy to collaborate with analysts across the country 
 tackling similar problems but using a shared vocabulary. The synthetic data 
@@ -23,7 +23,7 @@ This vignette explains how the package is structured so that it can be modified
 to meet the needs of users. 
 
 ```{r}
-library(OpenSDP.data)
+library(OpenSDPsynthR)
 default_sim <- sim_control()
 ```
 

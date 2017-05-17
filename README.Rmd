@@ -45,7 +45,7 @@ simulation. The details of this function are covered in the vignettes.
 
 # Get Started
 
-To use `OpenSDP.data`, follow the instructions below:
+To use `OpenSDPsynthR`, follow the instructions below:
 
 ## Install Package
 
@@ -54,7 +54,7 @@ The development version of the package is able to be installed using the
 package. 
 
 ```{r eval=FALSE}
-devtools::install_github("strategicdataproject/OpenSDP.data")
+devtools::install_github("strategicdataproject/OpenSDPsynthR")
 ```
 
 ## Make some data
@@ -62,7 +62,7 @@ devtools::install_github("strategicdataproject/OpenSDP.data")
 Load the package
 
 ```{r, message=TRUE}
-library(OpenSDP.data)
+library(OpenSDPsynthR)
 ```
 
 The main function of the package is `simpop` which generates a list of data 
@@ -157,7 +157,7 @@ in an existing data set
 For more details, see the simulation control vignette. 
 
 ```{r, eval=FALSE}
-vignette("Controlling the Data Simulation", package = "OpenSDP.data")
+vignette("Controlling the Data Simulation", package = "OpenSDPsynthR")
 ```
 
 
@@ -170,4 +170,4 @@ vignette("Controlling the Data Simulation", package = "OpenSDP.data")
 
 ## OpenSDP
 
-`OpenSDP.data` is part of the OpenSDP project. 
+`OpenSDPsynthR` is part of the OpenSDP project. 

@@ -1,4 +1,4 @@
 library(testthat)
-library(OpenSDP.data)
+library(OpenSDPsynthR)
 
-test_check("OpenSDP.data")
+test_check("OpenSDPsynthR")

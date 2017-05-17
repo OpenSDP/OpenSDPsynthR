@@ -39,7 +39,7 @@ A project to generate realistic synthetic unit-level longitudinal education data
 Using the `wakefield` package we can generate a simple set of demographic data. 
 
 ```{r, message=FALSE}
-library(OpenSDP.data)
+library(OpenSDPsynthR)
 library(magrittr)
 library(wakefield)
 library(lubridate)
@@ -179,7 +179,7 @@ For ELL status, age and race are strong determinants of initial ELL status. Some
 racial groups are much more likely to be ELL and younger students are more likely 
 to be ELL than older students. 
 
-The `OpenSDP.data` package bakes in some baseline values using `baseline` objects. 
+The `OpenSDPsynthR` package bakes in some baseline values using `baseline` objects. 
 A `baseline` object is a simple list with three elements:
 
 1. `keys` - the variable names that are required to match probabilities to cases, 
@@ -225,7 +225,7 @@ levels(stu_first$Race)
 ```
 
 Our `stu_first` object is mapped to the CEDS specification. To convert it from 
-CEDS to a more analyst friendly scheme, the `OpenSDP.data` package provides 
+CEDS to a more analyst friendly scheme, the `OpenSDPsynthR` package provides 
 the `map_CEDS()` function. 
 
 ```{r mapCEDS}
@@ -310,7 +310,7 @@ tm <- tm / rowSums(tm)
 tm
 ```
 
-Now, for each student we need to apply the transition matrix. Using the `OpenSDP.data` 
+Now, for each student we need to apply the transition matrix. Using the `OpenSDPsynthR` 
 function `make_markov_series()`, this is simple. 
 
 ```{r}
@@ -691,4 +691,4 @@ table(GIFTED_EVER = test_df$gifted_ever)
 
 ## OpenSDP
 
-`OpenSDP.data` is part of the OpenSDP project. 
+`OpenSDPsynthR` is part of the OpenSDP project. 

@@ -11,7 +11,7 @@ ell <-  ell %>% gather(-age, key = "race", value = "prob")
 xwalk <- read.csv("data-raw/CEDS_SDP_map.csv", stringsAsFactors = FALSE)
 xwalk$schema <- NA
 for(i in 1:nrow(xwalk)){
-  xwalk$schema[i] <- I(list(OpenSDP.data:::get_code_values(xwalk$CEDS_Option_set[i])))
+  xwalk$schema[i] <- I(list(OpenSDPsynthR:::get_code_values(xwalk$CEDS_Option_set[i])))
 }
 
 # SES data

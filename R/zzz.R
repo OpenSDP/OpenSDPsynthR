@@ -14,7 +14,7 @@
 utils::globalVariables(c("Sex", "iep", "Race", "frpl", "age"))
 
 
-.onLoad <- function(libname = find.package("OpenSDP.data"), pkgname = "OpenSDP.data"){
+.onLoad <- function(libname = find.package("OpenSDPsynthR"), pkgname = "OpenSDPsynthR"){
     # CRAN Note avoidance
   if(getRversion() >= "2.15.1")
     utils::globalVariables(

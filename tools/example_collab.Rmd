@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, echo=TRUE, results='hide', message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(OpenSDP.data)
+library(OpenSDPsynthR)
 simouts <- simpop(nstu = 1250L, seed = 488234, 
                   control = sim_control(nschls = 9L, 
                                         minyear=1997, maxyear=2013))

@@ -1,5 +1,5 @@
 ---
-title: "Structuring the OpenSDP.data Package"
+title: "Structuring the OpenSDPsynthR Package"
 author: "Jared E. Knowles"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -19,7 +19,7 @@ are observed and see what patterns are the most common. To do this, let's comput
 the frequency of transition states observed per student. 
 
 ```{r genData}
-library(OpenSDP.data)
+library(OpenSDPsynthR)
 simouts <- simpop(nstu = 1000, control = sim_control(nschls = 8L))
 stu_year <- simouts$stu_year
 
@@ -207,7 +207,7 @@ g12_cohort <- out$stu_year[out$stu_year$grade == "12", ]
 g12_cohort <- na.omit(g12_cohort)
 g12_cohort <- left_join(g12_cohort, out$demog_master[, 1:4], by = "sid")
 g12_cohort$male <- ifelse(g12_cohort$Sex == "Male", 1, 0)
-hs_outcomes <- OpenSDP.data:::assign_hs_outcomes(g12_cohort, 
+hs_outcomes <- OpenSDPsynthR:::assign_hs_outcomes(g12_cohort, 
                                                  control = sim_control())
 
 zzz <- out$hs_outcomes

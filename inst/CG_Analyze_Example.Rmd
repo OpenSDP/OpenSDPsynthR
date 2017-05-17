@@ -32,7 +32,8 @@ library(scales)
 library(magrittr)
 
 simouts <- simpop(nstu = 40000, seed = 8763434, 
-                  control = sim_control(nschls = 12L, minyear=1996, 
+                  control = sim_control(nschls = 12L, minyear=1996,
+                                        n_postsec = 50L,
                                         n_cohorts = 3,
                                         maxyear=2017)) 
 cgdata <- sdp_cleaner(simouts)

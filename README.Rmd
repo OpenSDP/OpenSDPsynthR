@@ -19,13 +19,13 @@ knitr::opts_chunk$set(
 ![](tools/figs/open_sdp_logo_red.png)
 
 
-A project to generate realistic synthetic unit-level longitudinal education data 
-to empower collaboration in education analytics. 
+A project to generate realistic synthetic unit-level longitudinal education data
+to empower collaboration in education analytics.
 
 ## Design Goals
 
-1. Generate synthetic education data that is realistic for use by analysts 
-across the education sector. Realistic means messy, and reflective of the 
+1. Generate synthetic education data that is realistic for use by analysts
+across the education sector. Realistic means messy, and reflective of the
 general pattern of relationships found in the U.S. education sector.
 2. Synthetic data should be able to be generated on-demand and responsive to
 inputs from the user. These inputs should allow the user to configure the
@@ -37,15 +37,15 @@ generated as needed so synthetic data coverage can grow.
 
 The package is organized into the following functions:
 
-- `simpop()` is the overall function that runs the simulation, this function calls 
+- `simpop()` is the overall function that runs the simulation, this function calls
 many subfunctions to simulate different elements of the student data
-- `cleaners` are functions which take the output from the `simpop` function and 
-reshape it into data formats for different analyses. Currently only two cleaners 
-are supported -- `CEDS` and `sdp_cleaner()` which prepare the data into a CEDS 
-like format and into the Strategic Data Project college-going analysis file 
-specification respectively. 
-- `sim_control()` -- a function that controls all of the parameters of the `simpop` 
-simulation. The details of this function are covered in the vignettes. 
+- `cleaners` are functions which take the output from the `simpop` function and
+reshape it into data formats for different analyses. Currently only two cleaners
+are supported -- `CEDS` and `sdp_cleaner()` which prepare the data into a CEDS
+like format and into the Strategic Data Project college-going analysis file
+specification respectively.
+- `sim_control()` -- a function that controls all of the parameters of the `simpop`
+simulation. The details of this function are covered in the vignettes.
 
 # Get Started
 
@@ -53,9 +53,9 @@ To use `OpenSDPsynthR`, follow the instructions below:
 
 ## Install Package
 
-The development version of the package is able to be installed using the 
-`install_github()`. To use this command you will need to install the `devtools` 
-package. 
+The development version of the package is able to be installed using the
+`install_github()`. To use this command you will need to install the `devtools`
+package.
 
 ```{r eval=FALSE}
 devtools::install_github("strategicdataproject/OpenSDPsynthR")
@@ -69,11 +69,11 @@ Load the package
 library(OpenSDPsynthR)
 ```
 
-The main function of the package is `simpop` which generates a list of data 
-elements corresponding to simulated educational careers, K-20, for a user 
-specified number of students. In R, a list is a data structure that can contain 
-multiple data elements of different structures. This can be used to emulate 
-the multiple tables of a Student Information System (SIS). 
+The main function of the package is `simpop` which generates a list of data
+elements corresponding to simulated educational careers, K-20, for a user
+specified number of students. In R, a list is a data structure that can contain
+multiple data elements of different structures. This can be used to emulate
+the multiple tables of a Student Information System (SIS).
 
 
 
@@ -91,25 +91,25 @@ names(out)
 Data elements produced include:
 
 - **Student demographics:**  age, race, and sex
-- **Student participation:** grade advancement, ELL status, IEP status, 
+- **Student participation:** grade advancement, ELL status, IEP status,
 FRPL status, gifted and talented status, attendance
-- **Student enrollment status:** exit type, enrollment type, transfer, graduation, 
+- **Student enrollment status:** exit type, enrollment type, transfer, graduation,
 dropout, etc.
 - **School attributes:** name, school category, school size, Title I and Title III status, etc.
 - **Student assessment:** math assessment, reading assessment, grade level assessed
-- **High school outcomes:** graduation, cumulative GPA, graduation type, cohort, 
+- **High school outcomes:** graduation, cumulative GPA, graduation type, cohort,
 class rank, postsecondary enrollment
-- **High school progression:** annual class rank, cumulative credits earned, credits 
+- **High school progression:** annual class rank, cumulative credits earned, credits
 earned, credits by English Language Arts and by Mathematics, credits attempted, 
 ontrack status
-- **Postsecondary enrollment:** year of enrollment, transfer indicator, name and ID of 
+- **Postsecondary enrollment:** year of enrollment, transfer indicator, name and ID of
 postsecondary institution, type of institution
-- **Postsecondary institution:** name, city, state, online only, average net price, 
-Pell grant rate, retention four year full time, share of part time enrollment, 
+- **Postsecondary institution:** name, city, state, online only, average net price,
+Pell grant rate, retention four year full time, share of part time enrollment,
 enrollment by race, SAT and ACT score distribution for admitted students
 
-There are two tables of metadata about the assessment data above to be used in 
-cases where multiple types of student assessment are analyzed together. 
+There are two tables of metadata about the assessment data above to be used in
+cases where multiple types of student assessment are analyzed together.
 
 - **Assessment information:** grade, subject, ID, type, and name of assessment
 - **Proficiency information:** mean score, error of score, number of students tested
@@ -120,7 +120,7 @@ table_names <- data.frame(table = NULL, column = NULL)
 for(i in seq_along(out)){
   table_name <- names(out)[[i]]
   columns <- names(out[[i]])
-  tmp <- data.frame(table = table_name, column = columns, 
+  tmp <- data.frame(table = table_name, column = columns,
                     stringsAsFactors = FALSE)
   table_names <- bind_rows(table_names, tmp)
 }
@@ -135,9 +135,9 @@ head(out$stu_year, 10)
 
 ## Cleaners
 
-You can reformat the synthetic data for use in specific types of projects. 
-Currently two functions exist to format the simulated data into an analysis 
-file matching the SDP College-going data specification and a CEDS-like 
+You can reformat the synthetic data for use in specific types of projects.
+Currently two functions exist to format the simulated data into an analysis
+file matching the SDP College-going data specification and a CEDS-like
 data specification. More of these functions are planned in the future.
 
 ```{r eval=FALSE}
@@ -148,29 +148,29 @@ ceds <- ceds_cleaner(out)
 
 ## Control Parameters
 
-By default, you only need to specify the number of students to simulate to the 
-`simpop` command. The package has default simulation parameters that will result 
-in creating a small school district with two schools. 
+By default, you only need to specify the number of students to simulate to the
+`simpop` command. The package has default simulation parameters that will result
+in creating a small school district with two schools.
 
 
 ```{r demonstrateOptionList}
 names(sim_control())
 ```
 
-These parameters can have complex structures to allow for conditional and random 
+These parameters can have complex structures to allow for conditional and random
 generation of data. Parameters fall into four categories:
 
-- **vectors:** a single list of parameters like school names, category names, or 
+- **vectors:** a single list of parameters like school names, category names, or
 school IDs
-- **conditional probability list:** an R list that contains a variable to group by, 
-a function to generate data with, and a list of parameters for that function for 
+- **conditional probability list:** an R list that contains a variable to group by,
+a function to generate data with, and a list of parameters for that function for
 each group in the grouping variable
-- **outcome simulation parameters:** an R list of arguments to pass to the `simglm` 
+- **outcome simulation parameters:** an R list of arguments to pass to the `simglm`
 function
-- **outcome adjustments:** an R list of lists, with functions that modify a variable 
+- **outcome adjustments:** an R list of lists, with functions that modify a variable
 in an existing data set
 
-For more details, see the simulation control vignette. 
+For more details, see the simulation control vignette.
 
 ```{r, eval=FALSE}
 vignette("Controlling the Data Simulation", package = "OpenSDPsynthR")
@@ -186,4 +186,14 @@ vignette("Controlling the Data Simulation", package = "OpenSDPsynthR")
 
 ## OpenSDP
 
-`OpenSDPsynthR` is part of the OpenSDP project. 
+`OpenSDPsynthR` is part of the OpenSDP project.
+
+[OpenSDP](https://opensdp.github.io) is an online, public repository of analytic
+code, tools, and training intended to foster collaboration among education
+analysts and researchers in order to accelerate the improvement of our school
+systems. The community is hosted by the
+[Strategic Data Project](https://sdp.cepr.harvard.edu), an initiative of the
+[Center for Education Policy Research at Harvard University](https://cepr.harvard.edu).
+We welcome contributions and feedback.
+
+These materials were originally authored by the Strategic Data Project.

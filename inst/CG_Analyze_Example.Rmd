@@ -38,8 +38,6 @@ simouts <- simpop(nstu = 40000, seed = 8763434,
                                         maxyear=2017)) 
 cgdata <- sdp_cleaner(simouts)
 
-# 56, 30, 20 progression
-
 dupes <- cg_data %>% group_by(sid) %>% mutate(dupes = n()) %>% filter(dupes > 1)
 # 
 # // Ninth grade cohorts you can observe persisting to the second year of college

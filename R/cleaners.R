@@ -251,7 +251,8 @@ sdp_cleaner <- function(simouts){
 
   ps_career2 <- simouts$ps_enroll %>%
     group_by(sid) %>%
-    mutate(persist = ifelse(any(ps[yr_seq == 2] == 1), 1, 0)) %>%
+    mutate(persist = ifelse(any(ps[yr_seq == 2] == 1) &
+                              any(ps[yr_seq == 1] == 1), 1, 0)) %>%
     group_by(sid, ps_type) %>%
     tidyr::complete(sid, ps_type) %>%
     summarise(persist = ifelse(any(persist > 0), 1, 0),

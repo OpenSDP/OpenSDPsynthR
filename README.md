@@ -34,7 +34,7 @@ Install Package
 The development version of the package is able to be installed using the `install_github()`. To use this command you will need to install the `devtools` package.
 
 ``` r
-devtools::install_github("strategicdataproject/OpenSDPsynthR")
+devtools::install_github("opensdp/OpenSDPsynthR")
 ```
 
 Make some data
@@ -117,18 +117,17 @@ head(out$stu_year, 10)
 #> Source: local data frame [10 x 17]
 #> Groups: sid [10]
 #> 
-#> # A tibble: 10 x 17
 #>       sid  year   age grade  frpl   ell   iep gifted grade_advance
 #>    <fctr> <dbl> <dbl> <chr> <chr> <chr> <chr>  <chr>         <chr>
-#>  1    002  2002     5    KG     0     0     0      0          <NA>
-#>  2    009  2002     6     1     1     0     0      1          <NA>
-#>  3    014  2002     5    KG     1     0     0      0          <NA>
-#>  4    017  2002     4    PK     0     0     0      0          <NA>
-#>  5    023  2002     5    KG     0     0     0      0          <NA>
-#>  6    024  2002     4    PK     0     0     0      0          <NA>
-#>  7    028  2002     5    KG     0     0     0      1          <NA>
-#>  8    030  2002     5    KG     0     0     0      0          <NA>
-#>  9    031  2002     6     1     1     0     0      0          <NA>
+#> 1     002  2002     5    KG     0     0     0      0          <NA>
+#> 2     009  2002     6     1     1     0     0      1          <NA>
+#> 3     014  2002     5    KG     1     0     0      0          <NA>
+#> 4     017  2002     4    PK     0     0     0      0          <NA>
+#> 5     023  2002     5    KG     0     0     0      0          <NA>
+#> 6     024  2002     4    PK     0     0     0      0          <NA>
+#> 7     028  2002     5    KG     0     0     0      1          <NA>
+#> 8     030  2002     5    KG     0     0     0      0          <NA>
+#> 9     031  2002     6     1     1     0     0      0          <NA>
 #> 10    034  2002     5    KG     1     0     0      0          <NA>
 #> # ... with 8 more variables: cohort_year <dbl>, cohort_grad_year <dbl>,
 #> #   exit_type <lgl>, enrollment_status <chr>, ndays_possible <dbl>,
@@ -193,3 +192,7 @@ OpenSDP
 -------
 
 `OpenSDPsynthR` is part of the OpenSDP project.
+
+[OpenSDP](https://opensdp.github.io) is an online, public repository of analytic code, tools, and training intended to foster collaboration among education analysts and researchers in order to accelerate the improvement of our school systems. The community is hosted by the [Strategic Data Project](https://sdp.cepr.harvard.edu), an initiative of the [Center for Education Policy Research at Harvard University](https://cepr.harvard.edu). We welcome contributions and feedback.
+
+These materials were originally authored by the Strategic Data Project.

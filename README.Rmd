@@ -58,7 +58,7 @@ The development version of the package is able to be installed using the
 package.
 
 ```{r eval=FALSE}
-devtools::install_github("strategicdataproject/OpenSDPsynthR")
+devtools::install_github("opensdp/OpenSDPsynthR")
 ```
 
 ## Make some data

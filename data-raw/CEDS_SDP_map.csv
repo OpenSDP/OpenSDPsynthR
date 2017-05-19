@@ -1,4 +1,4 @@
-entity,category,CEDS_name,sdp_name,CEDS_Option_set,SDP_option_match,
+entity,category,CEDS_name,sdp_name,CEDS_Option_set,SDP_option_match
 K12Student,Demographic,Birthdate,dob,YYYY-MM-DD,YYYY-MM-DD
 K12Student,Demographic,White,white,Yes - Yes;No - No;NotSelected - Not Selected,1 - Yes;0 - No;NA - Not Selected
 K12Student,Demographic,Asian,asian,Yes - Yes;No - No;NotSelected - Not Selected,1 - Yes;0 - No;NA - Not Selected

@@ -62,3 +62,12 @@ grad_sim_parameters <- list(
   unbalanceRange = c(100, 1500)
 )
 
+assess_sim_par <- OpenSDPsynthR::sim_control()$assess_sim_par
+gpa_sim_par <- OpenSDPsynthR::sim_control()$gpa_sim_par
+
+test_that("Validators work for two level and three level sim", {
+  expect_true(validate_sim_parameter(assess_sim_par))
+  expect_true(validate_sim_parameter(gpa_sim_par))
+  expect_true(validate_sim_parameter(grad_sim_parameters))
+})
+

@@ -309,7 +309,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
                        var_type = rep("lvl1", 6),
                        opts = list(
                          list(mean = 0, sd = 1),
-                         list(size = 1, prob =0.1),
+                         list(size = 1, prob = 0.1),
                          list(size = 1, prob = 0.2),
                          list(size = 1, prob = 0.45),
                          list(size = 1, prob = 0.1),
@@ -438,7 +438,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
     assert(validate_sim_parameter(assess_sim_par),
               "Invalid simulation parameters for assessment scores")
   }
-  if(is.null(ps_transfer_list)){
+  if (is.null(ps_transfer_list)) {
     tm <- matrix(
       c(100, 700, 90, 900),
       nrow = 2,
@@ -452,7 +452,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
     assert(validate_probability_list(ps_transfer_list),
               "Invalid simulation parameters for postsecondary transfer probability.")
   }
-  if(is.null(assessment_adjustment)){
+  if (is.null(assessment_adjustment)) {
     assessment_adjustment <- list(
       race_list = list(
         "White" = 0.2,
@@ -467,6 +467,14 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
         dist_mean <- race_par[[which(race == names(race_par))]] * sd
         dist_sd <- abs(sd * (dist_mean/sd))
         y <- x + rnorm(1, dist_mean, sqrt(dist_sd^3))
+        return(y)
+      },
+      gender_list = list("Male" = 0, # default = no gender bias
+                          "Female" = 0),
+      perturb_gender = function(x, gender, sd, gender_par = gender_list) {
+        dist_mean <- gender_par[[which(gender == names(gender_par))]] * sd
+        dist_sd <- abs(sd * (dist_mean/sd))
+        y <- x + rnorm(1, dist_mean, sqrt(dist_sd))
         return(y)
       },
 

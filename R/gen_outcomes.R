@@ -246,27 +246,34 @@ gen_assess <- function(data, control = sim_control()){
     dplyr::mutate(math_sd = sd(math_ss),
            rdg_sd = sd(rdg_ss)) %>% as.data.frame()
   # Perturb the test scores to reduce correlation and induce bias
-  # FRPL bias is underestimated because of the time component so need to add it in
-  # Racial bias is entirely absent
-  # TODO add bias by school
+  # FRL biases
   data$math_ss <- mapply(control$assessment_adjustment$perturb_frl,
                          data$math_ss, data$frpl, data$math_sd,
                          MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_frl,
                         data$rdg_ss, data$frpl, data$rdg_sd,
                         MoreArgs = list(frl_par = control$assessment_adjustment$frl_list))
+  # Racial biases
   data$math_ss <- mapply(control$assessment_adjustment$perturb_race,
                          data$math_ss, data$Race, data$math_sd,
                          MoreArgs = list(race_par = control$assessment_adjustment$race_list))
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_race,
                         data$rdg_ss, data$Race, data$rdg_sd,
                         MoreArgs = list(race_par = control$assessment_adjustment$race_list))
+  # School biases
   data$math_ss <- mapply(control$assessment_adjustment$perturb_school,
                          data$math_ss, data$schid, data$math_sd,
                          MoreArgs = list(schl_par = control$assessment_adjustment$school_list))
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_school,
                         data$rdg_ss, data$schid, data$rdg_sd,
                         MoreArgs = list(schl_par = control$assessment_adjustment$school_list))
+  # Gender biases
+  data$math_ss <- mapply(control$assessment_adjustment$perturb_gender,
+                         data$math_ss, data$Sex, data$math_sd,
+                         MoreArgs = list(gender_par = control$assessment_adjustment$gender_list))
+  data$rdg_ss <- mapply(control$assessment_adjustment$perturb_gender,
+                        data$rdg_ss, data$Sex, data$rdg_sd,
+                        MoreArgs = list(gender_par = control$assessment_adjustment$gender_list))
   # Perturb to reduce test correlation between reading and math
   data$rdg_ss <- mapply(control$assessment_adjustment$perturb_base,
                         data$rdg_ss, data$rdg_sd)

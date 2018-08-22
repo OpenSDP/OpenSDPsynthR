@@ -71,4 +71,3 @@ test_that("Validators work for two level and three level sim", {
   expect_true(validate_sim_parameter(grad_sim_parameters))
 })
 
->>>>>>> 99f079c02afe3294a4bddd8cce3fa2bcbc7be254

@@ -131,18 +131,11 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
   school <- gen_schools(control = control)
   # Get school level parameters for the simulation of outcomes
   if (is.null(control$grad_adj$school_list)) {
+    # school <- gen_schools(control = sim_control(nschls=12))
     school <- arrange(school, frpl_per)
-    sch_eff <- sort(rnorm(nrow(school)))
+    sch_eff <- sort(rnorm(nrow(school), sd = 0.4))
     sch_control_pars <- as.list(sch_eff)
     names(sch_control_pars) <- school$schid
-    control$grad_adj$perturb_school <- function(x, schid, sch_par = school_list){
-      val_mean <- sch_par[[which(schid == names(sch_par))]]
-      y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.5, 0.5)
-      y <- ifelse(y <= 0, 0.01, y)
-      y <- ifelse(y >= 1, 0.98, y)
-      y <- num_clip(y, 0, 1)
-      return(y)
-    }
     control$grad_adj$school_list <- sch_control_pars
   }
 

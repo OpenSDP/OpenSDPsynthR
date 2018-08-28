@@ -490,10 +490,12 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
         return(y)
       },
       school_list = best_schl,
-      perturb_school = function(x, schid, sd, schl_par = school_list){
-        val_mean <- ifelse(schid %in% schl_par, 0.25, 0)
-        val_mean_sd <- abs(sd * (val_mean/sd))
-        y <- x + rnorm(1, val_mean, sqrt(val_mean_sd))
+      perturb_school = function(x, schid, sch_par = school_list){
+        val_mean <- sch_par[[which(schid == names(sch_par))]]
+        y <- x + num_clip(rnorm(1, val_mean, sd = val_mean/5), -0.3, 0.3)
+        y <- ifelse(y <= 0, 0.01, y)
+        y <- ifelse(y >= 1, 0.98, y)
+        y <- num_clip(y, 0, 1)
         return(y)
       }
     )

@@ -4,9 +4,9 @@
 \alias{gen_outcome_model}
 \title{Generate data for a multilevel outcome}
 \usage{
-gen_outcome_model(fixed, fixed_param, random_var, fact_vars, cov_param = NULL,
-  cor_vars = NULL, ngrps, unbalanceRange, type = "binary",
-  with_err_gen = NULL, error_var = NULL)
+gen_outcome_model(fixed, fixed_param, random_var, fact_vars,
+  cov_param = NULL, cor_vars = NULL, ngrps, unbalanceRange,
+  type = "binary", with_err_gen = NULL, error_var = NULL)
 }
 \arguments{
 \item{fixed}{a formula with RHS only that specifies the variables to use}

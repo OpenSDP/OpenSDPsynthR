@@ -128,8 +128,24 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
   stu_year$ndays_attend <- ifelse(stu_year$ndays_attend > 180, 180, stu_year$ndays_attend)
   stu_year$att_rate <- stu_year$ndays_attend / stu_year$ndays_possible
   message("Creating ", control$nschls, " schools for you...")
-  # TODO: Rewrite this so it takes control the argument
   school <- gen_schools(control = control)
+  # Get school level parameters for the simulation of outcomes
+  if (is.null(control$grad_adj$school_list)) {
+    school <- arrange(school, frpl_per)
+    sch_eff <- sort(rnorm(nrow(school)))
+    sch_control_pars <- as.list(sch_eff)
+    names(sch_control_pars) <- school$schid
+    control$grad_adj$perturb_school <- function(x, schid, sch_par = school_list){
+      val_mean <- sch_par[[which(schid == names(sch_par))]]
+      y <- x + num_clip(rnorm(1, val_mean, sd = 0.075), -0.5, 0.5)
+      y <- ifelse(y <= 0, 0.01, y)
+      y <- ifelse(y >= 1, 0.98, y)
+      y <- num_clip(y, 0, 1)
+      return(y)
+    }
+    control$grad_adj$school_list <- sch_control_pars
+  }
+
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")
   stu_year <- left_join(stu_year, demog_master[, c(idvar, "White")], by = idvar)
   stu_year <- assign_schools(student = stu_year, schools = school,

@@ -137,6 +137,10 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
     sch_control_pars <- as.list(sch_eff)
     names(sch_control_pars) <- school$schid
     control$grad_adj$school_list <- sch_control_pars
+    sch_eff <- sort(rnorm(nrow(school), sd = 0.4))
+    sch_control_pars <- as.list(sch_eff)
+    names(sch_control_pars) <- school$schid
+    control$assessment_adjustment$school_list <- sch_control_pars
   }
 
   message("Assigning ", nrow(stu_year), " student-school enrollment spells...")

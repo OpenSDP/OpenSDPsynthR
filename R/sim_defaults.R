@@ -130,13 +130,13 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
   message("Creating ", control$nschls, " schools for you...")
   school <- gen_schools(control = control)
   # Get school level parameters for the simulation of outcomes
-  if (is.null(control$grad_adj$school_list)) {
+  if (is.null(control$grad_adjustment$school_list)) {
     # school <- gen_schools(control = sim_control(nschls=12))
     school <- arrange(school, frpl_per)
     sch_eff <- sort(rnorm(nrow(school), sd = 0.4))
     sch_control_pars <- as.list(sch_eff)
     names(sch_control_pars) <- school$schid
-    force(control$grad_adj$school_list <- sch_control_pars)
+    force(control$grad_adjustment$school_list <- sch_control_pars)
   }
   if (is.null(control$assessment_adjustment$school_list)) {
     school <- arrange(school, frpl_per)

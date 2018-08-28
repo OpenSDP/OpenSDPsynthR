@@ -528,7 +528,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
       },
       school_list = best_schl,
       perturb_school = function(x, schid, schl_par = school_list){
-        val_mean <- sch_par[[which(schid == names(sch_par))]]
+        val_mean <- schl_par[[which(schid == names(schl_par))]]
         y <- x + num_clip(rnorm(1, val_mean, sd = val_mean/5), -0.3, 0.3)
         y <- ifelse(y <= 0, 0.01, y)
         y <- ifelse(y >= 1, 0.98, y)

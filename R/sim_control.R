@@ -75,7 +75,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
 
   nschls <- nschls
   if(is.null(best_school)){
-    best_schl <- "01"
+    best_schl <- list("01" = "01")
   } else {
     best_schl <- best_school
   }

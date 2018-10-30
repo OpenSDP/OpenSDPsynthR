@@ -52,6 +52,9 @@ gen_outcome_model <- function(fixed, fixed_param, random_var, fact_vars,
                   n = ngrps, p = NULL,
                   cor_vars = cor_vars, data_str = "cross", unbal = TRUE,
                   unbalCont = unbalanceRange)
+
+
+
     mod <- glmer(update(fixed, "sim_data ~ . + (1|clustID)"),
                  data = df, family = "binomial", nAGQ = 0, # boost speed
                  control=glmerControl(optimizer = "nloptwrap"))

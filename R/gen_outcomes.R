@@ -127,11 +127,11 @@ gen_gpa <- function(data, control=sim_control()){
 gen_grad <- function(data, control = sim_control()){
   data <- as.data.frame(data)
   if(control$grad_sim_parameters$ngrps != control$nschls){
-    warning("Changing number of groups in outcome simulation to match schools")
+    message("Changing number of groups in outcome simulation to match schools")
     control$grad_sim_parameters$ngrps <- control$nschls
   }
   grad_sim <- do.call(gen_outcome_model, control$grad_sim_parameters)
-  if(any(all.vars(control$grad_sim_parameters$fixed) %in% names(data))){
+  if(any(!all.vars(control$grad_sim_parameters$fixed) %in% names(data))){
     warning("Data may not line up")
   }
   idvar <- names(data)[which(names(data) %in%
@@ -181,11 +181,11 @@ rescale_gpa <- function(x){
 gen_ps <- function(data, control = sim_control()){
   data <- as.data.frame(data)
   if(control$grad_sim_parameters$ngrps != control$nschls){
-    warning("Changing number of groups in outcome simulation to match schools")
+    message("Changing number of groups in outcome simulation to match schools")
     control$grad_sim_parameters$ngrps <- control$nschls
   }
   ps_sim <- do.call(gen_outcome_model, control$ps_sim_parameters)
-  if(any(all.vars(control$grad_sim_parameters$fixed) %in% names(data))){
+  if(any(!all.vars(control$grad_sim_parameters$fixed) %in% names(data))){
     warning("Data may not line up")
   }
   idvar <- names(data)[which(names(data) %in%

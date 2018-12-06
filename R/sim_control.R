@@ -75,7 +75,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
 
   nschls <- nschls
   if(is.null(best_school)){
-    best_schl <- list("01" = "01")
+    best_schl <- list("01" = 0.35)
   } else {
     best_schl <- best_school
   }
@@ -489,7 +489,7 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
         y <- x + rnorm(1, 0, sd * 0.8)
         return(y)
       },
-      school_list = best_schl,
+      school_list = NULL,
       perturb_school = function(x, schid, sd, schl_par = school_list){
         val_mean <- ifelse(schid %in% schl_par, 0.25, 0)
         val_mean_sd <- abs(sd * (val_mean/sd))
@@ -526,10 +526,10 @@ sim_control <- function(nschls=2L, best_school= NULL, race_groups=NULL, race_pro
         y <- num_clip(y, 0, 1)
         return(y)
       },
-      school_list = best_schl,
+      school_list = NULL,
       perturb_school = function(x, schid, schl_par = school_list){
         val_mean <- schl_par[[which(schid == names(schl_par))]]
-        y <- x + num_clip(rnorm(1, val_mean, sd = val_mean/5), -0.3, 0.3)
+        y <- x + num_clip(rnorm(1, val_mean, sd = abs(val_mean)/5), -0.3, 0.3)
         y <- ifelse(y <= 0, 0.01, y)
         y <- ifelse(y >= 1, 0.98, y)
         y <- num_clip(y, 0, 1)

@@ -483,11 +483,12 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                   control = control)
   data <- bind_cols(data, zzz)
   data$hs_status <- "hs_grad"
+  data$hs_status <- ifelse(data$cohort_grad_year == data$year,
+                           "ontime",
+                           ifelse(data$cohort_grad_year > data$year,
+                                  "early", "late"))
   data$hs_status[data$grad == 0] <- "none"
-  data$hs_status[data$grad == 1] <- ifelse(data$cohort_grad_year == data$year,
-                                           "ontime",
-                                           ifelse(data$cohort_grad_year > data$year,
-                                                  "early", "late"))
+
   data$hs_status[data$grad == 0] <-
     sapply(data$hs_status[data$grad == 0],
            function(x) {
@@ -498,8 +499,8 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                prob = c(0.62, 0.31, 0.04, 0.03)
              )
            })
-  data %<>% group_by(sid) %>%
-    mutate(chrt_grad = min(year[grad == 1]))
+  data %<>% group_by(sid) %>% arrange(year) %>%
+    mutate(chrt_grad = first(year[grad == 1]))
   data <- bind_rows(data %>% group_by(sid) %>%
                       mutate(nrow = n()) %>% filter(nrow == 1) %>%
                       select(-nrow),

@@ -628,19 +628,21 @@ gen_ps_enrollment <- function(hs_outcomes, nsc, control){
     mutate(opeid = sample(nsc$opeid, 1, prob = nsc$enroll))
 
   opeid_changer <- function(opeid){
-    sample(nsc$opeid[nsc$opeid != opeid],
+    opeid <- unique(opeid)
+    sample(nsc$opeid[!nsc$opeid %in% opeid],
            1,
-           prob =nsc$enroll[nsc$opeid != opeid])
+           prob = nsc$enroll[!nsc$opeid %in% opeid])
   }
   # Set enrollment year
 
   ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
     mutate(ps_change_ind = cumsum(ifelse(ps_transfer == "1", 1, 0)))
+  # Shuffle OPEIDs
   ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
-    mutate(opeid = replace(opeid, ps_change_ind == 1, opeid_changer(opeid)),
-           opeid = replace(opeid, ps_change_ind == 2, opeid_changer(opeid)),
-           opeid = replace(opeid, ps_change_ind == 3, opeid_changer(opeid)),
-           opeid = replace(opeid, ps_change_ind == 4, opeid_changer(opeid))) %>%
+    mutate(opeid = base::replace(opeid, ps_change_ind == 1, opeid_changer(opeid)),
+           opeid = base::replace(opeid, ps_change_ind == 2, opeid_changer(opeid)),
+           opeid = base::replace(opeid, ps_change_ind == 3, opeid_changer(opeid)),
+           opeid = base::replace(opeid, ps_change_ind == 4, opeid_changer(opeid))) %>%
     select(-ps_change_ind)
   attributes(ps_pool$opeid) <- NULL # Make join work by dropping attributes of IDs
   attributes(nsc$opeid) <- NULL

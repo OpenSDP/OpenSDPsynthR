@@ -6,6 +6,7 @@
 #' @import dplyr
 #' @export
 sdp_cleaner <- function(simouts){
+  # Compute high school summary variables for students in grades 9-12
   hs_summary <- simouts$stu_year %>%
     filter(grade %in% c("9", "10", "11", "12")) %>%
     group_by(sid) %>% arrange(sid, year) %>%
@@ -20,7 +21,9 @@ sdp_cleaner <- function(simouts){
       chrt_ninth = min(year[grade == "9"]),
       nyears = n()
     )
+  # Drop students who never get a ninth grade cohort
   hs_summary <- filter(hs_summary, is.finite(chrt_ninth))
+  # Figure out schools
   schools <- as.data.frame(simouts$schools)
   attributes(schools$schid) <- NULL
   hs_summary <- inner_join(hs_summary, schools[, c("schid", "name")],
@@ -32,10 +35,6 @@ sdp_cleaner <- function(simouts){
   hs_summary <- left_join(hs_summary, schools[, c("schid", "name")],
                           by=setNames("schid", "longest_hs_code"))
   hs_summary %<>% rename(longest_hs_name = name)
-
-
-
-
 
   demog_clean <- simouts$demog_master %>%
     group_by(sid) %>%
@@ -281,8 +280,8 @@ sdp_cleaner <- function(simouts){
     filter(!is.na(ps_type)) %>%
     filter(ps_type != "other") %>%
     select(-observed)
-  ps_career %<>% gather(key = "persist", value = "obs", all4, persist)
-  ps_career <- ps_career %>% gather(variable, value, -(sid:persist)) %>%
+  ps_career %<>% tidyr::gather(key = "persist", value = "obs", all4, persist)
+  ps_career <- ps_career %>% tidyr::gather(variable, value, -(sid:persist)) %>%
     tidyr::unite(temp, chrt, ps_type, persist, variable) %>%
     tidyr::spread(temp, value, fill = 0)
   # ps_career[, 2:ncol(ps_career)] <- apply(ps_career[, 2:ncol(ps_career)], 2, zeroNA)

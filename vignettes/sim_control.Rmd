@@ -29,24 +29,6 @@ default_sim <- sim_control()
 
 ```{r}
 names(default_sim)
-
-# library(tidyverse) # main suite of R packages to ease data analysis
-# library(magrittr) # allows for some easier pipelines of data
-# library(tidyr) #
-# library(ggplot2) # to plot
-# library(scales) # to format
-# library(grid)
-# library(gridExtra) # to plot
-# # Read in some R functions that are convenience wrappers
-# library(devtools)
-# library(OpenSDPsynthR)
-# 
-# simouts <- simpop(nstu = 4000, seed = 8763434, 
-#                   control = sim_control(nschls = 12L, 
-#                                         minyear = 1996,
-#                                         n_postsec = 50L,
-#                                         n_cohorts = 3)) 
-# cgdata <- sdp_cleaner(simouts)
 ```
 
 There are over 25 user parameters that can be modified to control the simulation. 

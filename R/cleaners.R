@@ -23,7 +23,7 @@ sdp_cleaner <- function(simouts){
     )
   # Drop students who never get a ninth grade cohort
   hs_summary <- filter(hs_summary, is.finite(chrt_ninth))
-  # Figure out schools
+  # Figure out
   schools <- as.data.frame(simouts$schools)
   attributes(schools$schid) <- NULL
   hs_summary <- inner_join(hs_summary, schools[, c("schid", "name")],
@@ -57,7 +57,7 @@ sdp_cleaner <- function(simouts){
   # Take the most recent score
   scores <- simouts$stu_assess %>% ungroup %>%
     group_by(sid, grade) %>%
-    mutate(keep = ifelse(year == min(year), 1, 0)) %>%
+    mutate(keep = if_else(year == min(year), 1, 0)) %>%
     filter(keep == 1) %>% select(-keep) %>%
     ungroup %>%
     filter(grade %in% c("8")) %>%
@@ -141,20 +141,21 @@ sdp_cleaner <- function(simouts){
   chrt_data$chrt_ninth <- chrt_data$chrt_ninth + 3
 
   simouts$ps_enroll <- left_join(simouts$ps_enroll, chrt_data)
+
   # now need to break this out by type, then split wide by year
   ps_wide <- simouts$ps_enroll %>% group_by(sid, yr_seq) %>%
-    summarize(enrl_1oct_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == yr_seq),
+    summarize(enrl_1oct_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) == yr_seq),
                                    1, 0),
-           enrl_1oct_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == yr_seq),
+           enrl_1oct_ninth = if_else(any((min(c(year[ps == 1], 1)) - chrt_ninth) == yr_seq),
                                    1, 0),
-           enrl_ever_w2_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) <= yr_seq + 1),
+           enrl_ever_w2_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) <= yr_seq + 1),
                                  1, 0),
-           enrl_ever_w2_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) <= yr_seq + 1),
+           enrl_ever_w2_ninth = if_else(any((min(c(year[ps == 1],1 )) - chrt_ninth) <= yr_seq + 1),
                                       1, 0)) %>%
     tidyr::gather(variable, value, -(sid:yr_seq)) %>%
     tidyr::unite(temp, yr_seq, variable) %>%
     tidyr::spread(temp, value, fill = 0) %>%
-    rename(
+    dplyr::rename(
       enrl_1oct_grad_yr1_any = `1_enrl_1oct_grad`,
       enrl_1oct_grad_yr2_any = `2_enrl_1oct_grad`,
       enrl_1oct_grad_yr3_any = `3_enrl_1oct_grad`,
@@ -186,13 +187,14 @@ sdp_cleaner <- function(simouts){
   zzz <- simouts$ps_enroll %>% group_by(sid, yr_seq, ps_type) %>%
     tidyr::complete(sid, yr_seq, ps_type) %>%
     group_by(sid, yr_seq, ps_type) %>%
-    summarize(enrl_1oct_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == yr_seq),
+    # TODO: better construction of any min year
+    summarize(enrl_1oct_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) == yr_seq),
                                       1, 0),
-              enrl_1oct_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == yr_seq),
+              enrl_1oct_ninth = if_else(any((min(c(year[ps == 1], 1)) - chrt_ninth) == yr_seq),
                                        1, 0),
-              enrl_ever_w2_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) <= (yr_seq + 1)),
+              enrl_ever_w2_ninth = if_else(any((min(c(year[ps == 1], 1)) - chrt_ninth) <= (yr_seq + 1)),
                                      1, 0),
-              enrl_ever_w2_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) <= (yr_seq + 1)),
+              enrl_ever_w2_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) <= (yr_seq + 1)),
                                      1, 0)) %>%
     mutate(enrl_1oct_grad = zeroNA(enrl_1oct_grad),
            enrl_1oct_ninth = zeroNA(enrl_1oct_ninth),
@@ -236,9 +238,9 @@ sdp_cleaner <- function(simouts){
   ps_career <- simouts$ps_enroll %>% group_by(sid, ps_type) %>%
     tidyr::complete(sid, ps_type) %>%
     summarise(enroll_count = sum(ps),
-            chrt_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == 1),
+            chrt_grad = ifelse(any((min(c(year[ps == 1], 1)) - chrt_grad) == 1),
                    1, 0),
-            chrt_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == 1),
+            chrt_ninth = ifelse(any((min(c(year[ps == 1], 1)) - chrt_ninth) == 1),
                                1, 0)) %>%
     mutate(all4 = ifelse(enroll_count >= 4, 1, 0)
            ) %>%
@@ -255,9 +257,9 @@ sdp_cleaner <- function(simouts){
     group_by(sid, ps_type) %>%
     tidyr::complete(sid, ps_type) %>%
     summarise(persist = ifelse(any(persist > 0), 1, 0),
-              chrt_grad = ifelse(any((min(year[ps == 1]) - chrt_grad) == 1),
+              chrt_grad = ifelse(any((min(c(year[ps == 1], 1)) - chrt_grad) == 1),
                                  1, 0),
-              chrt_ninth = ifelse(any((min(year[ps == 1]) - chrt_ninth) == 1),
+              chrt_ninth = ifelse(any((min(c(year[ps == 1], 1)) - chrt_ninth) == 1),
                                   1, 0)) %>%
     mutate(persist = zeroNA(persist),
            chrt_grad = zeroNA(chrt_grad),
@@ -378,7 +380,13 @@ sdp_cleaner <- function(simouts){
   final_data$chrt_grad[!is.finite(final_data$chrt_grad)] <- NA
   final_data$hs_diploma_date <- paste0("05/25/", final_data$chrt_grad)
   final_data$hs_diploma_date[is.na(final_data$chrt_grad)] <- NA
-  final_data$highly_qualified <- sapply(final_data$ps_prob - 0.2, rbinom, n=1, size=1)
+  safe_binom <- function(prob, n, size) {
+    prob <- ifelse(prob < 0, 0.00001, prob)
+    prob <- ifelse(prob > 1, 0.9999, prob)
+    out <- rbinom(prob, n = n, size = size)
+    return(out)
+  }
+  final_data$highly_qualified <- sapply(final_data$ps_prob - 0.2, safe_binom, n=1, size=1)
   final_data$highly_qualified[is.na(final_data$highly_qualified)] <- 0
   final_data$status_after_yr1 <- ifelse(final_data$status_after_yr1 == "still_enroll" &
                                           final_data$ontrack_endyr1 == 1,

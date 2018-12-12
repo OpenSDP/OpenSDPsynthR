@@ -23,11 +23,13 @@ sdp_cleaner <- function(simouts){
     )
   # Drop students who never get a ninth grade cohort
   hs_summary <- filter(hs_summary, is.finite(chrt_ninth))
-  # Figure out
+
+  # Get school assignments and school attributes based on first, last, and
+  # longest high school
   schools <- as.data.frame(simouts$schools)
   attributes(schools$schid) <- NULL
   hs_summary <- inner_join(hs_summary, schools[, c("schid", "name")],
-                           by=setNames("schid", "first_hs_code"))
+                           by = setNames("schid", "first_hs_code"))
   hs_summary %<>% rename(first_hs_name = name)
   hs_summary <- left_join(hs_summary, schools[, c("schid", "name")],
                           by=setNames("schid", "last_hs_code"))
@@ -36,6 +38,7 @@ sdp_cleaner <- function(simouts){
                           by=setNames("schid", "longest_hs_code"))
   hs_summary %<>% rename(longest_hs_name = name)
 
+  # Compute consistent/cleaned gender/race over the high school years
   demog_clean <- simouts$demog_master %>%
     group_by(sid) %>%
     summarize(
@@ -143,15 +146,26 @@ sdp_cleaner <- function(simouts){
   simouts$ps_enroll <- left_join(simouts$ps_enroll, chrt_data)
 
   # now need to break this out by type, then split wide by year
+  #TODO: Fix here, does enrl_1oct_grad_y4_any exist?
+
+  safe_min <- function(x) {
+    if(is.null(x) | length(x) == 0 | all(is.na(x))) {
+      return(0)
+    } else {
+      out <- min(x, na.rm = TRUE)
+      return(out)
+    }
+  }
+
   ps_wide <- simouts$ps_enroll %>% group_by(sid, yr_seq) %>%
-    summarize(enrl_1oct_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) == yr_seq),
-                                   1, 0),
-           enrl_1oct_ninth = if_else(any((min(c(year[ps == 1], 1)) - chrt_ninth) == yr_seq),
-                                   1, 0),
-           enrl_ever_w2_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) <= yr_seq + 1),
-                                 1, 0),
-           enrl_ever_w2_ninth = if_else(any((min(c(year[ps == 1],1 )) - chrt_ninth) <= yr_seq + 1),
-                                      1, 0)) %>%
+    summarize(enrl_1oct_grad = if_else(any((safe_min(year[ps == 1]) -  chrt_grad) == yr_seq),
+                                       1, 0),
+              enrl_1oct_ninth = if_else(any((safe_min(year[ps == 1]) -  chrt_ninth) == yr_seq),
+                                        1, 0),
+              enrl_ever_w2_grad = if_else(any((safe_min(year[ps == 1]) -  chrt_grad) <= yr_seq + 1),
+                                          1, 0),
+              enrl_ever_w2_ninth = if_else(any((safe_min(year[ps == 1]) -  chrt_ninth) <= yr_seq + 1),
+                                           1, 0)) %>%
     tidyr::gather(variable, value, -(sid:yr_seq)) %>%
     tidyr::unite(temp, yr_seq, variable) %>%
     tidyr::spread(temp, value, fill = 0) %>%
@@ -169,6 +183,7 @@ sdp_cleaner <- function(simouts){
     )
   # enrl_ever_w2_grad_any
 
+
   tmp <- ps_wide %>% select(sid, contains("enrl_ever"))
   tmp$enrl_ever_w2_grad_any <- tmp$`1_enrl_ever_w2_grad` + tmp$`2_enrl_ever_w2_grad` +
     tmp$`3_enrl_ever_w2_grad` + tmp$`4_enrl_ever_w2_grad`
@@ -184,43 +199,139 @@ sdp_cleaner <- function(simouts){
   simouts$ps_enroll$ps_type[is.na(simouts$ps_enroll$ps_type)] <- "other"
   simouts$ps_enroll$ps_type <- as.factor(simouts$ps_enroll$ps_type)
 
-  zzz <- simouts$ps_enroll %>% group_by(sid, yr_seq, ps_type) %>%
+
+  # ps_wide_ever?
+  # zeroNA is suuupppperrr slowwww
+  zzz <- simouts$ps_enroll %>% ungroup() %>%
+    sample_frac(0.1) %>%
+    group_by(sid, yr_seq, ps_type) %>%
     tidyr::complete(sid, yr_seq, ps_type) %>%
     group_by(sid, yr_seq, ps_type) %>%
     # TODO: better construction of any min year
-    summarize(enrl_1oct_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) == yr_seq),
-                                      1, 0),
-              enrl_1oct_ninth = if_else(any((min(c(year[ps == 1], 1)) - chrt_ninth) == yr_seq),
+    summarize(enrl_1oct_grad = if_else(any((safe_min(year[ps == 1]) - chrt_grad) == yr_seq),
                                        1, 0),
-              enrl_ever_w2_ninth = if_else(any((min(c(year[ps == 1], 1)) - chrt_ninth) <= (yr_seq + 1)),
-                                     1, 0),
-              enrl_ever_w2_grad = if_else(any((min(c(year[ps == 1], 1)) - chrt_grad) <= (yr_seq + 1)),
-                                     1, 0)) %>%
+              enrl_1oct_ninth = if_else(any((safe_min(year[ps == 1]) - chrt_ninth) == yr_seq),
+                                        1, 0),
+              enrl_ever_w2_ninth = if_else(any((safe_min(year[ps == 1]) - chrt_ninth) <= (yr_seq + 1)),
+                                           1, 0),
+              enrl_ever_w2_grad = if_else(any((safe_min(year[ps == 1]) - chrt_grad) <= (yr_seq + 1)),
+                                          1, 0)) %>%
     mutate(enrl_1oct_grad = zeroNA(enrl_1oct_grad),
            enrl_1oct_ninth = zeroNA(enrl_1oct_ninth),
            enrl_ever_w2_ninth = zeroNA(enrl_ever_w2_ninth),
            enrl_ever_w2_grad = zeroNA(enrl_ever_w2_grad)) %>%
     tidyr::gather(variable, value, -(sid:ps_type)) %>%
     tidyr::unite(temp, ps_type, yr_seq, variable) %>%
-    tidyr::spread(temp, value, fill = 0)
+    tidyr::spread(temp, value, fill = 0) %>%
+    # rename variables here
+    dplyr::rename(
+      enrl_1oct_grad_yr1_2yr = `2yr_1_enrl_1oct_grad`,
+      enrl_1oct_grad_yr2_2yr = `2yr_2_enrl_1oct_grad`,
+      enrl_1oct_grad_yr3_2yr = `2yr_3_enrl_1oct_grad`,
+      enrl_1oct_grad_yr4_2yr = `2yr_4_enrl_1oct_grad`,
+      enrl_1oct_grad_yr5_2yr = `2yr_5_enrl_1oct_grad`,
+      #
+      enrl_1oct_grad_yr1_4yr = `4yr_1_enrl_1oct_grad`,
+      enrl_1oct_grad_yr2_4yr = `4yr_2_enrl_1oct_grad`,
+      enrl_1oct_grad_yr3_4yr = `4yr_3_enrl_1oct_grad`,
+      enrl_1oct_grad_yr4_4yr = `4yr_4_enrl_1oct_grad`,
+      enrl_1oct_grad_yr5_4yr = `4yr_5_enrl_1oct_grad`,
+      # other
+      enrl_1oct_grad_yr1_other = `other_1_enrl_1oct_grad`,
+      enrl_1oct_grad_yr2_other = `other_2_enrl_1oct_grad`,
+      enrl_1oct_grad_yr3_other = `other_3_enrl_1oct_grad`,
+      enrl_1oct_grad_yr4_other = `other_4_enrl_1oct_grad`,
+      enrl_1oct_grad_yr5_other = `other_5_enrl_1oct_grad`,
+      ## ninth
+      enrl_1oct_ninth_yr1_2yr = `2yr_1_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr2_2yr = `2yr_2_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr3_2yr = `2yr_3_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr4_2yr = `2yr_4_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr5_2yr = `2yr_5_enrl_1oct_ninth`,
+      #
+      enrl_1oct_ninth_yr1_4yr = `4yr_1_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr2_4yr = `4yr_2_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr3_4yr = `4yr_3_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr4_4yr = `4yr_4_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr5_4yr = `4yr_5_enrl_1oct_ninth`,
+      # other
+      enrl_1oct_ninth_yr1_other = `other_1_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr2_other = `other_2_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr3_other = `other_3_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr4_other = `other_4_enrl_1oct_ninth`,
+      enrl_1oct_ninth_yr5_other = `other_5_enrl_1oct_ninth`,
+      # enrl ever w2 ninth
+      enrl_ever_w2_ninth_yr1_2yr = `2yr_1_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr2_2yr = `2yr_2_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr3_2yr = `2yr_3_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr4_2yr = `2yr_4_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr5_2yr = `2yr_5_enrl_ever_w2_ninth`,
+      #
+      enrl_ever_w2_ninth_yr1_4yr = `4yr_1_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr2_4yr = `4yr_2_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr3_4yr = `4yr_3_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr4_4yr = `4yr_4_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr5_4yr = `4yr_5_enrl_ever_w2_ninth`,
+      #
+      enrl_ever_w2_ninth_yr1_other = `other_1_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr2_other = `other_2_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr3_other = `other_3_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr4_other = `other_4_enrl_ever_w2_ninth`,
+      enrl_ever_w2_ninth_yr5_other = `other_5_enrl_ever_w2_ninth`,
+      # enrl ever w2 grad
+      enrl_ever_w2_grad_yr1_2yr = `2yr_1_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr2_2yr = `2yr_2_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr3_2yr = `2yr_3_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr4_2yr = `2yr_4_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr5_2yr = `2yr_5_enrl_ever_w2_grad`,
+      #
+      enrl_ever_w2_grad_yr1_4yr = `4yr_1_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr2_4yr = `4yr_2_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr3_4yr = `4yr_3_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr4_4yr = `4yr_4_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr5_4yr = `4yr_5_enrl_ever_w2_grad`,
+      #
+      enrl_ever_w2_grad_yr1_other = `other_1_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr2_other = `other_2_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr3_other = `other_3_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr4_other = `other_4_enrl_ever_w2_grad`,
+      enrl_ever_w2_grad_yr5_other = `other_5_enrl_ever_w2_grad`,
+      # enrl ever w2 grad
+    )
+
+  # empty
+  # table(plotdf$enrl_1oct_grad_yr1_2yr)
 
   tmp <- zzz %>% select(sid, contains("enrl_ever_w2"))
-  tmp$enrl_ever_w2_grad_2yr <- tmp$`2yr_1_enrl_ever_w2_grad` + tmp$`2yr_2_enrl_ever_w2_grad` +
-    tmp$`2yr_3_enrl_ever_w2_grad` + tmp$`2yr_4_enrl_ever_w2_grad`
-  tmp$enrl_ever_w2_grad_4yr <- tmp$`4yr_1_enrl_ever_w2_grad` + tmp$`4yr_2_enrl_ever_w2_grad` +
-    tmp$`4yr_3_enrl_ever_w2_grad` + tmp$`4yr_4_enrl_ever_w2_grad`
-  tmp$enrl_ever_w2_ninth_2yr <- tmp$`2yr_1_enrl_ever_w2_ninth` + tmp$`2yr_2_enrl_ever_w2_ninth` +
-    tmp$`2yr_3_enrl_ever_w2_ninth` + tmp$`2yr_4_enrl_ever_w2_ninth`
-  tmp$enrl_ever_w2_ninth_4yr <- tmp$`4yr_1_enrl_ever_w2_ninth` + tmp$`4yr_2_enrl_ever_w2_ninth` +
-    tmp$`4yr_3_enrl_ever_w2_ninth` + tmp$`4yr_4_enrl_ever_w2_ninth`
+  # Rewrite these sums w/ new variable names
+  tmp$enrl_ever_w2_grad_2yr <- tmp$`enrl_ever_w2_grad_yr1_2yr` +
+    tmp$`enrl_ever_w2_grad_yr2_2yr` +
+    tmp$`enrl_ever_w2_grad_yr3_2yr` + tmp$`enrl_ever_w2_grad_yr4_2yr`
+  tmp$enrl_ever_w2_grad_4yr <- tmp$`enrl_ever_w2_grad_yr1_4yr` +
+    tmp$`enrl_ever_w2_grad_yr2_4yr` +
+    tmp$`enrl_ever_w2_grad_yr3_4yr` + tmp$`enrl_ever_w2_grad_yr4_4yr`
+  #
+  tmp$enrl_ever_w2_ninth_2yr <- tmp$`enrl_ever_w2_ninth_yr1_2yr` +
+    tmp$`enrl_ever_w2_ninth_yr2_2yr` +
+    tmp$`enrl_ever_w2_ninth_yr3_2yr` + tmp$`enrl_ever_w2_ninth_yr4_2yr`
+  tmp$enrl_ever_w2_ninth_4yr <- tmp$`enrl_ever_w2_ninth_yr1_4yr` +
+    tmp$`enrl_ever_w2_ninth_yr2_4yr` +
+    tmp$`enrl_ever_w2_ninth_yr2_4yr` + tmp$`enrl_ever_w2_ninth_yr2_4yr`
 
   tmp <- tmp %>% select(sid, enrl_ever_w2_grad_2yr, enrl_ever_w2_grad_4yr,
                         enrl_ever_w2_ninth_2yr, enrl_ever_w2_ninth_4yr)
+  tmp <- as.data.frame(tmp)
   tmp[, 2:5] <- apply(tmp[, 2:5], 2, function(x) ifelse(x > 0, 1, 0))
   zzz <- zzz %>% select(sid, contains("enrl_1oct"))
   zzz <- left_join(zzz, tmp)
   ps_wide <- left_join(ps_wide, zzz, by = "sid")
   rm(zzz, tmp)
+
+  # enrl_1oct_grad_yr1_any
+  # enrl_1oct_grad_yr1_2yr
+  # enrl_1oct_grad_yr1_4yr
+  # enrl_ever_w2_grad_2yr
+  # enrl_ever_w2_grad_4yr
 
   simouts$ps_enroll$ps_type %<>% as.character()
   sdp_ps <- simouts$ps_enroll %>%  group_by(sid) %>%
@@ -232,23 +343,23 @@ sdp_cleaner <- function(simouts){
               first_college_name_any = ps_short_name[1], # make selection of first element safe
               first_college_name_2yr = ps_short_name[ps_type == "2yr"][1],
               first_college_name_4yr = ps_short_name[ps_type == "4yr"][1]
-              )
+    )
   simouts$ps_enroll$ps_type %<>% as.factor()
 
   ps_career <- simouts$ps_enroll %>% group_by(sid, ps_type) %>%
     tidyr::complete(sid, ps_type) %>%
     summarise(enroll_count = sum(ps),
-            chrt_grad = ifelse(any((min(c(year[ps == 1], 1)) - chrt_grad) == 1),
-                   1, 0),
-            chrt_ninth = ifelse(any((min(c(year[ps == 1], 1)) - chrt_ninth) == 1),
-                               1, 0)) %>%
+              chrt_grad = ifelse(any((min(c(year[ps == 1], 1)) - chrt_grad) == 1),
+                                 1, 0),
+              chrt_ninth = ifelse(any((min(c(year[ps == 1], 1)) - chrt_ninth) == 1),
+                                  1, 0)) %>%
     mutate(all4 = ifelse(enroll_count >= 4, 1, 0)
-           ) %>%
+    ) %>%
     mutate(enroll_count = zeroNA(enroll_count),
            chrt_grad = zeroNA(chrt_grad),
            chrt_ninth = zeroNA(chrt_ninth),
            all4 = zeroNA(all4)
-           )
+    )
 
   ps_career2 <- simouts$ps_enroll %>%
     group_by(sid) %>%
@@ -270,7 +381,7 @@ sdp_cleaner <- function(simouts){
   ps_career$enroll_count <- NULL
   ps_career %<>%
     tidyr::gather(key = "chrt", value = "observed", chrt_grad, chrt_ninth)
- # compute any
+  # compute any
   ps_career <- bind_rows(ps_career,
                          ps_career %>% group_by(sid, chrt) %>%
                            summarize(ps_type = "any",
@@ -370,7 +481,7 @@ sdp_cleaner <- function(simouts){
                              !is.na(final_data$hs_diploma)] <- "Graduated"
   final_data$last_wd_group[final_data$hs_diploma == 0 &
                              !is.na(final_data$hs_diploma)] <- final_data$hs_status[final_data$hs_diploma == 0 &
-                                                                                    !is.na(final_data$hs_diploma)]
+                                                                                      !is.na(final_data$hs_diploma)]
   final_data$last_wd_group[final_data$last_wd_group == "transferout"&
                              !is.na(final_data$hs_diploma)] <- "Transfer Out"
   final_data$last_wd_group[final_data$last_wd_group == "dropout"&
@@ -381,12 +492,14 @@ sdp_cleaner <- function(simouts){
   final_data$hs_diploma_date <- paste0("05/25/", final_data$chrt_grad)
   final_data$hs_diploma_date[is.na(final_data$chrt_grad)] <- NA
   safe_binom <- function(prob, n, size) {
-    prob <- ifelse(prob < 0, 0.00001, prob)
+    prob <- ifelse(prob < 0, 0.0001, prob)
     prob <- ifelse(prob > 1, 0.9999, prob)
-    out <- rbinom(prob, n = n, size = size)
+    out <- rbinom(n = n, size = size, prob = prob)
     return(out)
   }
-  final_data$highly_qualified <- sapply(final_data$ps_prob - 0.2, safe_binom, n=1, size=1)
+  final_data <- as.data.frame(final_data)
+  final_data$highly_qualified <- sapply(final_data$ps,safe_binom,
+                                        n = 1, size = 1)
   final_data$highly_qualified[is.na(final_data$highly_qualified)] <- 0
   final_data$status_after_yr1 <- ifelse(final_data$status_after_yr1 == "still_enroll" &
                                           final_data$ontrack_endyr1 == 1,
@@ -411,7 +524,7 @@ sdp_cleaner <- function(simouts){
                                         "Enrolled, On-Track",
                                         ifelse(final_data$status_after_yr4 == "still_enroll" &
                                                  final_data$ontrack_endyr4 == 0,
-                                           "Enrolled, Off-Track", final_data$status_after_yr4))
+                                               "Enrolled, Off-Track", final_data$status_after_yr4))
   final_data$status_after_yr3[final_data$hs_status == "early"] <- "Graduated On-Time"
   final_data$status_after_yr4[final_data$hs_status == "early"] <- "Graduated On-Time"
   final_data$status_after_yr4[final_data$hs_status == "ontime"] <- "Graduated On-Time"
@@ -455,8 +568,8 @@ sdp_cleaner <- function(simouts){
   final_data$last_hs_code <- as.numeric(final_data$last_hs_code)
   final_data$longest_hs_code <- as.numeric(final_data$longest_hs_code)
   final_data$last_wd_group <- factor(final_data$last_wd_group,
-                                        levels = c("Graduated", "Transfer Out",
-                                                   "Drop Out", "Other"))
+                                     levels = c("Graduated", "Transfer Out",
+                                                "Drop Out", "Other"))
   final_data$ontime_grad <- as.numeric(final_data$ontime_grad)
   final_data$late_grad <- as.numeric(final_data$late_grad)
   final_data$still_enrl <- as.numeric(final_data$still_enrl)
@@ -548,14 +661,13 @@ sdp_cleaner <- function(simouts){
   # category for colleges without assigned selectivity (assumed to be not
   # competitive).
   final_data <- left_join(final_data, simouts$nsc[, c("opeid", "rank")],
-                      by = c("first_college_opeid_4yr" = "opeid"))
+                          by = c("first_college_opeid_4yr" = "opeid"))
   final_data$rank <- factor(final_data$rank, levels = c(1, 2, 3, 4, 5, 6),
-               labels = c("Most Competitive", "Highly Competitive",
-                          "Very Competitive", "Competitive", "Least Competitive",
-                          "Other"))
+                            labels = c("Most Competitive", "Highly Competitive",
+                                       "Very Competitive", "Competitive", "Least Competitive",
+                                       "Other"))
   return(final_data)
 }
-
 
 
 #########################

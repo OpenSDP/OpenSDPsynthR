@@ -88,8 +88,10 @@ sdp_cleaner <- function(simouts){
                           direction = "wide")
   rm(credits_long)
 
-  status_vars <- as.data.frame(simouts$hs_annual) %>% select(sid, yr_seq, status_after) %>%
-    reshape(timevar = "yr_seq", sep = "_yr", idvar = "sid", direction = "wide")
+  status_vars <- as.data.frame(simouts$hs_annual) %>%
+    select(sid, yr_seq, status_after) %>%
+    reshape(timevar = "yr_seq", sep = "_yr",
+            idvar = "sid", direction = "wide")
 
   # simouts$hs_outcomes$grad_cohort == cohort_grad
 
@@ -349,9 +351,9 @@ sdp_cleaner <- function(simouts){
   ps_career <- simouts$ps_enroll %>% group_by(sid, ps_type) %>%
     tidyr::complete(sid, ps_type) %>%
     summarise(enroll_count = sum(ps),
-              chrt_grad = ifelse(any((min(c(year[ps == 1], 1)) - chrt_grad) == 1),
+              chrt_grad = ifelse(any((safe_min(year[ps == 1]) - chrt_grad) == 1),
                                  1, 0),
-              chrt_ninth = ifelse(any((min(c(year[ps == 1], 1)) - chrt_ninth) == 1),
+              chrt_ninth = ifelse(any((safe_min(year[ps == 1]) - chrt_ninth) == 1),
                                   1, 0)) %>%
     mutate(all4 = ifelse(enroll_count >= 4, 1, 0)
     ) %>%
@@ -368,9 +370,9 @@ sdp_cleaner <- function(simouts){
     group_by(sid, ps_type) %>%
     tidyr::complete(sid, ps_type) %>%
     summarise(persist = ifelse(any(persist > 0), 1, 0),
-              chrt_grad = ifelse(any((min(c(year[ps == 1], 1)) - chrt_grad) == 1),
+              chrt_grad = ifelse(any((safe_min(year[ps == 1]) - chrt_grad) == 1),
                                  1, 0),
-              chrt_ninth = ifelse(any((min(c(year[ps == 1], 1)) - chrt_ninth) == 1),
+              chrt_ninth = ifelse(any((safe_min(year[ps == 1]) - chrt_ninth) == 1),
                                   1, 0)) %>%
     mutate(persist = zeroNA(persist),
            chrt_grad = zeroNA(chrt_grad),

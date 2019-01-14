@@ -205,7 +205,6 @@ sdp_cleaner <- function(simouts){
   # ps_wide_ever?
   # zeroNA is suuupppperrr slowwww
   zzz <- simouts$ps_enroll %>% ungroup() %>%
-    sample_frac(0.1) %>%
     group_by(sid, yr_seq, ps_type) %>%
     tidyr::complete(sid, yr_seq, ps_type) %>%
     group_by(sid, yr_seq, ps_type) %>%

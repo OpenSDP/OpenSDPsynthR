@@ -5,8 +5,10 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{CG Analyze}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, echo = FALSE}
@@ -38,7 +40,6 @@ simouts <- simpop(nstu = 40000, seed = 8763434,
                                         maxyear=2017)) 
 cgdata <- sdp_cleaner(simouts)
 
-dupes <- cg_data %>% group_by(sid) %>% mutate(dupes = n()) %>% filter(dupes > 1)
 # 
 # // Ninth grade cohorts you can observe persisting to the second year of college
 # global chrt_ninth_begin_persist_yr2 = 2008

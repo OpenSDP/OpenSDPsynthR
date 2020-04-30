@@ -33,12 +33,58 @@ library(tidyr)
 library(scales)
 library(magrittr)
 
+
+
+# Let's get 30 good college names
+
+coll_names <- toupper(c("Riverbend University", "College of Easy River", "East River University", 
+                "West River University", "Community College of Riverbend", "Mountain State University", 
+                "East Mountain University", "West Mountain University", "Mountain State Community College", 
+                "College of Southern Mountain", "North Hills Community College", "West Hills Community College", 
+                "Northern Mountain University", "South Hills Community College", "College of Automotive Design", 
+                "College of Cosmotology", "Coastal Community College", "Coastal University", 
+                "College of Diesel Mechanics", "Southeastern State University", "Southeastern University", 
+                "College of Medicine", "South Metro Community College", "North Metro Community College", 
+                "East Metro Community College", "West Metro Community College", "Lakeview Community College",
+                "Lakeview University", "Lakeview Southern Community College", "Oceanside State University", 
+                "Jefferson University", "Washington University", "Roosevelt University", "Anthony University", 
+                "Davison University", "Lucy Stone University", "Douglass University", 
+                "Butler University", "Walker University", "DuBois University"))
+
+
+gen_nsc(30, names = coll_names)
+
 simouts <- simpop(nstu = 40000, seed = 8763434, 
-                  control = sim_control(nschls = 12L, minyear=1996,
+                  control = sim_control(nschls = 12L, minyear = 1996,
                                         n_postsec = 50L,
                                         n_cohorts = 3,
-                                        maxyear=2017)) 
+                                        maxyear = 2017)) 
+
+simouts <- simpop(nstu = 80000, seed = 11213, 
+                  control = sim_control(nschls = 40L, minyear = 2001,
+                                        n_postsec = length(coll_names),
+                                        postsec_method = NULL,
+                                        postsec_names = coll_names,
+                                        n_cohorts = 3,
+                                        maxyear = 2019)) 
 cgdata <- sdp_cleaner(simouts)
+# Rank is rank of the first college enrolled in
+cgdata %>% select(sid, math_ss, cum_gpa_final, ps, ps_prob, rank, first_college_opeid_any) %>% 
+  filter(ps == 1) %>%
+  distinct() %>% 
+  group_by(rank) %>% 
+  select(-sid) %>% 
+  summarize_all(mean)
+
+cgdata %>% select(sid, math_ss, cum_gpa_final, ps, ps_prob, rank, first_college_name_any) %>% 
+  filter(ps == 1) %>%
+  distinct() %>% 
+  group_by(first_college_name_any) %>% 
+  select(-sid, -ps) %>% 
+  summarize_all(mean)
+
+
+# Test it, look at student attributes by school rank
 
 # 
 # // Ninth grade cohorts you can observe persisting to the second year of college

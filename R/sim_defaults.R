@@ -202,7 +202,8 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
   })
   # TODO: Fix hardcoding of postsec - insert scorecard data here
   # Fix this so user can control method
-  nsc_postsec <- gen_nsc(n = control$n_postsec, method = control$postsec_method)
+  # Need to pass in the names as well
+  nsc_postsec <- gen_nsc(n = control$n_postsec, names = control$postsec_names, method = control$postsec_method)
   message("Simulating postsecondary outcomes... be patient...")
   ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec,
                                  control = control)
@@ -545,7 +546,8 @@ assign_hs_outcomes <- function(data, control = sim_control()){
 gen_nsc <- function(n, names = NULL, method = NULL){
   if(is.null(method)){
     ids <- wakefield::id(n)
-    enroll <- rnbinom(n, size = 1.4087, mu = 74.62) # starting values from existing district
+    enroll <- rnbinom(n, size = 0.9087, mu = 2440.62)
+    # enroll <- rnbinom(n, size = 1.4087, mu = 74.62) # starting values from existing district
     if(is.null(names)){
       names <- c(LETTERS, letters)
     }
@@ -566,9 +568,15 @@ gen_nsc <- function(n, names = NULL, method = NULL){
     out$type[grepl("UNIVERSITY", out$name)] <- "4yr"
     out$type[grepl("PRIVATE", out$name)] <- "4yr"
     out$type[grepl("COLLEGE OF", out$name)] <- "other"
+    # Need to make the rank and the opeid
+    out$rank <- NA
+    out$rank[out$type == "2yr"] <- 6
+    out$rank[out$type == "other"] <- 6
+    out$rank[out$type == "4yr"] <- sample(1:5, length(out$rank[out$type == "4yr"]),
+                                          replace = TRUE)
+    # out$rank <- sample(1:5, nrow(out), replace = TRUE)
     # out <- cbind(out, attribs)
-  }
-  if(method == "scorecard"){
+  } else if(method == "scorecard"){
     # TODO: set balance of 2yr and 4yr
     out <- bind_rows(
       college_scorecard[sample(row.names(college_scorecard[grepl("associate", college_scorecard$degrees_awarded_predominant),]), n*4),],

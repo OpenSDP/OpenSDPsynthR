@@ -600,7 +600,6 @@ gen_hs_annual <- function(hs_outcomes, stu_year){
 #' @return a table of enrollments
 #' @export
 gen_ps_enrollment <- function(hs_outcomes, nsc, control){
-  # TODO: Fix cohort here
   ps_pool <- hs_outcomes[hs_outcomes$ps == 1,
                                  c("sid", "ps_prob", "grad", "gpa", "ps",
                                    "chrt_grad")]
@@ -620,18 +619,95 @@ gen_ps_enrollment <- function(hs_outcomes, nsc, control){
 
 
   ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
-    mutate(ps_transfer = markov_cond_list("ALL", n = n()-1, control$ps_transfer_list,
+    mutate(ps_transfer = markov_cond_list("ALL", n = n() - 1, control$ps_transfer_list,
                                           t0 = sample(c("0", "1"), 1, prob = c(0.8, 0.2)),
                                           include.t0 = TRUE)
     )
-  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
-    mutate(opeid = sample(nsc$opeid, 1, prob = nsc$enroll))
 
-  opeid_changer <- function(opeid){
+  # Students with a higher ps_prob should have a higher chance at attending a low enrollment school
+  # And a lower change of attending a high enrollment school
+  # A selectivity function can help us here - could be done more elegantly with a sampling distro
+  # This function defines the relationship between college selectivity and the ps_prob variable
+  # More selective colleges are more likely if you have a higher ps_prob because ps_prob can
+  # be thought of as a latent variable capturing the overall academic preparedness of the student
+  # The function takes the 1-6 selectivity rank of the school (lower is more selective) and samples
+  # a range of probabilities based on the value of the individual probability fed into the function
+
+  # @param ranks a vector of integers 1-6, any length
+  # @param scalar, 0-1, probability of going to college
+  coll_assignment_selectivity <- function(ranks, prob) {
+    # 1 is most selective
+    # 5 is least selective
+
+    random_replace <- function(out, value, ...) {
+      out[out == value] <- runif(length(out[out == value]), ...)
+      return(out)
+    }
+
+    out <- ranks
+
+    if (prob > 0.95) {
+      out <- random_replace(out, 6, min = 0.0, max = 0)
+      out <- random_replace(out, 5, min = 0.0, max = 0.0)
+      out <- random_replace(out, 4, min = 0.01, max = 0.02)
+      out <- random_replace(out, 3, min = 0.1, max = 0.2)
+      out <- random_replace(out, 2, min = 0.15, max = 0.3)
+      out <- random_replace(out, 1, min = 0.4, max = 0.8)
+    } else if (prob <= 0.95 & prob > 0.85) {
+      out <- random_replace(out, 6, min = 0.01, max = 0.025)
+      out <- random_replace(out, 5, min = 0.01, max = 0.025)
+      out <- random_replace(out, 4, min = 0.01, max = 0.025)
+      out <- random_replace(out, 3, min = 0.1, max = 0.2)
+      out <- random_replace(out, 2, min = 0.1, max = 0.3)
+      out <- random_replace(out, 1, min = 0.1, max = 0.2)
+    } else if (prob <= 0.85 & prob > 0.7) {
+      out <- random_replace(out, 6, min = 0.01, max = 0.05)
+      out <- random_replace(out, 5, min = 0.01, max = 0.15)
+      out <- random_replace(out, 4, min = 0.1, max = 0.2)
+      out <- random_replace(out, 3, min = 0.2, max = 0.4)
+      out <- random_replace(out, 2, min = 0.1, max = 0.25)
+      out <- random_replace(out, 1, min = 0.05, max = 0.25)
+    } else if (prob <= 0.7 & prob > 0.5) {
+      out <- random_replace(out, 6, min = 0.05, max = 0.3)
+      out <- random_replace(out, 5, min = 0.05, max = 0.3)
+      out <- random_replace(out, 4, min = 0.05, max = 0.3)
+      out <- random_replace(out, 3, min = 0.1, max = 0.3)
+      out <- random_replace(out, 2, min = 0.0, max = 0.05)
+      out <- random_replace(out, 1, min = 0, max = 0.02)
+    } else if (prob > 0.3 & prob < 0.5) {
+      out <- random_replace(out, 6, min = 0.2, max = 0.6)
+      out <- random_replace(out, 5, min = 0.2, max = 0.8)
+      out <- random_replace(out, 4, min = 0.05, max = 0.1)
+      out <- random_replace(out, 3, min = 0.05, max = 0.1)
+      out <- random_replace(out, 2, min = 0.0, max = 0.01)
+      out <- random_replace(out, 1, min = 0, max = 0.01)
+    } else if (prob <= 0.3) {
+      out <- random_replace(out, 6, min = 0.35, max = 0.8)
+      out <- random_replace(out, 5, min = 0.35, max = 0.8)
+      out <- random_replace(out, 4, min = 0.05, max = 0.1)
+      out <- random_replace(out, 3, min = 0.05, max = 0.1)
+      out <- random_replace(out, 2, min = 0, max = 0.0)
+      out <- random_replace(out, 1, min = 0, max = 0.0)
+    }
+    out
+
+  }
+
+  # This function for each student assigns a school
+  # For each student, a student specific school sampling distribution of colleges is defined
+  # Based on the individual student's probability of going to college
+  # This creates a unique sampling distribution for each student, from which one school is drawn
+  ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
+    mutate(opeid = sample(nsc$opeid, 1,
+                          prob = coll_assignment_selectivity(nsc$rank, prob = ps_prob)))
+
+  # Some students transfer, this sets their probability of transferring based on the
+  # sampling distribution function above
+  opeid_changer <- function(opeid, prob){
     opeid <- unique(opeid)
     sample(nsc$opeid[!nsc$opeid %in% opeid],
            1,
-           prob = nsc$enroll[!nsc$opeid %in% opeid])
+           prob = coll_assignment_selectivity(nsc$rank[!nsc$opeid %in% opeid], prob = prob))
   }
   # Set enrollment year
 
@@ -639,10 +715,10 @@ gen_ps_enrollment <- function(hs_outcomes, nsc, control){
     mutate(ps_change_ind = cumsum(ifelse(ps_transfer == "1", 1, 0)))
   # Shuffle OPEIDs
   ps_pool <- ps_pool %>% group_by(sid) %>% arrange(sid, yr_seq, term) %>%
-    mutate(opeid = base::replace(opeid, ps_change_ind == 1, opeid_changer(opeid)),
-           opeid = base::replace(opeid, ps_change_ind == 2, opeid_changer(opeid)),
-           opeid = base::replace(opeid, ps_change_ind == 3, opeid_changer(opeid)),
-           opeid = base::replace(opeid, ps_change_ind == 4, opeid_changer(opeid))) %>%
+    mutate(opeid = base::replace(opeid, ps_change_ind == 1, opeid_changer(opeid, ps_prob)),
+           opeid = base::replace(opeid, ps_change_ind == 2, opeid_changer(opeid, ps_prob)),
+           opeid = base::replace(opeid, ps_change_ind == 3, opeid_changer(opeid, ps_prob)),
+           opeid = base::replace(opeid, ps_change_ind == 4, opeid_changer(opeid, ps_prob))) %>%
     select(-ps_change_ind)
   attributes(ps_pool$opeid) <- NULL # Make join work by dropping attributes of IDs
   attributes(nsc$opeid) <- NULL

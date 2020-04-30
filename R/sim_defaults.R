@@ -200,9 +200,7 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
   suppressWarnings({
     hs_annual <- gen_hs_annual(hs_outcomes, stu_year)
   })
-  # TODO: Fix hardcoding of postsec - insert scorecard data here
-  # Fix this so user can control method
-  # Need to pass in the names as well
+
   nsc_postsec <- gen_nsc(n = control$n_postsec, names = control$postsec_names, method = control$postsec_method)
   message("Simulating postsecondary outcomes... be patient...")
   ps_enroll <- gen_ps_enrollment(hs_outcomes = hs_outcomes, nsc = nsc_postsec,
@@ -512,13 +510,19 @@ assign_hs_outcomes <- function(data, control = sim_control()){
                     )
     zzz <- gen_ps(data, control = control)
     data <- bind_cols(data, zzz)
-    outcomes <- data[, c("sid", "scale_gpa", "gpa",
+    outcomes <- data[, c("sid", "schid","scale_gpa", "gpa",
                              "grad_prob", "grad", "hs_status",
                              "ps_prob", "ps", "year", "chrt_grad")]
     # outcomes$grad_cohort <- outcomes$year
     outcomes$year <- NULL
 
-  outcomes$class_rank <- rank(outcomes$gpa, ties.method = "first")
+    outcomes <- outcomes %>% group_by(schid, chrt_grad) %>%
+      mutate(class_rank = rank(gpa, ties.method = "first")) %>%
+      ungroup %>% select(-schid)
+
+    outcomes <- as.data.frame(outcomes)
+
+  # outcomes$class_rank <- rank(outcomes$gpa, ties.method = "first")
   # Diploma codes
   diplomaCodes <- c("00806", "00807", "00808", "00809", "00810", "00811")
   nonDiplomaCodes <- c("00812", "00813", "00814",  "00815", "00816",

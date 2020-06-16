@@ -662,6 +662,7 @@ sdp_cleaner <- function(simouts){
   # category for colleges without assigned selectivity (assumed to be not
   # competitive).
   # Join and rank based on first college of any type attended
+  simouts$nsc$opeid <- as.character(simouts$nsc$opeid)
   final_data <- left_join(final_data, simouts$nsc[, c("opeid", "rank")],
                           by = c("first_college_opeid_any" = "opeid"))
   final_data$rank <- factor(final_data$rank, levels = c(1, 2, 3, 4, 5, 6),

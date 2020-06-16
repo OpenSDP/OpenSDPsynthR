@@ -80,6 +80,8 @@ simpop <- function(nstu, seed=NULL, control = sim_control()){
     mutate(flag = if_else(age == min(age), 1, 0)) %>%
     filter(flag == 1) %>% select(-flag) %>% as.data.frame() %>%
     select_(idvar, "year", "age")
+  demog_master <- as.data.frame(demog_master)
+  demog_master[, idvar] <- as.character(demog_master[, idvar])
   stu_first <- inner_join(stu_first, demog_master[, c(idvar, "Race")],
                           by = idvar)
   stu_first$age <- round(stu_first$age, 0)
@@ -267,6 +269,7 @@ gen_annual_status <- function(data, control = sim_control()){
 #' @export
 gen_student_years <- function(data, control=sim_control()){
   stu_year <- vector(mode = "list", nrow(data))
+  data <- as.data.frame(data)
   stopifnot(any(c("ID", "id", "sid") %in% names(data)))
   if(is.null(control$minyear)){
     control$minyear <- 1997
@@ -284,6 +287,8 @@ gen_student_years <- function(data, control=sim_control()){
   stu_year <- bind_rows(stu_year) %>% as.data.frame()
   names(stu_year) <- c(idvar, "year")
   bdvar <- names(data)[which(names(data) %in% c("DOB", "dob", "Birthdate"))]
+  data <- as.data.frame(data)
+  data[, idvar] <- as.character(data[, idvar])
   stu_year <- left_join(stu_year, data[, c(idvar, bdvar)], by = idvar)
   # Drop rows that occur before the birthdate
   stu_year %<>% filter(stu_year$year > lubridate::year(stu_year[, bdvar]))

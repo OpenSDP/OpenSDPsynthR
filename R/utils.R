@@ -225,7 +225,7 @@ better_sim.lm <- function(object, nsim, newdata, resid_error = FALSE){
 #' .Dimnames = list(c("0", "1"), c("0", "1")))
 #' tm_convert(base_mat)
 tm_convert <- function(matrix){
-  stopifnot(class(matrix) == "matrix")
+  stopifnot("matrix" %in% class(matrix))
   out <- matrix / rowSums(matrix)
   return(out)
 }
